@@ -94,7 +94,7 @@ const Home: NextPage = () => {
                   {item.key.symbol}: {renderValue(item.val)}
                 </span>
               ) : (
-                renderValue(item)
+                renderValue(item.val)
               )}
             </li>
           ))}
