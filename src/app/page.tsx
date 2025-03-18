@@ -71,6 +71,8 @@ const Home: NextPage = () => {
   };
 
   const renderValue = (val: EscrowMap[number]["val"]): JSX.Element | string => {
+    if (!val) return "N/A"; 
+
     if (val.bool !== undefined) {
       return val.bool ? "True" : "False";
     } else if (val.string) {
