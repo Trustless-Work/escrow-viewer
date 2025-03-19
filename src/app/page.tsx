@@ -7,7 +7,8 @@ import { NavbarSimple } from "@/components/Navbar";
 import Image from "next/image";
 import {
   getLedgerKeyContractCode,
-  type EscrowMap,
+  type EscrowMap, 
+  type EscrowValue,
 } from "@/utils/ledgerkeycontract";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,9 +71,11 @@ const Home: NextPage = () => {
     }
   };
 
-  const renderValue = (val: EscrowMap[number]["val"]): JSX.Element | string => {
-    if (!val) return "N/A"; 
 
+
+  const renderValue = (val?: EscrowValue): JSX.Element | string => {
+    if (!val || Object.keys(val).length === 0) return "N/A"; // Prevents missing values
+  
     if (val.bool !== undefined) {
       return val.bool ? "True" : "False";
     } else if (val.string) {
@@ -85,64 +88,61 @@ const Home: NextPage = () => {
         (val.i128.hi ? BigInt(val.i128.hi) * BigInt(2 ** 32) : BigInt(0));
       const xlm = Number(stroops) / 10_000_000;
       return `${xlm.toFixed(2)} XLM`;
-    } else if (val.vec) {
+    } 
+    // ✅ Correctly handle milestones inside `val.vec`
+    else if (val.vec && Array.isArray(val.vec) && val.vec.length > 0) {
       return (
         <ul className="list-disc pl-4">
           {val.vec.map((item, index) => (
             <li key={index}>
-              {item.val &&
-              (item.val.string || item.val.bool || item.val.i128) ? (
-                <span>
-                  {item.key.symbol}: {renderValue(item.val)}
-                </span>
+
+                {Array.isArray(item.map) ? (
+                <ul className="ml-4">
+                  {item.map.map((milestone, milestoneIndex) => (
+                    <li key={milestoneIndex}>
+                      <strong>{milestone.key.symbol}:</strong> {renderValue(milestone.val)}
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                renderValue(item.val)
+                "N/A"
               )}
             </li>
           ))}
         </ul>
       );
-    } else if (val.map) {
+    } 
+    else if (val.map) {
       return renderMap(val.map);
     }
+  
     return JSON.stringify(val);
   };
-
+  
+  
+  
+  
   const renderMap = (map: EscrowMap): JSX.Element => {
     if (!Array.isArray(map)) {
       console.error("renderMap received non-array:", map);
-      return (
-        <div className="text-red-500">Error: Invalid escrow data format</div>
-      );
+      return <div className="text-red-500">Error: Invalid escrow data format</div>;
     }
+  
     return (
       <div className="space-y-2">
         {map.map(({ key, val }, index) => {
-          const roleField = Object.keys(ROLE_MAPPING).some(
-            (role) =>
-              key.symbol.includes(role.split(" ")[0]) ||
-              key.symbol === role.toLowerCase().replace(" ", "_")
-          );
-          const displayRole = roleField
-            ? ROLE_MAPPING[key.symbol] || key.symbol
-            : key.symbol;
+          if (key.symbol === "milestones" && val.vec) {
+            return (
+              <div key={index}>
+                <strong>Milestones:</strong>
+                {renderValue(val)}
+              </div>
+            );
+          }
+  
           return (
             <div key={index} className="flex space-x-2">
-              {roleField ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <strong className="underline cursor-help">
-                      {displayRole}:
-                    </strong>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {ROLE_PERMISSIONS[displayRole] ||
-                      "No description available"}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <strong>{displayRole}:</strong>
-              )}
+              <strong>{key.symbol}:</strong>
               <span>{renderValue(val)}</span>
             </div>
           );
@@ -150,6 +150,9 @@ const Home: NextPage = () => {
       </div>
     );
   };
+  
+  
+  
 
   return (
     <>

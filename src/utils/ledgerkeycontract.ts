@@ -5,7 +5,7 @@ interface EscrowKey {
   symbol: string;
 }
 
-interface EscrowValue {
+export interface EscrowValue {
   i128?: { hi: number; lo: number };
   string?: string;
   address?: string;
@@ -17,6 +17,7 @@ interface EscrowValue {
 interface EscrowMapEntry {
   key: EscrowKey;
   val: EscrowValue;
+  map?: EscrowMapEntry[]; 
 }
 
 export type EscrowMap = EscrowMapEntry[];
