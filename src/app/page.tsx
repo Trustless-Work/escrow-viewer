@@ -131,18 +131,19 @@ const Home: NextPage = () => {
     return (
       <div className="space-y-2">
         {map.map(({ key, val }, index) => {
-          if (key.symbol === "milestones" && val.vec) {
-            return (
-              <div key={index}>
-                <strong>Milestones:</strong>
-                {renderValue(val)}
-              </div>
-            );
-          }
-  
+          const displayRole = ROLE_MAPPING[key.symbol] || key.symbol;
           return (
             <div key={index} className="flex space-x-2">
-              <strong>{key.symbol}:</strong>
+              <Tooltip>  
+                <TooltipTrigger asChild>
+                  <strong className="underline cursor-help">
+                    {displayRole}:
+                  </strong>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {ROLE_PERMISSIONS[displayRole] || "No description available"}
+                </TooltipContent>
+              </Tooltip>
               <span>{renderValue(val)}</span>
             </div>
           );
