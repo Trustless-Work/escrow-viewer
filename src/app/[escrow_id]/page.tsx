@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { NextPage } from "next";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import EscrowViewer from "@/components/EscrowViewer";
 
@@ -27,30 +27,40 @@ const EscrowDetailsPage: NextPage = () => {
   const [contractId, setContractId] = useState<string>(initialEscrowId);
   const [escrowData, setEscrowData] = useState<EscrowMap | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const [hasFetchedInitial, setHasFetchedInitial] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (initialEscrowId && !hasFetchedInitial) {
-      fetchEscrowData(initialEscrowId); // Fetch initial ID from URL only once
-      setHasFetchedInitial(true);
-    }
-  }, [initialEscrowId, hasFetchedInitial]);
-
-  const fetchEscrowData = async (id: string) => {
+  const fetchEscrowData = useCallback(async (id: string) => {
     if (!id) {
       setError("Please enter a contract ID");
       return;
     }
+    setLoading(true);
     setError(null);
     try {
       const data = await getLedgerKeyContractCode(id);
       setEscrowData(data);
       router.push(`/${id}`); // Update URL
     } catch (err: any) {
-      setError(err.message || "Failed to fetch escrow data");
+      if (err.message.includes("Invalid contract ID")) {
+        setError("Invalid contract ID"); // Specific message for invalid ID
+      } else {
+        setError(err.message || "Failed to fetch escrow data"); // Generic error
+      }
+    } finally {
+      setLoading(false);
     }
-  };
+  });
+
+  useEffect(() => {
+    inputRef.current?.focus(); // Autofocus input
+    if (initialEscrowId && !hasFetchedInitial) {
+      fetchEscrowData(initialEscrowId); // Fetch initial ID from URL only once
+      setHasFetchedInitial(true);
+    }
+  }, [initialEscrowId, hasFetchedInitial, fetchEscrowData]);
 
   const handleFetch = () => {
     if (contractId === initialEscrowId && escrowData) return; // Skip if same ID already fetched
@@ -80,6 +90,7 @@ const EscrowDetailsPage: NextPage = () => {
           </h1>
           <div className="flex w-full max-w-sm items-center space-x-2">
             <Input
+              ref={inputRef}
               type="text"
               placeholder="Enter your escrow ID"
               value={contractId}
@@ -87,7 +98,15 @@ const EscrowDetailsPage: NextPage = () => {
             />
             <Button onClick={handleFetch}>Fetch</Button>
           </div>
-          {error && <p className="text-red-500">{error}</p>}
+          {loading && <p>Loading...</p>}
+          {error && (
+            <div>
+              <p className="text-red-500">{error}</p>
+              <Button onClick={() => router.push("/")} className="mt-2">
+                Go Back
+              </Button>
+            </div>
+          )}
           <EscrowViewer escrowData={escrowData} contractId={contractId} />
         </section>
       </div>
