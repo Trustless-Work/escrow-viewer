@@ -32,27 +32,35 @@ const EscrowDetailsPage: NextPage = () => {
   const [hasFetchedInitial, setHasFetchedInitial] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const fetchEscrowData = useCallback(async (id: string) => {
-    if (!id) {
-      setError("Please enter a contract ID");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getLedgerKeyContractCode(id);
-      setEscrowData(data);
-      router.push(`/${id}`); // Update URL
-    } catch (err: any) {
-      if (err.message.includes("Invalid contract ID")) {
-        setError("Invalid contract ID"); // Specific message for invalid ID
-      } else {
-        setError(err.message || "Failed to fetch escrow data"); // Generic error
+  const fetchEscrowData = useCallback(
+    async (id: string) => {
+      if (!id) {
+        setError("Please enter a contract ID");
+        return;
       }
-    } finally {
-      setLoading(false);
-    }
-  });
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await getLedgerKeyContractCode(id);
+        setEscrowData(data);
+        router.push(`/${id}`);
+      } catch (err: unknown) {
+        if (
+          err instanceof Error &&
+          err.message.includes("Invalid contract ID")
+        ) {
+          setError("Invalid contract ID"); // Specific message for invalid ID
+        } else {
+          setError(
+            err instanceof Error ? err.message : "Failed to fetch escrow data"
+          ); // Generic error
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [router]
+  );
 
   useEffect(() => {
     inputRef.current?.focus(); // Autofocus input
