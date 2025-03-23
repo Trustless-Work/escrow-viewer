@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Inter } from "next/font/google";
@@ -7,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { NextPage } from "next";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -16,10 +15,15 @@ const Home: NextPage = () => {
   const [contractId, setContractId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus(); // Autofocus input
+  }, []);
 
   const handleFetch = () => {
     if (!contractId) {
-      setError("Please enter a contract ID");
+      setError("Please enter a contract ID"); // Error handling for empty input
       return;
     }
     setError(null);
@@ -49,6 +53,7 @@ const Home: NextPage = () => {
           </h1>
           <div className="flex w-full max-w-sm items-center space-x-2">
             <Input
+              ref={inputRef}
               type="text"
               placeholder="Enter your escrow ID"
               value={contractId}
@@ -56,7 +61,8 @@ const Home: NextPage = () => {
             />
             <Button onClick={handleFetch}>Fetch</Button>
           </div>
-          {error && <p className="text-red-500">{error}</p>}
+          {error && <p className="text-red-500">{error}</p>}{" "}
+          {/* Error display */}
         </section>
       </div>
     </>
