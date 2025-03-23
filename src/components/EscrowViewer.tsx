@@ -1,8 +1,9 @@
 "use client";
 
-import { FC } from "react";
+import { FC, JSX, useState } from "react";
 import { type EscrowMap, type EscrowValue } from "@/utils/ledgerkeycontract";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -112,12 +113,25 @@ export const renderMap = (map: EscrowMap): JSX.Element => {
 };
 
 const EscrowViewer: FC<EscrowViewerProps> = ({ escrowData, contractId }) => {
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const copyLink = () => {
+    const url = `${window.location.origin}/${contractId}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+  };
+
   return escrowData ? (
     <Card className="mt-4">
-      <CardHeader>
-        <CardTitle>Escrow ID - {contractId}</CardTitle>
-      </CardHeader>
-      <CardContent>{renderMap(escrowData)}</CardContent>
+      <CardContent>
+        {renderMap(escrowData)}
+        <div className="mt-4 flex items-center space-x-2">
+          <Button onClick={copyLink}>
+            {copied ? "Copied!" : "Copy Contract Link"}
+          </Button>
+        </div>
+      </CardContent>
     </Card>
   ) : null;
 };
