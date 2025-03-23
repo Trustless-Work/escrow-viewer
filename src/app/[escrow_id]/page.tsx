@@ -36,6 +36,7 @@ const EscrowDetailsPage: NextPage = () => {
     async (id: string) => {
       if (!id) {
         setError("Please enter a contract ID");
+        setEscrowData(null);
         return;
       }
       setLoading(true);
@@ -45,6 +46,7 @@ const EscrowDetailsPage: NextPage = () => {
         setEscrowData(data);
         router.push(`/${id}`);
       } catch (err: unknown) {
+        setEscrowData(null);
         if (
           err instanceof Error &&
           err.message.includes("Invalid contract ID")
