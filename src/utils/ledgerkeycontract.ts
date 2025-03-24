@@ -17,7 +17,7 @@ export interface EscrowValue {
 interface EscrowMapEntry {
   key: EscrowKey;
   val: EscrowValue;
-  map?: EscrowMapEntry[]; 
+  map?: EscrowMapEntry[];
 }
 
 export type EscrowMap = EscrowMapEntry[];
@@ -67,7 +67,7 @@ export async function getLedgerKeyContractCode(
 
     const entry = json.result.entries[0];
     if (!entry) {
-      throw new Error("No ledger entry found for this contract ID");
+      throw new Error("Invalid contract ID: No ledger entry found");
     }
 
     const contractData = entry?.dataJson?.contract_data?.val?.contract_instance;
@@ -107,6 +107,6 @@ export async function getLedgerKeyContractCode(
     return escrowEntry.val.map as EscrowMap;
   } catch (error) {
     console.error("Error fetching escrow data:", error);
-    return [];
+    throw error; // Propagate the error instead of returning []
   }
 }
