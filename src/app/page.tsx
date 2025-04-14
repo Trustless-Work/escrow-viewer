@@ -1,25 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Inter } from "next/font/google"
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { NavbarSimple } from "@/components/Navbar"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { LoadingLogo } from "@/components/shared/loading-logo"
-import { getLedgerKeyContractCode, type EscrowMap } from "@/utils/ledgerkeycontract"
-import { organizeEscrowData, type OrganizedEscrowData } from "@/utils/escrow-helpers"
-import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants"
-import type { NextPage } from "next"
+import { Inter } from "next/font/google";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { NavbarSimple } from "@/components/Navbar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { LoadingLogo } from "@/components/shared/loading-logo";
+import {
+  getLedgerKeyContractCode,
+  type EscrowMap,
+} from "@/utils/ledgerkeycontract";
+import {
+  organizeEscrowData,
+  type OrganizedEscrowData,
+} from "@/utils/escrow-helpers";
+import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants";
+import type { NextPage } from "next";
 
-import { Header } from "@/components/escrow/header"
-import { SearchCard } from "@/components/escrow/search-card"
-import { ErrorDisplay } from "@/components/escrow/error-display"
-import { EscrowContent } from "@/components/escrow/escrow-content"
+import { Header } from "@/components/escrow/header";
+import { SearchCard } from "@/components/escrow/search-card";
+import { ErrorDisplay } from "@/components/escrow/error-display";
+import { EscrowContent } from "@/components/escrow/escrow-content";
+import { useRouter } from "next/navigation";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
+  const router = useRouter();
   const [contractId, setContractId] = useState<string>("");
   const [escrowData, setEscrowData] = useState<EscrowMap | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -34,42 +42,43 @@ const Home: NextPage = () => {
     };
 
     handleResize(); // Initial check
-    window.addEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleResize)
-    }
-  }, [])
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const fetchEscrowData = async () => {
     if (!contractId) {
-      setError("Please enter a contract ID")
-      return
+      setError("Please enter a contract ID");
+      return;
     }
     setLoading(true);
     setError(null);
     try {
-      const data = await getLedgerKeyContractCode(contractId)
+      const data = await getLedgerKeyContractCode(contractId);
       setEscrowData(data);
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      router.push(`/${contractId}`);
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     } catch (err: any) {
-      setError(err.message || "Failed to fetch escrow data")
+      setError(err.message || "Failed to fetch escrow data");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Handle enter key press
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      fetchEscrowData()
+      fetchEscrowData();
     }
-  }
+  };
 
   // Use example contract ID
   const handleUseExample = () => {
-    setContractId(EXAMPLE_CONTRACT_ID)
-  }
+    setContractId(EXAMPLE_CONTRACT_ID);
+  };
 
   // Organize data for display
   const organized: OrganizedEscrowData | null = organizeEscrowData(
@@ -80,16 +89,18 @@ const Home: NextPage = () => {
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
+      <div
+        className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}
+      >
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10">
           {/* Header Section */}
           <Header />
-          
+
           {/* Logo display (only on initial screen) */}
           {!escrowData && !loading && !error && (
-            <motion.div 
+            <motion.div
               className="flex justify-center mb-8"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -100,7 +111,7 @@ const Home: NextPage = () => {
           )}
 
           {/* Search Card */}
-          <SearchCard 
+          <SearchCard
             contractId={contractId}
             setContractId={setContractId}
             loading={loading}
@@ -115,7 +126,7 @@ const Home: NextPage = () => {
           <ErrorDisplay error={error} />
 
           {/* Content Section */}
-          <EscrowContent 
+          <EscrowContent
             loading={loading}
             organized={organized}
             isMobile={isMobile}
@@ -126,4 +137,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home
+export default Home;
