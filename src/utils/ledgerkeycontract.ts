@@ -17,7 +17,7 @@ export interface EscrowValue {
 interface EscrowMapEntry {
   key: EscrowKey;
   val: EscrowValue;
-  map?: EscrowMapEntry[]; 
+  map?: EscrowMapEntry[];
 }
 
 export type EscrowMap = EscrowMapEntry[];
@@ -31,8 +31,6 @@ export async function getLedgerKeyContractCode(
   contractId: string
 ): Promise<EscrowMap> {
   try {
-    console.log(`Fetching ledger data for contract ID: ${contractId}`);
-
     const ledgerKey = new Contract(contractId).getFootprint();
     const keyBase64 = ledgerKey.toXDR("base64");
 
@@ -59,7 +57,6 @@ export async function getLedgerKeyContractCode(
     }
 
     const json = await res.json();
-    console.log("Full JSON response:", JSON.stringify(json, null, 2));
 
     if (json.error) {
       throw new Error(json.error.message || "Failed to fetch ledger entries");
@@ -80,8 +77,6 @@ export async function getLedgerKeyContractCode(
       throw new Error("No storage data found or storage is not an array");
     }
 
-    console.log("Storage:", JSON.stringify(storage, null, 2));
-
     // Find the escrow entry
     const escrowEntry = storage.find(
       (s: StorageEntry) => s.key?.vec && s.key.vec[0]?.symbol === "Escrow"
@@ -91,18 +86,13 @@ export async function getLedgerKeyContractCode(
       throw new Error("Escrow data not found in the contract storage");
     }
 
-    console.log("Escrow Entry:", JSON.stringify(escrowEntry, null, 2));
-
     if (!escrowEntry.val || typeof escrowEntry.val !== "object") {
       throw new Error("Escrow value is missing or not a valid object");
     }
 
     if (!escrowEntry.val.map || !Array.isArray(escrowEntry.val.map)) {
-      console.warn("Escrow value map is not an array:", escrowEntry.val.map);
       return [];
     }
-
-    console.log("Escrow Map:", JSON.stringify(escrowEntry.val.map, null, 2));
 
     return escrowEntry.val.map as EscrowMap;
   } catch (error) {
