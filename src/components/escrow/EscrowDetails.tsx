@@ -22,6 +22,10 @@ import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
 import { ErrorDisplay } from "@/components/escrow/error-display";
 import { EscrowContent } from "@/components/escrow/escrow-content";
+// New Imports for transaction history feature
+import { fetchTransactions, fetchTransactionDetails } from "@/lib/transactionFetcher";
+import TransactionTable from "@/components/escrow/TransactionTable";
+import TransactionDetailModal from "@/components/escrow/TransactionDetailModal";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -39,6 +43,10 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
+  // === New State for Transaction History ===
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   // Check if viewport is mobile
   useEffect(() => {
@@ -66,6 +74,22 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
       try {
         const data = await getLedgerKeyContractCode(id);
         setEscrowData(data);
+
+        // === Fetch Transaction History ===
+        const txs = await fetchTransactions(id);
+        if (
+          txs &&
+          typeof txs === "object" &&
+          "error" in txs &&
+          (txs as { error: true }).error
+        ) {
+          setHistoryError("Recent transaction history unavailable (RPC retention).");
+          setTransactions([]);
+        } else {
+          setTransactions(txs as any[]);
+          setHistoryError(null);
+        }
+
         // Only navigate if the ID differs from the current URL
         if (id !== initialEscrowId) {
           router.push(`/${id}`);
@@ -158,6 +182,33 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
             organized={organized}
             isMobile={isMobile}
           />
+
+          {/* === Transaction History Section === */}
+          {escrowData && !loading && (
+            <div className="mt-10">
+              <h2 className="text-xl font-semibold mb-2">Recent Transactions</h2>
+
+              {/* Show fallback message if retention limit hit */}
+              {historyError ? (
+                <p className="text-red-500">{historyError}</p>
+              ) : (
+                <TransactionTable
+                  transactions={transactions}
+                  onRowClick={(hash: string) => setSelectedTxHash(hash)}
+                />
+              )}
+            </div>
+          )}
+
+          {/* === Transaction Detail Modal === */}
+          {selectedTxHash && (
+            <TransactionDetailModal
+              txHash={selectedTxHash}
+              onClose={() => setSelectedTxHash(null)}
+            />
+          )}
+
+
         </main>
       </div>
     </TooltipProvider>
