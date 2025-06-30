@@ -23,7 +23,7 @@ import { SearchCard } from "@/components/escrow/search-card";
 import { ErrorDisplay } from "@/components/escrow/error-display";
 import { EscrowContent } from "@/components/escrow/escrow-content";
 // New Imports for transaction history feature
-import { fetchTransactions, fetchTransactionDetails } from "@/lib/transactionFetcher";
+import { fetchTransactions } from "@/lib/transactionFetcher";
 import TransactionTable from "@/components/escrow/TransactionTable";
 import TransactionDetailModal from "@/components/escrow/TransactionDetailModal";
 

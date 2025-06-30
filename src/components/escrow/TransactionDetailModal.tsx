@@ -8,7 +8,7 @@ interface TransactionDetailModalProps {
 }
 
 const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({ txHash, onClose }) => {
-  const [details, setDetails] = useState(null);
+  const [details, setDetails] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     fetchTransactionDetails(txHash).then(setDetails);

@@ -10,10 +10,10 @@ const SOROBAN_RPC_URL = "https://rpc-futurenet.stellar.org";
 
 // Type definition for the simplified transaction metadata
 interface TransactionMeta {
-  txHash: string;
-  ledger: number;
-  createdAt: string;
-  status: string; // e.g. "Success", "Failed", etc.
+    txHash: string;
+    ledger: number;
+    createdAt: string;
+    status: string; // e.g. "Success", "Failed", etc.
 }
 
 /**
@@ -25,75 +25,81 @@ interface TransactionMeta {
  * @param options Optional: pagination cursor
  */
 export async function fetchTransactions(
-  contractId: string,
-  options?: { cursor?: string }
+    contractId: string,
+    options?: { cursor?: string }
 ): Promise<TransactionMeta[] | { error: true; message: string }> {
-  try {
-    const res = await fetch(SOROBAN_RPC_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "getTransactions",
-        params: {
-          contractId,
-          ...(options?.cursor && { cursor: options.cursor }),
-        },
-      }),
-    });
+    try {
+        const res = await fetch(SOROBAN_RPC_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "getTransactions",
+                params: {
+                    contractId,
+                    ...(options?.cursor && { cursor: options.cursor }),
+                },
+            }),
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    // If no transactions found or error thrown
-    if (!data.result || !data.result.transactions) {
-      throw new Error("No recent transactions available.");
+        // If no transactions found or error thrown
+        if (!data.result || !data.result.transactions) {
+            throw new Error("No recent transactions available.");
+        }
+
+        // Map response into simplified form for UI
+        return data.result.transactions.map((tx: {
+            hash: string;
+            ledger: number;
+            created_at: string;
+            status: string;
+        }) => ({
+            txHash: tx.hash,
+            ledger: tx.ledger,
+            createdAt: tx.created_at,
+            status: tx.status, // success/failure status string
+        }));
+    } catch (err) {
+        console.error("Error fetching recent transactions:", err);
+        return { error: true, message: "Transaction history unavailable or too old." };
     }
-
-    // Map response into simplified form for UI
-    return data.result.transactions.map((tx: any) => ({
-      txHash: tx.hash,
-      ledger: tx.ledger,
-      createdAt: tx.created_at,
-      status: tx.status, // success/failure status string
-    }));
-  } catch (err) {
-    console.error("Error fetching recent transactions:", err);
-    return { error: true, message: "Transaction history unavailable or too old." };
-  }
 }
 
 /**
  * Fetch detailed transaction info using `getTransaction` for a given hash.
- * Includes XDR and signer data if available.
- * Supports xdrFormat: "json" for simpler parsing.
- *
+// You may want to define a more specific type for transaction details if available
+export async function fetchTransactionDetails(
+  txHash: string
+): Promise<Record<string, unknown>> {
  * @param txHash The transaction hash to look up
  */
 export async function fetchTransactionDetails(
-  txHash: string
-): Promise<any> {
-  try {
-    const res = await fetch(SOROBAN_RPC_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 2,
-        method: "getTransaction",
-        params: {
-          hash: txHash,
-          xdrFormat: "json", // requested format for easier decoding
-        },
-      }),
-    });
+    txHash: string
+): Promise<Record<string, unknown>> {
+    try {
+        const res = await fetch(SOROBAN_RPC_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 2,
+                method: "getTransaction",
+                params: {
+                    hash: txHash,
+                    xdrFormat: "json", // requested format for easier decoding
+                },
+            }),
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!data.result) throw new Error("No transaction detail found");
-    return data.result;
-  } catch (err) {
-    console.error("Error fetching transaction details:", err);
-    return { error: true, message: "Transaction details not found or unavailable." };
-  }
+        if (!data.result) throw new Error("No transaction detail found");
+        return data.result;
+    } catch (err) {
+        console.error("Error fetching transaction details:", err);
+        return { error: true, message: "Transaction details not found or unavailable." };
+    }
 }
