@@ -49,6 +49,8 @@ export const FIELD_TOOLTIPS: { [key: string]: string } = {
 	title: "Title of the escrow contract.",
 	description: "Description of the escrow purpose.",
 	trustline: "Stellar asset that is used for the escrow.",
+	transaction_history: "Recent transaction history fetched from Soroban RPC. Note: RPC typically retains 24h-7 days of history.",
+	transaction_retention: "RPC history retention limits (~24h default, up to 7 days). For older data, recommend full indexers (e.g. Hubble/BigQuery).",
 };
 
 //? Role icons with colors
