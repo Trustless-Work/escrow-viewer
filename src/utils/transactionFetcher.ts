@@ -38,7 +38,7 @@ export interface TransactionResponse {
   retentionNotice?: string;
 }
 
-const SOROBAN_RPC_URL = "https://soroban-testnet.stellar.org";
+const SOROBAN_RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
 
 /**
  * Fetches recent transactions for a contract using Soroban JSON-RPC
@@ -239,7 +239,8 @@ export function formatTransactionTime(createdAt: string): string {
       second: '2-digit'
     }).format(date);
   } catch (error) {
-    return error instanceof Error ? error.message : "Invalid date";
+    console.warn("Failed to format transaction time:", error);
+    return "Invalid date";
   }
 }
 

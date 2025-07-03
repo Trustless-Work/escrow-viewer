@@ -64,27 +64,33 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
     }
   }, [txHash]);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
+  const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    // Optional: Show success toast using sonner
+  } catch (err) {
+    console.error('Failed to copy to clipboard:', err);
+    // Optional: Show error toast
+  }
+};
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-        case "SUCCESS":
-            return <CheckCircle className="h-4 w-4 text-green-600" />;
-            case "FAILED":
+      case "SUCCESS":
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "FAILED":
         return <AlertCircle className="h-4 w-4 text-red-600" />;
       default:
         return <Clock className="h-4 w-4 text-gray-600" />;
     }
-};
+  };
 
-const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
-        case "SUCCESS":
-            return "bg-green-100 text-green-800 border-green-200";
-            case "FAILED":
-                return "bg-red-100 text-red-800 border-red-200";
+      case "SUCCESS":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "FAILED":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -151,7 +157,7 @@ const getStatusBadgeColor = (status: string) => {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => copyToClipboard(details.txHash)}
+                        onClick={() => window.open(`https://stellar.expert/explorer/${process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'testnet'}/tx/${details.txHash}`, "_blank")}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
