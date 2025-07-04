@@ -13,6 +13,20 @@ interface TabViewProps {
   organized: OrganizedEscrowData
 }
 
+export interface Milestone {
+  title: string;
+  description: string;
+  status: string;
+  approved: boolean;
+  amount?: string;
+  release_flag?: boolean;
+  dispute_flag?: boolean;
+  resolved_flag?: boolean;
+  signer?: string;
+  approver?: string;
+  [key: string]: unknown;
+}
+
 export const TabView = ({ organized }: TabViewProps) => {
   return (
     <div className="block md:hidden mb-6">
@@ -138,7 +152,7 @@ export const TabView = ({ organized }: TabViewProps) => {
                 <div className="space-y-4">
                   {organized.milestones.map(
                     (
-                      milestone: any,
+                      milestone: Milestone,
                       index: number
                     ) => (
                       <MilestoneCard
