@@ -133,10 +133,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
         <main className="container mx-auto px-4 py-6 md:py-10">
           {/* Header Section */}
-          <div className="flex justify-between items-center mb-6">
-            <Header />
-            <NetworkToggle />
-          </div>
+          <Header />
 
           {/* Logo display (only on initial screen) */}
           {!escrowData && !loading && !error && (
