@@ -1,4 +1,5 @@
 import { Contract } from "@stellar/stellar-sdk";
+import { NetworkType, getNetworkConfig } from "@/lib/network-config";
 
 // Define types for the escrow data map
 interface EscrowKey {
@@ -28,7 +29,8 @@ interface StorageEntry {
 }
 
 export async function getLedgerKeyContractCode(
-  contractId: string
+  contractId: string,
+  network: NetworkType = 'testnet'
 ): Promise<EscrowMap> {
   try {
     const ledgerKey = new Contract(contractId).getFootprint();
@@ -44,7 +46,8 @@ export async function getLedgerKeyContractCode(
       },
     };
 
-    const res = await fetch("https://soroban-testnet.stellar.org", {
+    const networkConfig = getNetworkConfig(network);
+    const res = await fetch(networkConfig.rpcUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
