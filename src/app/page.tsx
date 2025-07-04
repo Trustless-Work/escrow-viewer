@@ -6,9 +6,11 @@ import { motion } from "framer-motion";
 import { NavbarSimple } from "@/components/Navbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingLogo } from "@/components/shared/loading-logo";
-import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants";
+import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import type { NextPage } from "next";
 import { useRouter } from "next/navigation";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { NetworkToggle } from "@/components/shared/network-toggle";
 
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
@@ -18,6 +20,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
   const router = useRouter();
+  const { currentNetwork } = useNetwork();
   const [contractId, setContractId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -56,7 +59,7 @@ const Home: NextPage = () => {
 
   // Use example contract ID
   const handleUseExample = () => {
-    setContractId(EXAMPLE_CONTRACT_ID);
+    setContractId(EXAMPLE_CONTRACT_IDS[currentNetwork]);
   };
 
   return (

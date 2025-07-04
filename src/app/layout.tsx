@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from 'react'
+import { NetworkProvider } from "@/contexts/NetworkContext";
 
 
 const geistSans = Geist({
@@ -38,7 +39,9 @@ export default function RootLayout({
         {...customBodyProps}
       >
         <Suspense fallback={<div>Loading...</div>}>
-          {children}
+          <NetworkProvider>
+            {children}
+          </NetworkProvider>
         </Suspense>
       </body>
     </html>

@@ -13,6 +13,20 @@ interface TabViewProps {
   organized: OrganizedEscrowData
 }
 
+export interface Milestone {
+  title: string;
+  description: string;
+  status: string;
+  approved: boolean;
+  amount?: string;
+  release_flag?: boolean;
+  dispute_flag?: boolean;
+  resolved_flag?: boolean;
+  signer?: string;
+  approver?: string;
+  [key: string]: unknown;
+}
+
 export const TabView = ({ organized }: TabViewProps) => {
   return (
     <div className="block md:hidden mb-6">
@@ -138,16 +152,10 @@ export const TabView = ({ organized }: TabViewProps) => {
                 <div className="space-y-4">
                   {organized.milestones.map(
                     (
-                      milestone: {
-                        title: string;
-                        description: string;
-                        status: string;
-                        approved: boolean;
-                      },
+                      milestone: Milestone,
                       index: number
                     ) => (
                       <MilestoneCard
-                        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                         key={index}
                         index={index}
                         title={milestone.title}
@@ -155,6 +163,12 @@ export const TabView = ({ organized }: TabViewProps) => {
                         status={milestone.status}
                         approved={milestone.approved}
                         tooltips={FIELD_TOOLTIPS}
+                        amount={milestone.amount}
+                        release_flag={milestone.release_flag}
+                        dispute_flag={milestone.dispute_flag}
+                        resolved_flag={milestone.resolved_flag}
+                        signer={milestone.signer}
+                        approver={milestone.approver}
                       />
                     )
                   )}
