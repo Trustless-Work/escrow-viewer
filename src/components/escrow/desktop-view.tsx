@@ -89,12 +89,7 @@ export const DesktopView = ({ organized }: DesktopViewProps) => {
             <div className="grid md:grid-cols-2 gap-4">
               {organized.milestones.map(
                 (
-                  milestone: {
-                    title: string;
-                    description: string;
-                    status: string;
-                    approved: boolean;
-                  },
+                  milestone: any,
                   index: number
                 ) => (
                   <motion.div
@@ -109,6 +104,12 @@ export const DesktopView = ({ organized }: DesktopViewProps) => {
                       approved={milestone.approved}
                       tooltips={FIELD_TOOLTIPS}
                       index={index}
+                      amount={milestone.amount}
+                      release_flag={milestone.release_flag}
+                      dispute_flag={milestone.dispute_flag}
+                      resolved_flag={milestone.resolved_flag}
+                      signer={milestone.signer}
+                      approver={milestone.approver}
                     />
                   </motion.div>
                 )
