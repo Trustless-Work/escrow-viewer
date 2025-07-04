@@ -15,8 +15,10 @@ import {
   organizeEscrowData,
   type OrganizedEscrowData,
 } from "@/utils/escrow-helpers";
-import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants";
+import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import { useRouter } from "next/navigation";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { NetworkToggle } from "@/components/shared/network-toggle";
 
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
@@ -33,6 +35,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   initialEscrowId,
 }) => {
   const router = useRouter();
+  const { currentNetwork } = useNetwork();
   const [contractId, setContractId] = useState<string>(initialEscrowId);
   const [escrowData, setEscrowData] = useState<EscrowMap | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -64,7 +67,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const data = await getLedgerKeyContractCode(id);
+        const data = await getLedgerKeyContractCode(id, currentNetwork);
         setEscrowData(data);
         // Only navigate if the ID differs from the current URL
         if (id !== initialEscrowId) {
@@ -77,7 +80,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
         setLoading(false);
       }
     },
-    [router, initialEscrowId]
+    [router, initialEscrowId, currentNetwork]
   );
 
   // Fetch initial escrow data
@@ -86,6 +89,13 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
       fetchEscrowData(initialEscrowId);
     }
   }, [initialEscrowId, fetchEscrowData]);
+
+  // Refetch data when network changes
+  useEffect(() => {
+    if (initialEscrowId) {
+      fetchEscrowData(initialEscrowId);
+    }
+  }, [currentNetwork, fetchEscrowData]);
 
   // Handle enter key press
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -96,7 +106,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
   // Use example contract ID
   const handleUseExample = () => {
-    setContractId(EXAMPLE_CONTRACT_ID);
+    setContractId(EXAMPLE_CONTRACT_IDS[currentNetwork]);
   };
 
   // Handle fetch button click
@@ -123,7 +133,10 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
         <main className="container mx-auto px-4 py-6 md:py-10">
           {/* Header Section */}
-          <Header />
+          <div className="flex justify-between items-center mb-6">
+            <Header />
+            <NetworkToggle />
+          </div>
 
           {/* Logo display (only on initial screen) */}
           {!escrowData && !loading && !error && (

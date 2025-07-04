@@ -78,5 +78,10 @@ export const calculateProgress = (milestones: any[]): number => {
 	return (completed / milestones.length) * 100;
 };
 
-//? Example contract ID for UI placeholders
-export const EXAMPLE_CONTRACT_ID = "CAX5I6OZW27RQ5VNF3K6TBKNXCLXXQL54HJXSZFLSKYAOVLZYCLXRXLF";
+//? Example contract IDs for UI placeholders
+export const EXAMPLE_CONTRACT_IDS = {
+  testnet: "CAX5I6OZW27RQ5VNF3K6TBKNXCLXXQL54HJXSZFLSKYAOVLZYCLXRXLF",
+  mainnet: "CANVLF5SPV7LF6YOA2PFFPJQAFEUXEEE7SLKXRHUAMAN65EXFHBDLARP"
+};
+
+export const EXAMPLE_CONTRACT_ID = EXAMPLE_CONTRACT_IDS.testnet;
