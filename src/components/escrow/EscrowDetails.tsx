@@ -15,8 +15,9 @@ import {
   organizeEscrowData,
   type OrganizedEscrowData,
 } from "@/utils/escrow-helpers";
-import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants";
+import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import { useRouter } from "next/navigation";
+import { useNetwork } from "@/contexts/NetworkContext";
 
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
@@ -40,6 +41,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   initialEscrowId,
 }) => {
   const router = useRouter();
+  const { currentNetwork } = useNetwork();
   const [contractId, setContractId] = useState<string>(initialEscrowId);
   const [escrowData, setEscrowData] = useState<EscrowMap | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -107,7 +109,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const data = await getLedgerKeyContractCode(id);
+        const data = await getLedgerKeyContractCode(id, currentNetwork);
         setEscrowData(data);
         // Only navigate if the ID differs from the current URL
         if (id !== initialEscrowId) {
@@ -123,6 +125,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
         setLoading(false);
       }
     },
+
     [router, initialEscrowId, fetchTransactionData]
   );
 
@@ -133,6 +136,13 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     }
   }, [initialEscrowId, fetchEscrowData]);
 
+  // Refetch data when network changes
+  useEffect(() => {
+    if (initialEscrowId) {
+      fetchEscrowData(initialEscrowId);
+    }
+  }, [currentNetwork, fetchEscrowData]);
+
   // Handle enter key press
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -142,7 +152,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
   // Use example contract ID
   const handleUseExample = () => {
-    setContractId(EXAMPLE_CONTRACT_ID);
+    setContractId(EXAMPLE_CONTRACT_IDS[currentNetwork]);
   };
 
   // Handle fetch button click
