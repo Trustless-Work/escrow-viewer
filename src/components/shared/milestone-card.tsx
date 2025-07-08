@@ -10,6 +10,12 @@ interface MilestoneProps {
   status: string;
   approved: boolean;
   tooltips: { [key: string]: string };
+  amount?: string;
+  release_flag?: boolean;
+  dispute_flag?: boolean;
+  resolved_flag?: boolean;
+  signer?: string;
+  approver?: string;
 }
 
 export const MilestoneCard = ({
@@ -19,6 +25,12 @@ export const MilestoneCard = ({
   status,
   approved,
   tooltips,
+  amount,
+  release_flag,
+  dispute_flag,
+  resolved_flag,
+  signer,
+  approver,
 }: MilestoneProps) => {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -56,6 +68,31 @@ export const MilestoneCard = ({
               />
             </div>
             <p className="text-gray-800 text-base">{description}</p>
+            {amount && (
+              <div className="flex items-center gap-2 text-sm mt-2">
+                <span className="font-medium">Amount:</span>
+                <span className="text-blue-700">{amount}</span>
+              </div>
+            )}
+            {(release_flag !== undefined || dispute_flag !== undefined || resolved_flag !== undefined) && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {release_flag !== undefined && (
+                  <span className={`px-2 py-0.5 rounded text-xs ${release_flag ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>Release: {release_flag ? "Yes" : "No"}</span>
+                )}
+                {dispute_flag !== undefined && (
+                  <span className={`px-2 py-0.5 rounded text-xs ${dispute_flag ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-500"}`}>Dispute: {dispute_flag ? "Yes" : "No"}</span>
+                )}
+                {resolved_flag !== undefined && (
+                  <span className={`px-2 py-0.5 rounded text-xs ${resolved_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>Resolved: {resolved_flag ? "Yes" : "No"}</span>
+                )}
+              </div>
+            )}
+            {(signer || approver) && (
+              <div className="flex flex-col gap-1 mt-2 text-xs text-gray-700">
+                {signer && <span><span className="font-medium">Signer:</span> {signer}</span>}
+                {approver && <span><span className="font-medium">Approver:</span> {approver}</span>}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

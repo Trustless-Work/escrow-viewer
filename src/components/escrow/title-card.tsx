@@ -9,17 +9,20 @@ import {
 } from "@/components/ui/card"
 import { ProgressBar } from "@/components/shared/progress-bar"
 import { cardVariants } from "@/utils/animations/animation-variants"
+import type { EscrowType } from "@/utils/escrow-helpers"
 
 interface TitleCardProps {
   title: string;
   description: string;
   progress: number;
+  escrowType?: EscrowType;
 }
 
 export const TitleCard = ({ 
   title, 
   description, 
-  progress 
+  progress, 
+  escrowType 
 }: TitleCardProps) => {
   return (
     <motion.div variants={cardVariants}>
@@ -30,8 +33,20 @@ export const TitleCard = ({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div className="flex items-center gap-3">
               <DollarSign className="text-blue-500 h-6 w-6" />
-              <CardTitle className="text-xl sm:text-2xl text-blue-600 font-bold">
+              <CardTitle className="text-xl sm:text-2xl text-blue-600 font-bold flex items-center gap-2">
                 {title}
+                {escrowType && (
+                  <Badge
+                    variant={escrowType === "multi-release" ? "default" : "secondary"}
+                    className={
+                      escrowType === "multi-release"
+                        ? "bg-blue-100 text-blue-700 border-blue-200"
+                        : "bg-green-100 text-green-700 border-green-200"
+                    }
+                  >
+                    {escrowType === "multi-release" ? "Multi-Release" : "Single-Release"}
+                  </Badge>
+                )}
               </CardTitle>
             </div>
             <Badge

@@ -13,6 +13,20 @@ interface DesktopViewProps {
   organized: OrganizedEscrowData;
 }
 
+export interface Milestone {
+  title: string;
+  description: string;
+  status: string;
+  approved: boolean;
+  amount?: string;
+  release_flag?: boolean;
+  dispute_flag?: boolean;
+  resolved_flag?: boolean;
+  signer?: string;
+  approver?: string;
+  [key: string]: unknown;
+}
+
 export const DesktopView = ({ organized }: DesktopViewProps) => {
   return (
     <div className="hidden md:block space-y-6">
@@ -89,12 +103,7 @@ export const DesktopView = ({ organized }: DesktopViewProps) => {
             <div className="grid md:grid-cols-2 gap-4">
               {organized.milestones.map(
                 (
-                  milestone: {
-                    title: string;
-                    description: string;
-                    status: string;
-                    approved: boolean;
-                  },
+                  milestone: Milestone,
                   index: number
                 ) => (
                   <motion.div
@@ -109,6 +118,12 @@ export const DesktopView = ({ organized }: DesktopViewProps) => {
                       approved={milestone.approved}
                       tooltips={FIELD_TOOLTIPS}
                       index={index}
+                      amount={milestone.amount}
+                      release_flag={milestone.release_flag}
+                      dispute_flag={milestone.dispute_flag}
+                      resolved_flag={milestone.resolved_flag}
+                      signer={milestone.signer}
+                      approver={milestone.approver}
                     />
                   </motion.div>
                 )

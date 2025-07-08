@@ -19,15 +19,24 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
   const [currentNetwork, setCurrentNetwork] = useState<NetworkType>(getDefaultNetwork());
 
   useEffect(() => {
-    const savedNetwork = localStorage.getItem('escrow-viewer-network') as NetworkType;
-    if (savedNetwork && (savedNetwork === 'testnet' || savedNetwork === 'mainnet')) {
-      setCurrentNetwork(savedNetwork);
+    try {
+      const savedNetwork = localStorage.getItem('escrow-viewer-network') as NetworkType;
+      if (savedNetwork && (savedNetwork === 'testnet' || savedNetwork === 'mainnet')) {
+        setCurrentNetwork(savedNetwork);
+      }
+    } catch (error) {
+      console.warn('Failed to access localStorage:', error);
+  
     }
   }, []);
 
   const setNetwork = (network: NetworkType) => {
     setCurrentNetwork(network);
-    localStorage.setItem('escrow-viewer-network', network);
+    try {
+      localStorage.setItem('escrow-viewer-network', network);
+    } catch (error) {
+      console.warn('Failed to save network preference:', error);
+    }
   };
 
   const toggleNetwork = () => {
