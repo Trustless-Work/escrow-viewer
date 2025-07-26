@@ -71,6 +71,8 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     };
   }, []);
 
+  
+
   // Fetch transaction data
   const fetchTransactionData = useCallback(
     async (id: string, cursor?: string) => {
