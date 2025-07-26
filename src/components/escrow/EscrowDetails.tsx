@@ -128,7 +128,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
       }
     },
 
-    [router, initialEscrowId, fetchTransactionData]
+    [router, initialEscrowId, fetchTransactionData, currentNetwork]
   );
 
   // Fetch initial escrow data
@@ -136,7 +136,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     if (initialEscrowId) {
       fetchEscrowData(initialEscrowId);
     }
-  }, [initialEscrowId, fetchEscrowData]);
+  }, [initialEscrowId, fetchEscrowData, initialEscrowId]);
 
   // Refetch data when network changes
   useEffect(() => {
