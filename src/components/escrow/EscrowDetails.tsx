@@ -136,6 +136,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     }
   }, [initialEscrowId, fetchEscrowData]);
 
+  
   // Refetch data when network changes
   useEffect(() => {
     if (initialEscrowId) {
@@ -182,12 +183,17 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     }
   };
 
+  console.log("🔑 Keys in EscrowMap:", escrowData?.map(entry => entry.key.symbol));
+
   // Organize data for display
   const organized: OrganizedEscrowData | null = organizeEscrowData(
     escrowData,
     contractId,
     isMobile
   );
+
+console.log("✅ Raw Escrow Data:", escrowData);
+console.log("📦 Organized Escrow Data:", organized);
 
   return (
     <TooltipProvider>

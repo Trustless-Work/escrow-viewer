@@ -10,8 +10,6 @@ import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import type { NextPage } from "next";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { NetworkToggle } from "@/components/shared/network-toggle";
-
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
 import { ErrorDisplay } from "@/components/escrow/error-display";

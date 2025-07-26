@@ -7,12 +7,13 @@ interface EscrowKey {
 }
 
 export interface EscrowValue {
-  i128?: { hi: number; lo: number };
+  i128?: { hi: number; lo: number } | string;
   string?: string;
   address?: string;
   bool?: boolean;
-  vec?: EscrowMapEntry[]; // For nested structures like milestones
-  map?: EscrowMapEntry[]; // Ensure map is an array
+  u32?: number; // ✅ Add this line
+  vec?: EscrowMapEntry[];
+  map?: EscrowMapEntry[];
 }
 
 interface EscrowMapEntry {
