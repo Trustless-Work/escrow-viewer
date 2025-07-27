@@ -1,4 +1,3 @@
-import type { JSX } from "react";
 import { truncateAddress, calculateProgress } from "../lib/escrow-constants";
 import type { EscrowMap, EscrowValue } from "@/utils/ledgerkeycontract";
 
