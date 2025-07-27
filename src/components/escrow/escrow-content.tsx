@@ -7,6 +7,8 @@ import { TabView } from "@/components/escrow/tab-view"
 import { DesktopView } from "@/components/escrow/desktop-view"
 import { WelcomeState } from "@/components/escrow/welcome-state"
 import error from "next/error"
+import { useNetwork } from "@/contexts/NetworkContext"; // Add this line
+
 
 interface EscrowContentProps {
 	loading: boolean;
@@ -19,6 +21,8 @@ export const EscrowContent = ({
 	organized,
 	isMobile,
 }: EscrowContentProps) => {
+	const { currentNetwork } = useNetwork(); // Get network from context
+
 	return (
 		<div className="flex flex-col items-center">
 			{/* Loading state */}
@@ -57,10 +61,10 @@ export const EscrowContent = ({
 						/>
 
 						{/* Mobile view: Use tabs for compact display */}
-						{isMobile && <TabView organized={organized} />}
+						{isMobile && <TabView organized={organized} network={currentNetwork}/>}
 
 						{/* Desktop view: Show all sections at once */}
-						{!isMobile && <DesktopView organized={organized} />}
+						{!isMobile && <DesktopView organized={organized} network={currentNetwork}/>}
 					</motion.div>
 				)}
 			</AnimatePresence>

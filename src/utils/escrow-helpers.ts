@@ -1,32 +1,75 @@
+import type { JSX } from "react";
 import { truncateAddress, calculateProgress } from "../lib/escrow-constants";
 import type { EscrowMap, EscrowValue } from "@/utils/ledgerkeycontract";
 
-export type EscrowType = "single-release" | "multi-release";
-export type EscrowExtractedValue = string;
+/**
+ * Trustless Work - Escrow Data Helpers
+ * 
+ * This module transforms low-level `EscrowMap` data retrieved from the Soroban smart contract
+ * into a structured and typed format usable by the frontend UI.
+ * It handles parsing roles, milestones, flags, amounts, and metadata.
+ */
 
+// ----- Types -----
+
+export type EscrowType = "single-release" | "multi-release";
+
+// Values extracted from on-chain that could be a string or a link object
+export type EscrowExtractedValue = string | { label: string; url: string };
+
+// Human-friendly milestone object
+export interface ParsedMilestone {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  approved: boolean;
+  amount?: string;
+  release_flag?: boolean;
+  dispute_flag?: boolean;
+  resolved_flag?: boolean;
+  signer?: string;
+  approver?: string;
+}
+
+// Structured contract output
+export interface OrganizedEscrowData {
+  title: string;
+  description: string;
+  properties: Record<string, string>;
+  roles: Record<string, string>;
+  flags: {
+    dispute_flag: string;
+    release_flag: string;
+    resolved_flag: string;
+  };
+  milestones: ParsedMilestone[];
+  progress: number;
+  escrowType: EscrowType;
+}
+
+// ----- Main Helpers -----
+
+/**
+ * Determine escrow type based on milestone flags or amounts
+ */
 export function detectEscrowType(data: EscrowMap | null): EscrowType {
   if (!data) return "single-release";
+
   const milestonesEntry = data.find((entry) => entry.key.symbol === "milestones");
   if (!milestonesEntry?.val?.vec) return "single-release";
 
-  const milestones = milestonesEntry.val.vec;
-  if (
-    milestones.some(
-      (m) =>
-        m.map &&
-        Array.isArray(m.map) &&
-        m.map.some(
-          (e) =>
-            e.key.symbol === "amount" ||
-            (typeof e.key.symbol === "string" && e.key.symbol.endsWith("flag"))
-        )
+  return milestonesEntry.val.vec.some((m) =>
+    m.map?.some((e) =>
+      e.key.symbol === "amount" ||
+      (typeof e.key.symbol === "string" && e.key.symbol.endsWith("flag"))
     )
-  ) {
-    return "multi-release";
-  }
-  return "single-release";
+  ) ? "multi-release" : "single-release";
 }
 
+/**
+ * Extract a human-readable value from a contract key.
+ */
 export const extractValue = (
   data: EscrowMap | null,
   key: string,
@@ -46,60 +89,44 @@ export const extractValue = (
   if (typeof val.address === "string")
     return isAddress ? truncateAddress(val.address, isMobile) : val.address;
 
-  if (val.map && key === "trustline") {
-    const address = val.map.find((e) => e.key.symbol === "address")?.val?.address;
-    if (typeof address === "string") {
-      return truncateAddress(address, isMobile);
-    }
-    return "N/A";
+  // Special trustline case → we return a label + URL object
+if (val.map && key === "trustline") {
+  const address = val.map.find((e) => e.key.symbol === "address")?.val?.address;
+  if (typeof address === "string") {
+    // ✅ Return just the address string
+    return address;
+  }
+  return "N/A";
+}
+
+
+  // Handle amounts stored as i128
+if (typeof val.i128 === "string") {
+  const stroops = BigInt(val.i128);
+  if (key === "platform_fee") return `${(Number(stroops) / 100).toFixed(2)}%`;
+
+  let divisor = 1;
+  const trustlineEntry = data.find((e) => e.key.symbol === "trustline");
+  const decimalsEntry = trustlineEntry?.val?.map?.find((m) => m.key.symbol === "decimals");
+  const decimals =
+    typeof decimalsEntry?.val === "object" && "u32" in decimalsEntry.val
+      ? decimalsEntry.val.u32
+      : undefined;
+
+  if (typeof decimals === "number" && decimals > 0) {
+    divisor = decimals;
   }
 
-  if (
-    val.i128 &&
-    typeof val.i128.lo === "number" &&
-    (typeof val.i128.hi === "number" || typeof val.i128.hi === "undefined")
-  ) {
-    const lo = BigInt(val.i128.lo);
-    const hi = val.i128.hi ? BigInt(val.i128.hi) * BigInt(2 ** 32) : BigInt(0);
-    const stroops = lo + hi;
+  return (Number(stroops) / divisor).toFixed(2);
+}
 
-    if (key === "platform_fee") {
-      return `${(Number(stroops) / 100).toFixed(2)}%`;
-    }
-
-    let divisor = 1;
-    const trustlineEntry = data.find((e) => e.key.symbol === "trustline");
-    const decimalsEntry = trustlineEntry?.val?.map?.find((m) => m.key.symbol === "decimals");
-    const decimals =
-      typeof decimalsEntry?.val === "object" && "u32" in decimalsEntry.val
-        ? decimalsEntry.val.u32
-        : undefined;
-
-    if (typeof decimals === "number" && decimals > 0) {
-      divisor = decimals;
-    }
-
-    const units = Number(stroops) / divisor;
-    return units.toFixed(2);
-  }
 
   return "N/A";
 };
 
-export interface ParsedMilestone {
-  id: number;
-  title: string;
-  description: string;
-  status: string;
-  approved: boolean;
-  amount?: string;
-  release_flag?: boolean;
-  dispute_flag?: boolean;
-  resolved_flag?: boolean;
-  signer?: string;
-  approver?: string;
-}
-
+/**
+ * Transforms raw milestone entries into parsed milestone objects.
+ */
 export const extractMilestones = (
   data: EscrowMap | null,
   escrowType: EscrowType
@@ -109,19 +136,15 @@ export const extractMilestones = (
   const milestonesEntry = data.find((entry) => entry.key.symbol === "milestones");
   if (!milestonesEntry?.val?.vec) return [];
 
-  const results: ParsedMilestone[] = [];
+  return milestonesEntry.val.vec.reduce<ParsedMilestone[]>((acc, item, index) => {
+    if (!item.map) return acc;
 
-  milestonesEntry.val.vec.forEach((item, index) => {
-    if (!item.map || !Array.isArray(item.map)) return;
-
-    const milestoneMap = item.map.reduce((acc: Record<string, EscrowValue>, entry) => {
-      if (entry.key?.symbol) {
-        acc[entry.key.symbol] = entry.val;
-      }
-      return acc;
+    const milestoneMap = item.map.reduce((macc: Record<string, EscrowValue>, entry) => {
+      if (entry.key?.symbol) macc[entry.key.symbol] = entry.val;
+      return macc;
     }, {});
 
-    const base = {
+    const base: ParsedMilestone = {
       id: index,
       title: milestoneMap.title?.string || `Milestone ${index + 1}`,
       description: milestoneMap.description?.string || `Milestone ${index + 1}`,
@@ -130,31 +153,29 @@ export const extractMilestones = (
     };
 
     if (escrowType === "multi-release") {
-      results.push({
-        ...base,
-        amount: milestoneMap.amount
-          ? String(
-              extractValue(
-                [{ key: { symbol: "amount" }, val: milestoneMap.amount }],
-                "amount",
-                false
-              )
-            )
-          : undefined,
-        release_flag: milestoneMap.release_flag?.bool,
-        dispute_flag: milestoneMap.dispute_flag?.bool,
-        resolved_flag: milestoneMap.resolved_flag?.bool,
-        signer: milestoneMap.signer?.address,
-        approver: milestoneMap.approver?.address,
-      });
-    } else {
-      results.push(base);
+      return [
+        ...acc,
+        {
+          ...base,
+          amount: milestoneMap.amount
+            ? String(extractValue([{ key: { symbol: "amount" }, val: milestoneMap.amount }], "amount", false))
+            : undefined,
+          release_flag: milestoneMap.release_flag?.bool,
+          dispute_flag: milestoneMap.dispute_flag?.bool,
+          resolved_flag: milestoneMap.resolved_flag?.bool,
+          signer: milestoneMap.signer?.address,
+          approver: milestoneMap.approver?.address,
+        },
+      ];
     }
-  });
 
-  return results;
+    return [...acc, base];
+  }, []);
 };
 
+/**
+ * Extract all role-address mappings and format them.
+ */
 export const extractRoles = (
   data: EscrowMap | null,
   isMobile: boolean
@@ -172,6 +193,34 @@ export const extractRoles = (
   }, {} as Record<string, string>);
 };
 
+export const extractFlags = (data: EscrowMap | null): Record<string, string> => {
+  const flags: Record<string, string> = {
+    dispute_flag: "N/A",
+    release_flag: "N/A",
+    resolved_flag: "N/A",
+  };
+
+  if (!data) return flags;
+
+  const flagsEntry = data.find((entry) => entry.key.symbol === "flags");
+  if (!flagsEntry?.val?.map) return flags;
+
+  for (const flag of flagsEntry.val.map) {
+    const symbol = flag.key.symbol;
+    const boolVal = flag.val?.bool;
+    if (symbol === "disputed") flags.dispute_flag = boolVal ? "True" : "False";
+    if (symbol === "released") flags.release_flag = boolVal ? "True" : "False";
+    if (symbol === "resolved") flags.resolved_flag = boolVal ? "True" : "False";
+  }
+
+  return flags;
+};
+
+
+
+/**
+ * Create a fully structured object to be used in UI.
+ */
 export const organizeEscrowData = (
   escrowData: EscrowMap | null,
   contractId: string,
@@ -179,10 +228,14 @@ export const organizeEscrowData = (
 ): OrganizedEscrowData | null => {
   if (!escrowData) return null;
 
+   console.log("📦 Raw EscrowMap:", JSON.stringify(escrowData, null, 2));
+
   const escrowType = detectEscrowType(escrowData);
   const milestones = extractMilestones(escrowData, escrowType);
   const progress = calculateProgress(milestones);
   const roles = extractRoles(escrowData, isMobile);
+  const flags = extractFlags(escrowData);
+
 
   let totalAmount = extractValue(escrowData, "amount", isMobile);
 
@@ -193,47 +246,28 @@ export const organizeEscrowData = (
       }
       return acc;
     }, 0);
-    if (sum > 0) totalAmount = `${sum.toFixed(2)}`;
+    if (sum > 0) totalAmount = `${sum.toFixed(2)} units`;
   }
 
   return {
-    title: extractValue(escrowData, "title", isMobile),
-    description: extractValue(escrowData, "description", isMobile),
+    title: String(extractValue(escrowData, "title", isMobile)),
+    description: String(extractValue(escrowData, "description", isMobile)),
     properties: {
       escrow_id: contractId,
-      amount: totalAmount,
-      balance: extractValue(escrowData, "balance", isMobile) || totalAmount,
-      platform_fee: extractValue(escrowData, "platform_fee", isMobile),
-      engagement_id: extractValue(escrowData, "engagement_id", isMobile),
-      trustline: extractValue(escrowData, "trustline", isMobile),
+      amount: String(totalAmount),
+      balance: String(extractValue(escrowData, "balance", isMobile) || totalAmount),
+      platform_fee: String(extractValue(escrowData, "platform_fee", isMobile)),
+      engagement_id: String(extractValue(escrowData, "engagement_id", isMobile)),
+      trustline: String(extractValue(escrowData, "trustline", isMobile)),
     },
     roles,
-    flags: {
-      dispute_flag: extractValue(escrowData, "dispute_flag", isMobile),
-      release_flag: extractValue(escrowData, "release_flag", isMobile),
-      resolved_flag: extractValue(escrowData, "resolved_flag", isMobile),
-    },
+flags: {
+  dispute_flag: flags.dispute_flag,
+  release_flag: flags.release_flag,
+  resolved_flag: flags.resolved_flag,
+},
     milestones,
     progress,
     escrowType,
   };
 };
-
-export interface OrganizedEscrowData {
-  title: string;
-  description: string;
-  properties: {
-    [key: string]: string;
-  };
-  roles: {
-    [key: string]: string;
-  };
-  flags: {
-    dispute_flag: string;
-    release_flag: string;
-    resolved_flag: string;
-  };
-  milestones: ParsedMilestone[];
-  progress: number;
-  escrowType: EscrowType;
-}

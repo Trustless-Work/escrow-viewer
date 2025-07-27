@@ -8,12 +8,16 @@ import { SectionCard } from "@/components/shared/section-card";
 import { DetailRow } from "@/components/shared/detail-row";
 import { StatusPanel } from "@/components/shared/status-panel";
 import { MilestoneCard } from "@/components/shared/milestone-card";
+import { truncateAddress } from "@/lib/escrow-constants";
+
 
 interface TabViewProps {
   organized: OrganizedEscrowData;
+    network: "mainnet" | "testnet";
+
 }
 
-export const TabView = ({ organized }: TabViewProps) => {
+export const TabView = ({ organized,  network }: TabViewProps) => {
   return (
     <div className="block md:hidden mb-6">
       <Tabs defaultValue="details" className="w-full">
@@ -57,11 +61,21 @@ export const TabView = ({ organized }: TabViewProps) => {
                   <DetailRow
                     key={key}
                     label={key}
-                    value={
-                      key === "trustline"
-                        ? String(value).split(" ")[0]
-                        : value
-                    }
+value={
+  key === "trustline" && typeof value === "string" ? (
+    <a
+      href={`https://stellar.expert/explorer/${network}/account/${value}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline text-blue-600"
+    >
+ {truncateAddress(value, true)} // or `false` depending on the desired truncation style
+
+    </a>
+  ) : (
+      String(value)
+  )
+}
                     tooltip={FIELD_TOOLTIPS[key] || "No description available"}
                     canCopy={key === "escrow_id"}
                   />

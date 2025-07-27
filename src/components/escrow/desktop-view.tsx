@@ -8,12 +8,16 @@ import { DetailRow } from "@/components/shared/detail-row";
 import { StatusPanel } from "@/components/shared/status-panel";
 import { MilestoneCard } from "@/components/shared/milestone-card";
 import { RoleCard } from "@/components/shared/role-card";
+import { truncateAddress } from "@/lib/escrow-constants";
+
 
 interface DesktopViewProps {
   organized: OrganizedEscrowData;
+  network: "mainnet" | "testnet";
 }
 
-export const DesktopView = ({ organized }: DesktopViewProps) => {
+
+export const DesktopView = ({ organized, network }: DesktopViewProps) => {
   return (
     <div className="hidden md:block space-y-6">
       {/* Details and Status in a 2-column grid */}
@@ -30,11 +34,20 @@ export const DesktopView = ({ organized }: DesktopViewProps) => {
                 <DetailRow
                   key={key}
                   label={key}
-                  value={
-                    key === "trustline"
-                      ? String(value).split(" ")[0] // Remove decimals from trustline
-                      : value
-                  }
+  value={
+key === "trustline" ? (
+  <a
+    href={`https://stellar.expert/explorer/${network}/contract/${value}`}
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    {truncateAddress(String(value), false)}
+  </a>
+) : (
+  String(value)
+)
+  }
+
                   tooltip={FIELD_TOOLTIPS[key] || "No description available"}
                   canCopy={key === "escrow_id"}
                 />
