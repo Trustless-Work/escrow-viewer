@@ -69,8 +69,7 @@ value={
       rel="noopener noreferrer"
       className="underline text-blue-600"
     >
- {truncateAddress(value, true)} // or `false` depending on the desired truncation style
-
+{truncateAddress(value, true)} {/* or false depending on the desired truncation style */}
     </a>
   ) : (
       String(value)
