@@ -88,36 +88,36 @@ export const extractValue = (
   if (typeof val.address === "string")
     return isAddress ? truncateAddress(val.address, isMobile) : val.address;
 
-  // Special trustline case → we return a label + URL object
-if (val.map && key === "trustline") {
-  const address = val.map.find((e) => e.key.symbol === "address")?.val?.address;
-  if (typeof address === "string") {
-    // ✅ Return just the address string
-    return address;
-  }
-  return "N/A";
-}
 
-
-  // Handle amounts stored as i128
-if (typeof val.i128 === "string") {
-  const stroops = BigInt(val.i128);
-  if (key === "platform_fee") return `${(Number(stroops) / 100).toFixed(2)}%`;
-
-  let divisor = 1;
-  const trustlineEntry = data.find((e) => e.key.symbol === "trustline");
-  const decimalsEntry = trustlineEntry?.val?.map?.find((m) => m.key.symbol === "decimals");
-  const decimals =
-    typeof decimalsEntry?.val === "object" && "u32" in decimalsEntry.val
-      ? decimalsEntry.val.u32
-      : undefined;
-
-  if (typeof decimals === "number" && decimals > 0) {
-    divisor = decimals;
+  // show asset code, issuer, decimals
+  if (val.map && key === "trustline") {
+    const assetCode = val.map.find((e) => e.key.symbol === "asset_code")?.val?.string;
+    const issuer = val.map.find((e) => e.key.symbol === "issuer")?.val?.address;
+    const decimalsEntry = val.map.find((e) => e.key.symbol === "decimals");
+    const decimals = typeof decimalsEntry?.val === "object" && "u32" in decimalsEntry.val ? decimalsEntry.val.u32 : undefined;
+    if (assetCode && issuer) {
+      return `${assetCode} (${issuer})${typeof decimals === "number" ? `, ${decimals} decimals` : ""}`;
+    }
+    if (issuer) return issuer;
+    return "N/A";
   }
 
-  return (Number(stroops) / divisor).toFixed(2);
-}
+  // Descriptive balance extraction: format using asset decimals
+  if (typeof val.i128 === "string") {
+    const stroops = BigInt(val.i128);
+    let divisor = 1;
+    const trustlineEntry = data.find((e) => e.key.symbol === "trustline");
+    let decimals;
+    if (trustlineEntry?.val?.map) {
+      const decimalsEntry = trustlineEntry.val.map.find((m) => m.key.symbol === "decimals");
+      decimals = typeof decimalsEntry?.val === "object" && "u32" in decimalsEntry.val ? decimalsEntry.val.u32 : undefined;
+    }
+    if (typeof decimals === "number" && decimals > 0) {
+      divisor = Math.pow(10, decimals);
+    }
+    if (key === "platform_fee") return `${(Number(stroops) / 100).toFixed(2)}%`;
+    return (Number(stroops) / divisor).toFixed(typeof decimals === "number" ? decimals : 2);
+  }
 
 
   return "N/A";
