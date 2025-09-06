@@ -30,6 +30,15 @@ import {
   type TransactionMetadata,
   type TransactionResponse,
 } from "@/utils/transactionFetcher";
+import { Networks } from "@stellar/stellar-sdk";
+import {
+  fetchTokenBalance,
+  sacContractIdFromAsset,
+    fetchTokenDecimals,   // <- add this
+
+} from "@/utils/token-balance";
+import type { EscrowValue } from "@/utils/ledgerkeycontract";
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,6 +57,10 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
+  const [liveBalance, setLiveBalance] = useState<string | null>(null);
+const [balanceMismatch, setBalanceMismatch] = useState<boolean>(false);
+const [liveDecimals, setLiveDecimals] = useState<number | null>(null);
+
 
   // Transaction-related state
   const [transactions, setTransactions] = useState<TransactionMetadata[]>([]);
@@ -101,6 +114,42 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     []
   );
 
+
+function readTrustlineMeta(escrow: EscrowMap | null): {
+  code?: string;
+  issuer?: string;
+  decimals?: number;
+  tokenContractId?: string;
+} | null {
+  if (!escrow) return null;
+  const tlMap = escrow.find((e) => e.key.symbol === "trustline")?.val?.map;
+  if (!tlMap) return null;
+
+  const by = (k: string): EscrowValue | undefined =>
+    tlMap.find((m) => m.key.symbol === k)?.val;
+
+  // Support multiple shapes:
+  const code = by("code")?.string;
+  const issuer = by("issuer")?.address;
+
+  // Prefer explicit 'contract_id', but fall back to 'address' (your UI treats this as a contract)
+  const contractId =
+    by("contract_id")?.string ??
+    by("address")?.address ??     // sometimes serialized as address
+    by("address")?.string;        // or as string
+
+  let decimals: number | undefined;
+  const d = by("decimals") as any;
+  if (d && typeof d === "object" && "u32" in d) decimals = d.u32 as number;
+  if (typeof (by("decimals") as any)?.u32 === "number") {
+    decimals = (by("decimals") as any).u32 as number;
+  }
+
+  return { code, issuer, decimals, tokenContractId: contractId };
+}
+
+
+
   const fetchEscrowData = useCallback(
     async (id: string) => {
       if (!id) {
@@ -113,6 +162,59 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
       try {
         const data = await getLedgerKeyContractCode(id, currentNetwork);
         setEscrowData(data);
+        // --- Live token balance (SAC) ---
+setLiveBalance(null);
+setBalanceMismatch(false);
+setLiveDecimals(null);
+
+const tl = readTrustlineMeta(data);
+if (tl && (tl.tokenContractId || (tl.code && tl.issuer))) {
+  const passphrase =
+    currentNetwork === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
+
+  const tokenCid =
+    tl.tokenContractId ??
+    sacContractIdFromAsset(tl.code!, tl.issuer!, passphrase);
+
+  // On Soroban, the "owner" whose balance we want is the escrow contract ID (your route param)
+  const raw = await fetchTokenBalance(currentNetwork, tokenCid, id);
+
+// After: const tokenCid = tl.tokenContractId ?? sacContractIdFromAsset(...);
+let dec = typeof tl.decimals === "number" ? tl.decimals : undefined;
+
+if (dec === undefined) {
+  try {
+    // ask token for its decimals if not in escrow storage
+    dec = await fetchTokenDecimals(currentNetwork, tokenCid);
+  } catch {
+    // safe default if token doesn’t report (common is 7 on Stellar)
+    dec = 7;
+  }
+}
+  const scaled = Number(raw) / Math.pow(10, dec);
+  const scaledStr = scaled.toFixed(dec);
+
+  setLiveBalance(scaledStr);
+  setLiveDecimals(dec);
+
+  // Compare vs contract-reported "balance" (if present)
+  // NOTE: organizeEscrowData already formats; but compare using raw helper path:
+  const balanceEntry = data.find((e) => e.key.symbol === "balance")?.val;
+  let stored: number | null = null;
+  if (balanceEntry && typeof balanceEntry === "object" && "i128" in balanceEntry && balanceEntry.i128) {
+    // balance stored as i128; scale by SAME decimals
+    const hi = (balanceEntry.i128 as any).hi ?? 0;
+    const lo = (balanceEntry.i128 as any).lo ?? 0;
+    const big = (BigInt(String(hi)) * (BigInt(2) ** BigInt(64))) + BigInt(String(lo));
+    stored = Number(big) / Math.pow(10, dec);
+  }
+
+  if (stored !== null && Number.isFinite(stored)) {
+    const eps = 1 / Math.pow(10, dec);
+    setBalanceMismatch(Math.abs(stored - scaled) > eps);
+  }
+}
+
         // Only navigate if the ID differs from the current URL
         if (id !== initialEscrowId) {
           router.push(`/${id}`);
@@ -235,6 +337,35 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
             organized={organized}
             isMobile={isMobile}
           />
+{/* Live ledger balance panel */}
+{escrowData && liveBalance && (
+  <motion.div
+    className="mt-6"
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white/80 backdrop-blur-sm border border-blue-100 rounded-2xl p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />
+        <div>
+          <div className="text-sm text-gray-600">Ledger balance (from token contract)</div>
+          <div className="text-xl font-semibold text-gray-900">
+            {liveBalance}
+            {typeof liveDecimals === "number" ? <span className="ml-1 text-gray-500 text-sm"> (d={liveDecimals})</span> : null}
+          </div>
+        </div>
+      </div>
+
+      {balanceMismatch && (
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+          <span className="text-xs font-semibold">⚠️ Mismatch</span>
+          <span className="text-xs">Stored contract balance differs</span>
+        </div>
+      )}
+    </div>
+  </motion.div>
+)}
 
           {/* Transaction History Section */}
           {escrowData && (
