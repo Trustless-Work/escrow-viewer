@@ -1,111 +1,123 @@
-// src/hooks/useTokenBalance.ts
 import { useEffect, useState } from "react";
 import type { EscrowMap, EscrowValue } from "@/utils/ledgerkeycontract";
-import { fetchTokenBalance, fetchTokenDecimals, sacContractIdFromAsset } from "@/lib/token-service";
-import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
+import {
+  fetchTokenBalance,
+  fetchTokenDecimals,
+  sacContractIdFromAsset,
+} from "@/lib/token-service";
 import { Networks } from "@stellar/stellar-sdk";
+import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
 
-/** Pulls trustline metadata from the escrow storage entry. */
-function extractTrustlineMeta(escrow: EscrowMap | null): {
-  code?: string;
-  issuer?: string;
-  tokenContractId?: string;
-  decimals?: number;
-} | null {
-  if (!escrow) return null;
+// --- local helpers ---
 
-  const tl = escrow.find((e) => e.key.symbol === "trustline")?.val?.map;
-  if (!tl) return null;
-
-  const get = (k: string): EscrowValue | undefined => tl.find((m) => m.key.symbol === k)?.val;
-
-  const code = get("code")?.string;
-  const issuer = get("issuer")?.address;
-
-  // Prefer explicit contract_id, but support address/string fallback
-  const tokenContractId =
-    get("contract_id")?.string ??
-    get("address")?.address ??
-    get("address")?.string;
-
-  let decimals: number | undefined;
-  const d = get("decimals") as unknown as { u32?: number } | undefined;
-  if (d && typeof d.u32 === "number") decimals = d.u32;
-
-  return { code, issuer, tokenContractId, decimals };
+function parseI128(hi: number | string, lo: number | string): bigint {
+  const HI = BigInt(String(hi));
+  const LO = BigInt(String(lo));
+  return (HI << BigInt(64)) + LO;
+}
+function pow10(n: number) {
+  return Math.pow(10, n);
+}
+function safeDecimals(decimals?: number): number {
+  if (typeof decimals !== "number" || !Number.isFinite(decimals)) return 2;
+  if (decimals < 0) return 0;
+  if (decimals > 18) return 18;
+  return Math.floor(decimals);
+}
+function toFixedPlaces(n: number, digits: number) {
+  return n.toFixed(digits);
+}
+function scaleBigintToNumber(v: bigint, decimals: number): number {
+  return Number(v) / pow10(decimals);
 }
 
-/**
- * Reads live token balance from SAC for the escrow contract id, and
- * compares it to the stored "balance" (if present) in escrow storage.
- */
-export function useTokenBalance(contractId: string, escrow: EscrowMap | null, network: NetworkType) {
+function readTrustlineMeta(escrow: EscrowMap | null): {
+  code?: string;
+  issuer?: string;
+  decimals?: number;
+  tokenContractId?: string;
+} | null {
+  if (!escrow) return null;
+  const tlMap = escrow.find((e) => e.key.symbol === "trustline")?.val?.map;
+  if (!tlMap) return null;
+
+  const by = (k: string): EscrowValue | undefined =>
+    tlMap.find((m) => m.key.symbol === k)?.val;
+
+  const code = by("code")?.string;
+  const issuer = by("issuer")?.address;
+  const contractId =
+    by("contract_id")?.string ??
+    by("address")?.address ??
+    by("address")?.string;
+
+  let decimals: number | undefined;
+  const d = by("decimals") as any;
+  if (d && typeof d === "object" && "u32" in d) decimals = d.u32 as number;
+
+  return { code, issuer, tokenContractId: contractId, decimals };
+}
+
+export function useTokenBalance(
+  contractId: string,
+  escrow: EscrowMap | null,
+  network: NetworkType
+) {
   const [ledgerBalance, setLedgerBalance] = useState<string | null>(null);
   const [decimals, setDecimals] = useState<number | null>(null);
-  const [mismatch, setMismatch] = useState<boolean>(false);
+  const [mismatch, setMismatch] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
+    (async () => {
       setLedgerBalance(null);
       setDecimals(null);
       setMismatch(false);
 
-      const meta = extractTrustlineMeta(escrow);
+      const meta = readTrustlineMeta(escrow);
       if (!meta) return;
 
-      const passphrase =
-        getNetworkConfig(network).networkPassphrase ??
-        (network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET);
+      try {
+        const pass =
+          getNetworkConfig(network).networkPassphrase ??
+          (network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET);
 
-      const tokenCid =
-        meta.tokenContractId ??
-        (meta.code && meta.issuer ? sacContractIdFromAsset(meta.code, meta.issuer, passphrase) : undefined);
+        const tokenCid =
+          meta.tokenContractId ??
+          (meta.code && meta.issuer
+            ? sacContractIdFromAsset(meta.code, meta.issuer, pass)
+            : undefined);
 
-      if (!tokenCid) return;
+        if (!tokenCid) return;
 
-      // Resolve decimals (use on-chain decimals if escrow storage didn’t include them)
-      let dec = typeof meta.decimals === "number" ? meta.decimals : undefined;
-      if (dec === undefined) {
-        try {
-          dec = await fetchTokenDecimals(network, tokenCid);
-        } catch {
-          dec = 7; // Stellar-common default fallback
+        let dec =
+          typeof meta.decimals === "number" ? meta.decimals : undefined;
+        if (dec === undefined) {
+          dec = await fetchTokenDecimals(network, tokenCid).catch(() => 7);
         }
+        const d = safeDecimals(dec);
+
+        // Try live balance; null means the host didn’t return retval
+        const raw = await fetchTokenBalance(network, tokenCid, contractId).catch(
+          () => null
+        );
+
+        if (raw !== null) {
+          const liveNumber = scaleBigintToNumber(raw, d);
+          setLedgerBalance(toFixedPlaces(liveNumber, d));
+          setDecimals(d);
+
+          // Compare vs stored balance (only when live exists)
+          const be = escrow?.find((e) => e.key.symbol === "balance")?.val as any;
+          if (be?.i128) {
+            const big = parseI128(be.i128.hi ?? 0, be.i128.lo ?? 0);
+            const stored = Number(big) / pow10(d);
+            setMismatch(Math.abs(stored - liveNumber) > 1 / pow10(d));
+          }
+        }
+      } catch {
+        // swallow – panel will just not render
       }
-
-      // Fetch live raw balance (unscaled bigint)
-      const raw = await fetchTokenBalance(network, tokenCid, contractId);
-      const scaled = Number(raw) / Math.pow(10, dec);
-      const scaledStr = scaled.toFixed(dec);
-
-      if (!cancelled) {
-        setLedgerBalance(scaledStr);
-        setDecimals(dec);
-      }
-
-      // Compare vs stored balance (if present in escrow storage)
-      const be = escrow?.find((e) => e.key.symbol === "balance")?.val as unknown as {
-        i128?: { hi?: number | string; lo?: number | string };
-      } | undefined;
-
-      if (be?.i128) {
-        const hi = BigInt(String(be.i128.hi ?? 0));
-        const lo = BigInt(String(be.i128.lo ?? 0));
-        const storedRaw = (hi << BigInt(64)) + lo;
-        const stored = Number(storedRaw) / Math.pow(10, dec);
-        const eps = 1 / Math.pow(10, dec);
-        const isMismatch = Math.abs(stored - scaled) > eps;
-
-        if (!cancelled) setMismatch(isMismatch);
-      }
-    }
-
-    void run();
-    return () => {
-      cancelled = true;
-    };
+    })();
   }, [contractId, escrow, network]);
 
   return { ledgerBalance, decimals, mismatch };

@@ -1,7 +1,7 @@
 // src/hooks/useEscrowData.ts
 import { useCallback, useEffect, useState } from "react";
 import { getLedgerKeyContractCode, type EscrowMap } from "@/utils/ledgerkeycontract";
-import { organizeEscrowData, type OrganizedEscrowData } from "@/utils/escrow-helpers";
+import { organizeEscrowData, type OrganizedEscrowData } from "@/mappers/escrow-mapper";
 import type { NetworkType } from "@/lib/network-config";
 
 /**
