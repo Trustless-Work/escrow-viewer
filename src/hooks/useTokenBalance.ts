@@ -8,27 +8,54 @@ import {
 import { Networks } from "@stellar/stellar-sdk";
 import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
 
-// --- local helpers ---
+// ----- small helpers (typed, no `any`) -----
 
-function parseI128(hi: number | string, lo: number | string): bigint {
+function parseI128FromParts(
+  hi: number | string,
+  lo: number | string
+): bigint {
   const HI = BigInt(String(hi));
   const LO = BigInt(String(lo));
   return (HI << BigInt(64)) + LO;
 }
+
 function pow10(n: number) {
   return Math.pow(10, n);
 }
+
 function safeDecimals(decimals?: number): number {
   if (typeof decimals !== "number" || !Number.isFinite(decimals)) return 2;
   if (decimals < 0) return 0;
   if (decimals > 18) return 18;
   return Math.floor(decimals);
 }
+
 function toFixedPlaces(n: number, digits: number) {
   return n.toFixed(digits);
 }
+
 function scaleBigintToNumber(v: bigint, decimals: number): number {
   return Number(v) / pow10(decimals);
+}
+
+/** Try to read `.u32` off an EscrowValue-like object without `any` */
+function readU32(val?: EscrowValue): number | undefined {
+  const maybe = val as unknown as { u32?: unknown } | undefined;
+  if (maybe && typeof maybe.u32 === "number") return maybe.u32;
+  return undefined;
+}
+
+/** Return {hi, lo} if `val.i128` is an object with those fields, else undefined */
+function readI128Parts(
+  val?: EscrowValue
+): { hi: number | string; lo: number | string } | undefined {
+  const v = val as unknown as { i128?: unknown } | undefined;
+  if (!v || typeof v.i128 !== "object" || v.i128 === null) return undefined;
+  const i = v.i128 as Record<string, unknown>;
+  const hi = i.hi as number | string | undefined;
+  const lo = i.lo as number | string | undefined;
+  if (hi === undefined || lo === undefined) return undefined;
+  return { hi, lo };
 }
 
 function readTrustlineMeta(escrow: EscrowMap | null): {
@@ -51,9 +78,7 @@ function readTrustlineMeta(escrow: EscrowMap | null): {
     by("address")?.address ??
     by("address")?.string;
 
-  let decimals: number | undefined;
-  const d = by("decimals") as any;
-  if (d && typeof d === "object" && "u32" in d) decimals = d.u32 as number;
+  const decimals = readU32(by("decimals"));
 
   return { code, issuer, tokenContractId: contractId, decimals };
 }
@@ -96,7 +121,6 @@ export function useTokenBalance(
         }
         const d = safeDecimals(dec);
 
-        // Try live balance; null means the host didn’t return retval
         const raw = await fetchTokenBalance(network, tokenCid, contractId).catch(
           () => null
         );
@@ -106,16 +130,19 @@ export function useTokenBalance(
           setLedgerBalance(toFixedPlaces(liveNumber, d));
           setDecimals(d);
 
-          // Compare vs stored balance (only when live exists)
-          const be = escrow?.find((e) => e.key.symbol === "balance")?.val as any;
-          if (be?.i128) {
-            const big = parseI128(be.i128.hi ?? 0, be.i128.lo ?? 0);
+          // Compare vs stored balance
+          const balanceVal = escrow
+            ?.find((e) => e.key.symbol === "balance")
+            ?.val;
+          const parts = readI128Parts(balanceVal);
+          if (parts) {
+            const big = parseI128FromParts(parts.hi, parts.lo);
             const stored = Number(big) / pow10(d);
             setMismatch(Math.abs(stored - liveNumber) > 1 / pow10(d));
           }
         }
       } catch {
-        // swallow – panel will just not render
+        // swallow – panel will just not render if something fails
       }
     })();
   }, [contractId, escrow, network]);

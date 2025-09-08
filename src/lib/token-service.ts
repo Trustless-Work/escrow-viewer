@@ -1,4 +1,5 @@
 import {
+  Account,
   Address,
   Asset,
   Contract,
@@ -17,17 +18,6 @@ export function sacContractIdFromAsset(
   passphrase: string
 ) {
   return new Asset(code, issuer).contractId(passphrase);
-}
-
-/** Build a minimal fake account for simulation */
-function makeFakeAccount(accountId: string, sequence: number) {
-  return {
-    accountId: () => accountId,
-    sequenceNumber: () => String(sequence),
-    incrementSequenceNumber() {
-      /* no-op for simulate */
-    },
-  };
 }
 
 /** Recursively search an object/array for a string `retval` field */
@@ -70,7 +60,7 @@ async function simulateAndGetRetval(
 ): Promise<xdr.ScVal | null> {
   const sim = await rpcSimulate(rpcUrl, txB64);
   const retvalB64 = findRetval(sim);
-  if (!retvalB64) return null; // <- important: do NOT throw
+  if (!retvalB64) return null;
   return xdr.ScVal.fromXDR(retvalB64, "base64");
 }
 
@@ -87,12 +77,12 @@ async function callContractNoArgs(
 
   const latest = await getLatestLedger(cfg.rpcUrl);
   const source = Keypair.random();
-  const account = makeFakeAccount(source.publicKey(), latest.sequence);
+  const account = new Account(source.publicKey(), String(latest.sequence));
 
   const c = new Contract(contractId);
   const op = c.call(func);
 
-  const tx = new TransactionBuilder(account as any, {
+  const tx = new TransactionBuilder(account, {
     fee: "10000",
     networkPassphrase: passphrase,
   })
@@ -123,7 +113,7 @@ export async function fetchTokenDecimals(
 
     // Unexpected — fallback to common Stellar default
     return 7;
-  } catch (e: unknown) {
+  } catch {
     // If retval was blocked, default to 7 (common on Stellar)
     return 7;
   }
@@ -144,14 +134,14 @@ export async function fetchTokenBalance(
 
   const latest = await getLatestLedger(cfg.rpcUrl);
   const source = Keypair.random();
-  const account = makeFakeAccount(source.publicKey(), latest.sequence);
+  const account = new Account(source.publicKey(), String(latest.sequence));
 
   const c = new Contract(tokenContractId);
   const scAddr = Address.fromString(ownerAddress).toScAddress();
   const scvOwner = xdr.ScVal.scvAddress(scAddr);
   const op = c.call("balance", scvOwner);
 
-  const tx = new TransactionBuilder(account as any, {
+  const tx = new TransactionBuilder(account, {
     fee: "10000",
     networkPassphrase: passphrase,
   })
@@ -160,10 +150,9 @@ export async function fetchTokenBalance(
     .build();
 
   const scv = await simulateAndGetRetval(cfg.rpcUrl, tx.toXDR());
-  if (!scv) return null; // <- key change: no throws
+  if (!scv) return null;
 
   if (scv.switch() !== xdr.ScValType.scvI128()) {
-    // Unusual – treat as no live balance
     return null;
   }
 

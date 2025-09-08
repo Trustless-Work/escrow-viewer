@@ -1,12 +1,12 @@
+// src/mappers/escrow-mapper.ts
 import { truncateAddress, calculateProgress } from "@/lib/escrow-constants";
 import type { EscrowMap, EscrowValue } from "@/utils/ledgerkeycontract";
 
 /**
  * Escrow Data Mapper (pure)
  * - Scales i128 amounts by 10^decimals (from trustline.decimals)
- * - Accepts i128 as {hi,lo} or as a decimal-string (Soroban JSON variants)
- * - Clamps decimals to avoid toFixed runtime errors
- * - Adds display formatting (amount=0 decimals, balance=2 decimals)
+ * - Accepts i128 as {hi,lo} OR decimal string
+ * - Clamps decimals for safe toFixed
  */
 
 export type EscrowType = "single-release" | "multi-release";
@@ -37,7 +37,7 @@ export interface OrganizedEscrowData {
   escrowType: EscrowType;
 }
 
-// ----- helpers -----
+// ---- helpers (typed) ----
 
 function getDecimalsFromEscrowMap(data: EscrowMap | null): number | undefined {
   if (!data) return undefined;
@@ -57,46 +57,53 @@ function safeDecimals(decimals?: number): number {
   return Math.floor(decimals);
 }
 
-function fmtDecimals(valueStr: string, digits: number): string {
-  const n = Number(valueStr);
-  if (!Number.isFinite(n)) return valueStr;
+function formatFixed(n: number, digits: number): string {
   return n.toFixed(digits);
+}
+
+/** runtime guard for "value has i128 field" */
+function hasI128(val: unknown): val is { i128: unknown } {
+  return !!val && typeof val === "object" && "i128" in (val as Record<string, unknown>);
 }
 
 /** Accept i128 as {hi,lo} OR as a decimal string */
 function i128ToBigIntFlexible(v: EscrowValue | undefined): bigint | null {
   if (!v) return null;
-  const anyv = v as any;
 
-  // Case 1: object with hi/lo
-  if (anyv.i128 && typeof anyv.i128 === "object" && anyv.i128.hi !== undefined) {
-    const hi = BigInt(String(anyv.i128.hi ?? 0));
-    const lo = BigInt(String(anyv.i128.lo ?? 0));
-    return (hi << BigInt(64)) + lo;
+  if (hasI128(v)) {
+    const i = (v as unknown as { i128: Record<string, unknown> }).i128;
+    if (!i || typeof i !== "object") return null;
+    const hi = (i as Record<string, unknown>).hi as number | string | undefined;
+    const lo = (i as Record<string, unknown>).lo as number | string | undefined;
+    if (hi === undefined || lo === undefined) return null;
+    return (BigInt(String(hi)) << BigInt(64)) + BigInt(String(lo));
   }
 
-  // Case 2: string i128
-  if (typeof anyv.i128 === "string") {
-    // Assume this is an unscaled integer encoded as string
-    try {
-      return BigInt(anyv.i128);
-    } catch {
-      return null;
+  if ((v as unknown as { i128?: unknown }).i128 !== undefined) {
+    const asStr = (v as unknown as { i128: unknown }).i128;
+    if (typeof asStr === "string") {
+      try {
+        return BigInt(asStr);
+      } catch {
+        return null;
+      }
     }
   }
-
   return null;
 }
 
-function formatAmountFromI128(v: EscrowValue | undefined, decimals?: number) {
+function formatAmountFromI128(
+  v: EscrowValue | undefined,
+  decimals?: number
+): string {
   const big = i128ToBigIntFlexible(v);
   if (big === null) return "N/A";
   const d = safeDecimals(decimals);
   const scaled = Number(big) / Math.pow(10, d);
-  return scaled.toFixed(d);
+  return formatFixed(scaled, d);
 }
 
-// ----- main -----
+// ---- main ----
 
 export function detectEscrowType(data: EscrowMap | null): EscrowType {
   if (!data) return "single-release";
@@ -125,19 +132,18 @@ export const extractValue = (
   const val: EscrowValue = item.val;
   if (!val) return "N/A";
 
-  if (typeof (val as any).bool === "boolean")
-    return (val as any).bool ? "True" : "False";
-  if (typeof (val as any).string === "string") return (val as any).string;
-  if (typeof (val as any).address === "string")
+  if (typeof (val as { bool?: unknown }).bool === "boolean")
+    return (val as { bool: boolean }).bool ? "True" : "False";
+  if (typeof (val as { string?: unknown }).string === "string")
+    return (val as { string: string }).string;
+  if (typeof (val as { address?: unknown }).address === "string")
     return isAddress
-      ? truncateAddress((val as any).address, isMobile)
-      : (val as any).address;
+      ? truncateAddress((val as { address: string }).address, isMobile)
+      : (val as { address: string }).address;
 
-  if ((val as any).map && key === "trustline") {
-    const tm = (val as any).map as {
-      key: { symbol: string };
-      val: EscrowValue;
-    }[];
+  if ((val as { map?: unknown }).map && key === "trustline") {
+    type MapEntry = { key: { symbol: string }; val: EscrowValue };
+    const tm = (val as { map: MapEntry[] }).map;
     const address =
       tm.find((e) => e.key.symbol === "address")?.val?.address ??
       tm.find((e) => e.key.symbol === "contract_id")?.val?.string;
@@ -146,12 +152,12 @@ export const extractValue = (
   }
 
   // Handle both object and string i128
-  if ((val as any).i128 !== undefined) {
+  if ((val as { i128?: unknown }).i128 !== undefined) {
     if (key === "platform_fee") {
       const big = i128ToBigIntFlexible(val);
       if (big === null) return "N/A";
-      const percent = Number(big) / 100; // assuming basis points
-      return `${percent.toFixed(2)}%`;
+      const percent = Number(big) / 100; // assume basis points
+      return formatFixed(percent, 2) + "%";
     }
     const decimals = getDecimalsFromEscrowMap(data);
     return formatAmountFromI128(val, decimals);
@@ -186,7 +192,7 @@ export const extractMilestones = (
       title: milestoneMap.title?.string || `Milestone ${index + 1}`,
       description: milestoneMap.description?.string || `Milestone ${index + 1}`,
       status: milestoneMap.status?.string || "pending",
-      approved: Boolean((milestoneMap as any).approved_flag?.bool),
+      approved: Boolean(milestoneMap.approved_flag?.bool),
     };
 
     if (escrowType === "multi-release") {
@@ -198,12 +204,12 @@ export const extractMilestones = (
         ...acc,
         {
           ...base,
-          amount: amountStr ? fmtDecimals(amountStr, 2) : undefined, // milestone display: 2 decimals
-          release_flag: (milestoneMap as any).release_flag?.bool,
-          dispute_flag: (milestoneMap as any).dispute_flag?.bool,
-          resolved_flag: (milestoneMap as any).resolved_flag?.bool,
-          signer: (milestoneMap as any).signer?.address,
-          approver: (milestoneMap as any).approver?.address,
+          amount: amountStr ? formatFixed(Number(amountStr), 2) : undefined,
+          release_flag: Boolean(milestoneMap.release_flag?.bool),
+          dispute_flag: Boolean(milestoneMap.dispute_flag?.bool),
+          resolved_flag: Boolean(milestoneMap.resolved_flag?.bool),
+          signer: milestoneMap.signer?.address,
+          approver: milestoneMap.approver?.address,
         },
       ];
     }
@@ -220,8 +226,9 @@ export const extractRoles = (
   const rolesEntry = data.find((entry) => entry.key.symbol === "roles");
   if (!rolesEntry?.val?.map) return {};
   return rolesEntry.val.map.reduce((acc, entry) => {
-    if (entry.key?.symbol && (entry.val as any)?.address) {
-      acc[entry.key.symbol] = truncateAddress((entry.val as any).address, isMobile);
+    const addr = entry.val?.address;
+    if (entry.key?.symbol && typeof addr === "string") {
+      acc[entry.key.symbol] = truncateAddress(addr, isMobile);
     }
     return acc;
   }, {} as Record<string, string>);
@@ -240,9 +247,8 @@ export const extractFlags = (data: EscrowMap | null): Record<string, string> => 
 
   for (const flag of flagsEntry.val.map) {
     const symbol = flag.key.symbol;
-    const boolVal = (flag.val as any)?.bool;
+    const boolVal = flag.val?.bool === true;
 
-    // Accept multiple possible key names
     if (symbol === "disputed" || symbol === "dispute_flag")
       flags.dispute_flag = boolVal ? "True" : "False";
     if (symbol === "released" || symbol === "release_flag")
@@ -253,7 +259,6 @@ export const extractFlags = (data: EscrowMap | null): Record<string, string> => 
   return flags;
 };
 
-/** Main organizer */
 export const organizeEscrowData = (
   escrowData: EscrowMap | null,
   contractId: string,
@@ -268,27 +273,27 @@ export const organizeEscrowData = (
   const roles = extractRoles(escrowData, isMobile);
   const flags = extractFlags(escrowData);
 
+  // total amount
   let totalAmount: string = String(extractValue(escrowData, "amount", isMobile));
-
   if (escrowType === "multi-release") {
     const sum = milestones.reduce((acc, m) => {
       if (m.amount && !isNaN(parseFloat(m.amount))) acc += parseFloat(m.amount);
       return acc;
     }, 0);
-    if (sum > 0) totalAmount = sum.toFixed(decimals);
+    if (sum > 0) totalAmount = formatFixed(sum, decimals);
   }
 
-  // Balance (prefer i128 → scaled)
+  // balance (prefer i128 → scaled) with SAFE guard
   let balance = String(extractValue(escrowData, "balance", isMobile));
   const balanceRaw = escrowData.find((e) => e.key.symbol === "balance")?.val;
-  if ((balanceRaw as any)?.i128 !== undefined) {
+  if (hasI128(balanceRaw)) {
     const big = i128ToBigIntFlexible(balanceRaw) ?? 0n;
-    balance = (Number(big) / Math.pow(10, decimals)).toFixed(decimals);
+    balance = formatFixed(Number(big) / Math.pow(10, decimals), decimals);
   }
 
-  // Apply display rules
-  const displayAmount = fmtDecimals(totalAmount, 0); // amount: 0 decimals for display
-  const displayBalance = fmtDecimals(balance, 2);   // balance: 2 decimals for display
+  // display rules
+  const displayAmount = formatFixed(Number(totalAmount) || 0, 0);
+  const displayBalance = formatFixed(Number(balance) || 0, 2);
 
   return {
     title: String(extractValue(escrowData, "title", isMobile)),
@@ -311,4 +316,6 @@ export const organizeEscrowData = (
     progress,
     escrowType,
   };
+  console.log("[DEBUG] Organized escrow data:", organizeEscrowData);
+
 };

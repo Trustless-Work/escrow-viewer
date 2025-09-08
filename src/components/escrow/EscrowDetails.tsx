@@ -150,6 +150,35 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     }
   };
 
+// === DEBUG LOGGING (EscrowDetails) ===
+const DEBUG = true;
+
+useEffect(() => {
+  if (!DEBUG) return;
+  console.log("[DBG][EscrowDetails] network:", currentNetwork);
+  console.log("[DBG][EscrowDetails] contractId:", contractId);
+}, [currentNetwork, contractId]);
+
+useEffect(() => {
+  if (!DEBUG) return;
+  console.log("[DBG][EscrowDetails] raw escrow map:", raw);
+}, [raw]);
+
+useEffect(() => {
+  if (!DEBUG) return;
+  console.log("[DBG][EscrowDetails] organized data:", organized);
+}, [organized]);
+
+useEffect(() => {
+  if (!DEBUG) return;
+  console.log("[DBG][EscrowDetails] token live balance:", {
+    ledgerBalance,
+    decimals,
+    mismatch,
+  });
+}, [ledgerBalance, decimals, mismatch]);
+
+
   return (
     <TooltipProvider>
       <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
