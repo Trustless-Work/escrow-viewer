@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion"
-import type { OrganizedEscrowData } from "@/utils/escrow-helpers"
+import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
 import { staggerContainer } from "@/utils/animations/animation-variants"
 import { LoadingLogo } from "@/components/shared/loading-logo"
 import { TitleCard } from "@/components/escrow/title-card"
