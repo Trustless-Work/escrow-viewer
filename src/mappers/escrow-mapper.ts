@@ -166,43 +166,63 @@ export const extractMilestones = (
   return milestonesEntry.val.vec.reduce<ParsedMilestone[]>((acc, item, index) => {
     if (!item.map) return acc;
 
-    const milestoneMap = item.map.reduce(
-      (macc: Record<string, EscrowValue>, entry) => {
-        if (entry.key?.symbol) macc[entry.key.symbol] = entry.val;
-        return macc;
-      },
-      {}
-    );
+    // Collapse the milestone's map into a key->EscrowValue object
+    const milestoneMap = item.map.reduce<Record<string, EscrowValue>>((macc, entry) => {
+      if (entry.key?.symbol) macc[entry.key.symbol] = entry.val;
+      return macc;
+    }, {});
+
+    // --- NEW: handle nested flags map ---
+    // either flags live under milestoneMap.flags.map[...] or as flat *_flag keys
+    type FlagEntry = { key: { symbol: string }; val: EscrowValue };
+    const nestedFlags: FlagEntry[] | undefined =
+      (milestoneMap as any).flags?.map && Array.isArray((milestoneMap as any).flags.map)
+        ? ((milestoneMap as any).flags.map as FlagEntry[])
+        : undefined;
+
+    const getNestedFlag = (name: string): boolean =>
+      !!nestedFlags?.find((f) => f.key.symbol === name)?.val?.bool;
+
+    const approved =
+      getNestedFlag("approved") ||
+      Boolean((milestoneMap as any).approved?.bool) ||
+      Boolean((milestoneMap as any).approved_flag?.bool);
+
+    const release_flag =
+      getNestedFlag("released") ||
+      Boolean((milestoneMap as any).release_flag?.bool);
+
+    const dispute_flag =
+      getNestedFlag("disputed") ||
+      Boolean((milestoneMap as any).dispute_flag?.bool);
+
+    const resolved_flag =
+      getNestedFlag("resolved") ||
+      Boolean((milestoneMap as any).resolved_flag?.bool);
 
     const base: ParsedMilestone = {
       id: index,
       title: milestoneMap.title?.string || `Milestone ${index + 1}`,
       description: milestoneMap.description?.string || `Milestone ${index + 1}`,
       status: milestoneMap.status?.string || "pending",
-      approved: Boolean(milestoneMap.approved_flag?.bool),
+      approved,
     };
 
     if (escrowType === "multi-release") {
-      // Scale on-chain i128 → decimal (using trustline.decimals), then clamp UI to 2 decimals
-      const rawAmount = milestoneMap.amount
+      const amountStr = milestoneMap.amount
         ? formatAmountFromI128(milestoneMap.amount, decimals)
         : undefined;
-
-      const displayAmount =
-        rawAmount && !Number.isNaN(Number(rawAmount))
-          ? Number(rawAmount).toFixed(2) // 👈 UI-friendly formatting here
-          : undefined;
 
       return [
         ...acc,
         {
           ...base,
-          amount: displayAmount,
-          release_flag: Boolean(milestoneMap.release_flag?.bool),
-          dispute_flag: Boolean(milestoneMap.dispute_flag?.bool),
-          resolved_flag: Boolean(milestoneMap.resolved_flag?.bool),
-          signer: milestoneMap.signer?.address,
-          approver: milestoneMap.approver?.address,
+          amount: amountStr ? formatFixed(Number(amountStr), 2) : undefined, // keep 2dp display
+          release_flag,
+          dispute_flag,
+          resolved_flag,
+          signer: (milestoneMap as any).signer?.address,
+          approver: (milestoneMap as any).approver?.address,
         },
       ];
     }
@@ -210,6 +230,7 @@ export const extractMilestones = (
     return [...acc, base];
   }, []);
 };
+
 
 export const extractRoles = (
   data: EscrowMap | null,
