@@ -27,6 +27,8 @@ import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useMemo } from "react"; // make sure this is imported
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -58,6 +60,19 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     raw,
     currentNetwork
   );
+
+  const organizedWithLive = useMemo(() => {
+  if (!organized) return null;
+  if (!ledgerBalance) return organized; // nothing to override
+  return {
+    ...organized,
+    properties: {
+      ...organized.properties,
+      balance: ledgerBalance, // <- replace storage balance with live one
+    },
+  };
+}, [organized, ledgerBalance]);
+
 
   // Transaction-related state (kept here for now)
   const [transactions, setTransactions] = useState<TransactionMetadata[]>([]);
@@ -216,7 +231,7 @@ useEffect(() => {
           <ErrorDisplay error={error} />
 
           {/* Content Section */}
-          <EscrowContent loading={loading} organized={organized} isMobile={isMobile} />
+          <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
 
           {/* Live ledger balance (from token contract) */}
           {raw && ledgerBalance && (
