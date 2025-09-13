@@ -140,19 +140,26 @@ function parseFnReturnFromEventB64(
       (typeof v0.data === "function" ? v0.data() : v0.data) as xdr.ScVal | undefined;
     if (!Array.isArray(topics) || topics.length < 2 || !data) return null;
 
-    const isSym = (sv: xdr.ScVal) =>
-      typeof (sv as any).switch === "function" &&
-      (sv as any).switch() === xdr.ScValType.scvSymbol();
+type ScValSwitchable = { switch?: () => number; sym?: () => { toString(): string } };
 
-    const topic0 = topics[0];
-    const topic1 = topics[1];
-    if (!isSym(topic0) || !isSym(topic1)) return null;
+// Narrow by capability instead of comparing enum values
+type HasSym = { sym?: () => { toString(): string } };
 
-    const sym0 = topic0.sym().toString();
-    const sym1 = topic1.sym().toString();
-    if (sym0 !== "fn_return" || sym1 !== expectFunc) return null;
+const hasSym = (sv: xdr.ScVal): sv is xdr.ScVal & HasSym =>
+  typeof (sv as HasSym).sym === "function";
 
-    return data;
+const topic0 = topics[0];
+const topic1 = topics[1];
+
+if (!hasSym(topic0) || !hasSym(topic1)) return null;
+
+const sym0 = topic0.sym()!.toString();
+const sym1 = topic1.sym()!.toString();
+
+if (sym0 !== "fn_return" || sym1 !== expectFunc) return null;
+
+return data; // unchanged
+
   } catch {
     return null;
   }
