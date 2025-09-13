@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 import { ProgressBar } from "@/components/shared/progress-bar"
 import { cardVariants } from "@/utils/animations/animation-variants"
-import type { EscrowType } from "@/utils/escrow-helpers"
+import type { EscrowType } from "@/mappers/escrow-mapper"
 
 interface TitleCardProps {
   title: string;

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { FileText, Flag, Users, ListChecks } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { OrganizedEscrowData } from "@/utils/escrow-helpers";
+import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
 import { FIELD_TOOLTIPS, ROLE_MAPPING, ROLE_PERMISSIONS } from "@/lib/escrow-constants";
 import { cardVariants } from "@/utils/animations/animation-variants";
 import { SectionCard } from "@/components/shared/section-card";
