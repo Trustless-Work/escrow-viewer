@@ -1,4 +1,3 @@
-// src/lib/token-service.ts
 import {
   Account,
   Address,
@@ -12,17 +11,13 @@ import {
 import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
 import { getLatestLedger, simulateTransaction as rpcSimulate } from "@/lib/rpc";
 
-/** JSON-RPC simulate response (minimal shape we use) */
-type RpcSimResult = {
-  // host-dependent fields
-  transactionData?: string;
-  minResourceFee?: string;
-  latestLedger?: number;
-  // array of result items (Soroban uses this for per-op returns)
-  results?: Array<{ auth?: unknown[]; xdr?: string }>;
-  // sometimes nesting appears; keep generic fields for traversal
-  [k: string]: unknown;
-};
+/** gated logger (enable with NEXT_PUBLIC_DEBUG_ESCROW=1) */
+function dbg(...args: unknown[]) {
+  if (process.env.NEXT_PUBLIC_DEBUG_ESCROW === "1") {
+    // eslint-disable-next-line no-console
+    console.log("[token-service]", ...args);
+  }
+}
 
 /** Derive Stellar Asset Contract ID (SAC) from classic asset */
 export function sacContractIdFromAsset(
@@ -35,7 +30,7 @@ export function sacContractIdFromAsset(
 
 /** Recursively search an object/array for a string `retval` field */
 function findRetval(node: unknown): string | undefined {
-  if (node == null) return undefined;
+  if (!node) return undefined;
   if (typeof node === "string") return undefined;
 
   if (Array.isArray(node)) {
@@ -48,11 +43,8 @@ function findRetval(node: unknown): string | undefined {
 
   if (typeof node === "object") {
     const o = node as Record<string, unknown>;
-
-    // direct
     if (typeof o.retval === "string") return o.retval;
 
-    // common container fields
     if (o.result) {
       const r = findRetval(o.result);
       if (typeof r === "string") return r;
@@ -61,43 +53,121 @@ function findRetval(node: unknown): string | undefined {
       const r = findRetval(o.results);
       if (typeof r === "string") return r;
     }
-
-    // blind search
     for (const k of Object.keys(o)) {
       const r = findRetval(o[k]);
       if (typeof r === "string") return r;
     }
   }
-
   return undefined;
 }
 
-/** Simulate a built tx via JSON-RPC and return retval ScVal (or null if unavailable) */
+/** Try to parse a Diagnostic/Contract event and extract the return value for fn_return(funcName) */
+function parseFnReturnFromEventB64(
+  evB64: string,
+  expectFunc: string
+): xdr.ScVal | null {
+  try {
+    // 1) Try DiagnosticEvent → ContractEvent
+    let ce: xdr.ContractEvent | null = null;
+    try {
+      // Some SDK versions expose DiagnosticEvent; some don’t.
+      const maybeDiag = (xdr as unknown as Record<string, any>).DiagnosticEvent;
+      if (maybeDiag && typeof maybeDiag.fromXDR === "function") {
+        const dev = maybeDiag.fromXDR(evB64, "base64");
+        if (dev && typeof dev.event === "function") {
+          ce = dev.event() as xdr.ContractEvent;
+        }
+      }
+    } catch {
+      // ignore and try raw ContractEvent
+    }
+
+    // 2) Fallback: parse as raw ContractEvent
+    if (!ce) {
+      ce = xdr.ContractEvent.fromXDR(evB64, "base64");
+    }
+
+    // 3) Access v0 body without checking enum (SDKs differ on ContractEventBodyType export)
+    let v0: any = null;
+    try {
+      v0 = (ce as any).body().v0();
+    } catch {
+      return null;
+    }
+    if (!v0) return null;
+
+    const topics: xdr.ScVal[] = v0.topics?.() ?? v0.topics ?? [];
+    const data: xdr.ScVal = typeof v0.data === "function" ? v0.data() : v0.data;
+    if (!Array.isArray(topics) || topics.length < 2 || !data) return null;
+
+    const isSym = (sv: xdr.ScVal) =>
+      sv.switch && sv.switch() === xdr.ScValType.scvSymbol();
+
+    const topic0 = topics[0];
+    const topic1 = topics[1];
+    if (!isSym(topic0) || !isSym(topic1)) return null;
+
+    const sym0 = topic0.sym().toString();
+    const sym1 = topic1.sym().toString();
+    if (sym0 !== "fn_return" || sym1 !== expectFunc) return null;
+
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/** Parse all events to locate fn_return(funcName) */
+function parseFnReturnFromEvents(
+  events: unknown,
+  expectFunc: string
+): xdr.ScVal | null {
+  if (!Array.isArray(events)) return null;
+  for (const evB64 of events) {
+    if (typeof evB64 !== "string") continue;
+    const sv = parseFnReturnFromEventB64(evB64, expectFunc);
+    if (sv) return sv;
+  }
+  return null;
+}
+
+/** Simulate a built tx via JSON-RPC and return retval ScVal (or null if unavailable)
+ * - First look for a `retval` field in the JSON
+ * - If missing, parse events for `fn_return(funcName)`
+ */
 async function simulateAndGetRetval(
   rpcUrl: string,
-  txB64: string
+  txB64: string,
+  funcNameForEvent?: string
 ): Promise<xdr.ScVal | null> {
-  const sim = (await rpcSimulate(rpcUrl, txB64)) as RpcSimResult;
+  const sim = await rpcSimulate(rpcUrl, txB64);
 
-  // Try to find an explicit retval
+  // Try direct retval
   const retvalB64 = findRetval(sim);
   if (retvalB64) {
-    return xdr.ScVal.fromXDR(retvalB64, "base64");
-  }
-
-  // Fallback: some hosts put per-op return in results[0].xdr (scv wrapper)
-  if (Array.isArray(sim.results) && sim.results[0]?.xdr) {
     try {
-      return xdr.ScVal.fromXDR(String(sim.results[0].xdr), "base64");
-    } catch {
-      // ignore, covered by debug below
+      return xdr.ScVal.fromXDR(retvalB64, "base64");
+    } catch (e) {
+      dbg("simulate: retval present but failed to parse:", (e as Error)?.message);
     }
   }
 
-  // Debug preview to aid troubleshooting (short & safe)
-  const preview = JSON.stringify(sim).slice(0, 600);
-  // eslint-disable-next-line no-console
-  console.debug("[token-service] simulate: no retval found (preview):", preview);
+  // Fallback: parse events (fn_return)
+  if (funcNameForEvent) {
+    try {
+      const evRet = parseFnReturnFromEvents((sim as any).events, funcNameForEvent);
+      if (evRet) {
+        dbg("simulate: used fn_return fallback for", funcNameForEvent);
+        return evRet;
+      }
+    } catch (e) {
+      dbg("simulate: event parse error:", (e as Error)?.message);
+    }
+  }
+
+  // Final debug
+  dbg("simulate response (preview):", JSON.stringify(sim)?.slice(0, 600));
+  dbg("simulate: no retval found in response structure");
   return null;
 }
 
@@ -127,8 +197,10 @@ async function callContractNoArgs(
     .setTimeout(30)
     .build();
 
-  const scv = await simulateAndGetRetval(cfg.rpcUrl, tx.toXDR());
+  const scv = await simulateAndGetRetval(cfg.rpcUrl, tx.toXDR(), func);
   if (!scv) {
+    // If host blocks retval for simple views, we can’t discover decimals here.
+    // Let callers decide on a default.
     throw new Error("no-decimals-retval");
   }
   return scv;
@@ -141,17 +213,22 @@ export async function fetchTokenDecimals(
 ): Promise<number> {
   try {
     const scv = await callContractNoArgs(network, tokenContractId, "decimals");
+
     if (scv.switch() === xdr.ScValType.scvU32()) return scv.u32();
     if (scv.switch() === xdr.ScValType.scvU64()) return Number(scv.u64());
     if (scv.switch() === xdr.ScValType.scvU128()) return Number(scv.u128());
-    return 7; // default
+
+    // Unexpected — fallback to common Stellar default
+    return 7;
   } catch {
-    return 7; // default when retval blocked
+    // If retval was blocked, default to 7 (common on Stellar)
+    return 7;
   }
 }
 
 /** Read token balance(owner) via simulate (read-only).
  * Returns bigint on success or null when retval is unavailable.
+ * Falls back to parsing `fn_return(balance)` from events.
  */
 export async function fetchTokenBalance(
   network: NetworkType,
@@ -180,9 +257,17 @@ export async function fetchTokenBalance(
     .setTimeout(30)
     .build();
 
-  const scv = await simulateAndGetRetval(cfg.rpcUrl, tx.toXDR());
-  if (!scv) return null;
-  if (scv.switch() !== xdr.ScValType.scvI128()) return null;
+  // Try retval, then event fallback
+  const scv = await simulateAndGetRetval(cfg.rpcUrl, tx.toXDR(), "balance");
+  if (!scv) {
+    dbg("simulate balance: no retval (RPC host may be redacting)");
+    return null;
+  }
+
+  if (scv.switch() !== xdr.ScValType.scvI128()) {
+    dbg("simulate balance: unexpected ScVal type", scv.switch());
+    return null;
+  }
 
   const i128 = scv.i128();
   const hi = BigInt(i128.hi().toString());

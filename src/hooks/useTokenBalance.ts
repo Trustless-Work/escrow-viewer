@@ -1,107 +1,164 @@
-// src/hooks/useTokenBalance.ts
 import { useEffect, useState } from "react";
 import type { EscrowMap, EscrowValue } from "@/utils/ledgerkeycontract";
-import { fetchTokenBalance, fetchTokenDecimals, sacContractIdFromAsset } from "@/lib/token-service";
-import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
+import {
+  fetchTokenBalance,
+  fetchTokenDecimals,
+  sacContractIdFromAsset,
+} from "@/lib/token-service";
 import { Networks } from "@stellar/stellar-sdk";
+import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
 
-/** Trustline sub-map entry */
-type TLMapEntry = { key: { symbol: string }; val: EscrowValue };
-type TrustlineShape = { map?: TLMapEntry[] } | undefined;
-
-function readTrustlineMeta(
-  escrow: EscrowMap | null
-): { code?: string; issuer?: string; tokenContractId?: string; decimals?: number } | null {
-  if (!escrow) return null;
-  const tl = escrow.find((e) => e.key.symbol === "trustline")?.val as TrustlineShape;
-  const map = tl?.map;
-  if (!map) return null;
-
-  const by = (k: string): EscrowValue | undefined => map.find((m) => m.key.symbol === k)?.val;
-  const code = by("code")?.string;
-  const issuer = by("issuer")?.address;
-  const tokenContractId = by("contract_id")?.string ?? by("address")?.address ?? by("address")?.string;
-
-  let decimals: number | undefined;
-  const d = by("decimals") as { u32?: number } | undefined;
-  if (d && typeof d.u32 === "number") decimals = d.u32;
-
-  return { code, issuer, tokenContractId, decimals };
+function dbg(...args: unknown[]) {
+  if (process.env.NEXT_PUBLIC_DEBUG_ESCROW === "1") {
+    // eslint-disable-next-line no-console
+    console.log("[useTokenBalance]", ...args);
+  }
 }
 
-export function useTokenBalance(contractId: string, escrow: EscrowMap | null, network: NetworkType) {
+/** Read trustline meta from escrow map */
+function readTrustlineMeta(escrow: EscrowMap | null) {
+  if (!escrow) return null;
+  const tl = escrow.find((e) => e.key.symbol === "trustline")?.val?.map;
+  if (!tl) return null;
+
+  const by = (k: string): EscrowValue | undefined =>
+    tl.find((m) => m.key.symbol === k)?.val;
+
+  const code = by("code")?.string;
+  const issuer = by("issuer")?.address;
+  const tokenContractId =
+    by("contract_id")?.string ??
+    by("address")?.address ??
+    by("address")?.string;
+
+  // decimals can be either exponent (7) or scale (10_000_000)
+  let rawDecimals: number | undefined;
+  const d = by("decimals") as unknown as { u32?: number } | undefined;
+  if (d && typeof d.u32 === "number") rawDecimals = d.u32;
+
+  return { code, issuer, tokenContractId, rawDecimals };
+}
+
+/** If decimals looks like a scale (>= 1000), convert to exponent via log10. */
+function normalizeDecimals(raw?: number): number | undefined {
+  if (raw === undefined || !Number.isFinite(raw)) return undefined;
+  if (raw >= 1000) {
+    const exp = Math.log10(raw);
+    // use an integer if it's (almost) a power of 10
+    if (Math.abs(exp - Math.round(exp)) < 1e-9) return Math.round(exp);
+  }
+  return raw;
+}
+
+function clampDecimals(d?: number): number {
+  if (typeof d !== "number" || !Number.isFinite(d)) return 7; // safe default on Stellar
+  if (d < 0) return 0;
+  if (d > 12) return 12; // keep UI sane
+  return Math.floor(d);
+}
+
+export function useTokenBalance(
+  contractId: string,
+  escrow: EscrowMap | null,
+  network: NetworkType
+) {
   const [ledgerBalance, setLedgerBalance] = useState<string | null>(null);
   const [decimals, setDecimals] = useState<number | null>(null);
   const [mismatch, setMismatch] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
     (async () => {
       setLedgerBalance(null);
       setDecimals(null);
       setMismatch(false);
 
       const meta = readTrustlineMeta(escrow);
-      if (!meta) return;
+      if (!meta) {
+        dbg("no trustline meta found; skipping live balance");
+        return;
+      }
 
-      const pass = getNetworkConfig(network).networkPassphrase ??
+      const passphrase =
+        getNetworkConfig(network).networkPassphrase ??
         (network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET);
 
       const tokenCid =
         meta.tokenContractId ??
-        (meta.code && meta.issuer ? sacContractIdFromAsset(meta.code, meta.issuer, pass) : undefined);
+        (meta.code && meta.issuer
+          ? sacContractIdFromAsset(meta.code, meta.issuer, passphrase)
+          : undefined);
 
-      if (!tokenCid) return;
-
-      let dec = typeof meta.decimals === "number" ? meta.decimals : undefined;
-      if (dec === undefined) {
-        dec = await fetchTokenDecimals(network, tokenCid).catch(() => 7);
-      }
-
-      const raw = await fetchTokenBalance(network, tokenCid, contractId);
-      if (raw == null) {
-        if (!cancelled) {
-          setDecimals(dec);
-          setLedgerBalance(null);
-        }
+      if (!tokenCid) {
+        dbg("no token contract id; skipping live balance");
         return;
       }
 
-      const scale = Math.pow(10, dec);
-      const value = Number(raw) / scale;
-      if (!cancelled) {
-        setDecimals(dec);
-        setLedgerBalance(value.toFixed(2)); // show 2 decimals in panel
+      // 1) Start from escrow metadata (normalize if it’s actually a scale)
+      let dGuess = normalizeDecimals(meta.rawDecimals);
+
+      // 2) If still unknown, ask token.decimals()
+      if (dGuess === undefined) {
+        try {
+          const dFromToken = await fetchTokenDecimals(network, tokenCid);
+          dGuess = dFromToken;
+        } catch {
+          // ignored; will default below
+        }
       }
 
-      // Compare stored contract "balance" (if present) to live balance
-      const bEntry = escrow?.find((e) => e.key.symbol === "balance")?.val as
-        | { i128?: unknown }
+      // 3) Clamp / default (USDC on Stellar commonly 7)
+      const d = clampDecimals(dGuess);
+
+      // 4) Fetch raw balance
+      const raw = await fetchTokenBalance(network, tokenCid, contractId);
+      if (raw == null) {
+        dbg("simulate returned null (retval redacted?).");
+        return;
+      }
+
+      // 5) Scale and format for display
+      const scaled = Number(raw) / Math.pow(10, d);
+      const display = scaled.toFixed(2); // UI as 2 decimals
+
+      setLedgerBalance(display);
+      setDecimals(d);
+
+      // 6) Compare vs stored balance in escrow map (if any)
+      const be = escrow?.find((e) => e.key.symbol === "balance")?.val as
+        | { i128?: string | { hi?: number; lo?: number } }
         | undefined;
 
-      if (bEntry && typeof bEntry === "object" && "i128" in bEntry && bEntry.i128) {
-        let stored = 0;
-        const i = bEntry.i128 as unknown;
-        if (typeof i === "string") {
+      let stored: number | null = null;
+      if (be?.i128 !== undefined) {
+        let big: bigint | null = null;
+        if (typeof be.i128 === "string") {
           try {
-            stored = Number(BigInt(i)) / scale;
+            big = BigInt(be.i128);
           } catch {
-            stored = 0;
+            big = null;
           }
-        } else if (i && typeof i === "object") {
-          const obj = i as { hi?: number | string; lo?: number | string };
-          const hi = BigInt(String(obj.hi ?? 0));
-          const lo = BigInt(String(obj.lo ?? 0));
-          stored = Number((hi << BigInt(64)) + lo) / scale;
+        } else if (be.i128 && typeof be.i128 === "object") {
+          const hi = BigInt(String((be.i128 as any).hi ?? 0));
+          const lo = BigInt(String((be.i128 as any).lo ?? 0));
+          big = (hi << BigInt(64)) + lo;
         }
-        if (!cancelled) setMismatch(Math.abs(stored - value) > 1 / scale);
+        if (big !== null) stored = Number(big) / Math.pow(10, d);
       }
-    })();
 
-    return () => {
-      cancelled = true;
-    };
+      if (stored !== null && Number.isFinite(stored)) {
+        const eps = 1 / Math.pow(10, Math.min(d, 6));
+        setMismatch(Math.abs(stored - scaled) > eps);
+      }
+
+      dbg("live-balance", {
+        tokenCid,
+        raw: raw.toString(),
+        decimalsRawFromMeta: meta.rawDecimals,
+        decimalsNormalized: dGuess,
+        decimalsUsed: d,
+        display,
+      });
+    })();
   }, [contractId, escrow, network]);
 
   return { ledgerBalance, decimals, mismatch };

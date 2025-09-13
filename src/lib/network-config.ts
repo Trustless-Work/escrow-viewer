@@ -16,7 +16,7 @@ export const NETWORK_CONFIGS: Record<NetworkType, NetworkConfig> = {
   },
   mainnet: {
     name: 'Mainnet',
-    rpcUrl: 'https://soroban-mainnet.stellar.org',
+    rpcUrl: 'https://stellar.api.onfinality.io/public',
     horizonUrl: 'https://horizon.stellar.org',
     networkPassphrase: 'Public Global Stellar Network ; September 2015'
   }
