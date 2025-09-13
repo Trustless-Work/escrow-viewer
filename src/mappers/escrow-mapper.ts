@@ -156,16 +156,7 @@ function i128ToBigIntFlexible(v: EscrowValue | undefined): bigint | null {
   return null;
 }
 
-function formatAmountFromI128(
-  v: EscrowValue | undefined,
-  decimals?: number
-): string {
-  const big = i128ToBigIntFlexible(v);
-  if (big === null) return "N/A";
-  const d = safeDecimals(decimals);
-  const scaled = Number(big) / Math.pow(10, d);
-  return formatFixed(scaled, d);
-}
+
 
 /* ---------------- main ---------------- */
 
@@ -244,7 +235,6 @@ export const extractMilestones = (
 
     // --- NEW: handle nested flags map ---
     // either flags live under milestoneMap.flags.map[...] or as flat *_flag keys
-    type FlagEntry = { key: { symbol: string }; val: EscrowValue };
  // nested flags map (if present)
 // --- flags: nested or flat ---
 const nestedFlags: MapEntry[] | undefined = getMap(milestoneMap, "flags");
