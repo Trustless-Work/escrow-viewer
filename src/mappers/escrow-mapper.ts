@@ -59,51 +59,56 @@ function getI128(m: Record<string, EscrowValue>, k: string): I128Like | undefine
 }
 
 
-
-type BoolLike = { bool: boolean };
-type StrLikePresent = { string: string };
+type BoolLike        = { bool: boolean };
+type StrLikePresent  = { string: string };
 type AddrLikePresent = { address: string };
-type MapEntry = { key: { symbol: string }; val: EscrowValue };
-type MapLikePresent = { map: MapEntry[] };
-type VecLikePresent = { vec: Array<{ map?: MapEntry[] } & Record<string, EscrowValue>> };
-type I128Parts = { hi?: number | string; lo?: number | string };
-type I128Like = { i128: string | I128Parts };
+type MapEntry        = { key: { symbol: string }; val: EscrowValue };
+type MapLikePresent  = { map: MapEntry[] };
+type I128Parts       = { hi?: number | string; lo?: number | string };
+type I128Like        = { i128: string | I128Parts };
 
 function isBoolLike(v: unknown): v is BoolLike {
-  return !!v && typeof (v as any).bool === "boolean";
+  return !!v && typeof (v as Record<"bool", unknown>).bool === "boolean";
 }
 function isStrLike(v: unknown): v is StrLikePresent {
-  return !!v && typeof (v as any).string === "string";
+  return !!v && typeof (v as Record<"string", unknown>).string === "string";
 }
 function isAddrLike(v: unknown): v is AddrLikePresent {
-  return !!v && typeof (v as any).address === "string";
+  return !!v && typeof (v as Record<"address", unknown>).address === "string";
 }
 function isMapLike(v: unknown): v is MapLikePresent {
-  return !!v && Array.isArray((v as any).map);
+  const m = v as { map?: unknown };
+  return !!v && Array.isArray(m.map);
 }
-function isVecLike(v: unknown): v is VecLikePresent {
-  return !!v && Array.isArray((v as any).vec);
+// (If you don’t use isVecLike anywhere, delete it entirely to fix the unused error)
+
+function isI128Parts(v: unknown): v is I128Parts {
+  if (!v || typeof v !== "object") return false;
+  const r = v as Record<string, unknown>;
+  return ("hi" in r || "lo" in r); // presence indicates the {hi,lo} form
 }
+
 function isI128Like(v: unknown): v is I128Like {
-  return !!v && typeof v === "object" && "i128" in (v as Record<string, unknown>);
+  if (!v || typeof v !== "object") return false;
+  const r = v as Record<string, unknown>;
+  if (!("i128" in r)) return false;
+  const raw = (r as { i128: unknown }).i128;
+  return typeof raw === "string" || isI128Parts(raw);
 }
 
 function i128ToBigIntFlexibleSafe(v: I128Like): bigint | null {
   const raw = v.i128;
   if (typeof raw === "string") {
-    try {
-      return BigInt(raw);
-    } catch {
-      return null;
-    }
+    try { return BigInt(raw); } catch { return null; }
   }
-  if (raw && typeof raw === "object") {
-    const hi = BigInt(String((raw as I128Parts).hi ?? 0));
-    const lo = BigInt(String((raw as I128Parts).lo ?? 0));
+  if (isI128Parts(raw)) {
+    const hi = BigInt(String(raw.hi ?? 0));
+    const lo = BigInt(String(raw.lo ?? 0));
     return (hi << BigInt(64)) + lo;
   }
   return null;
 }
+
 
 
 function getDecimalsFromEscrowMap(data: EscrowMap | null): number | undefined {

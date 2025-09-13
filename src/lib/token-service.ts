@@ -140,7 +140,6 @@ function parseFnReturnFromEventB64(
       (typeof v0.data === "function" ? v0.data() : v0.data) as xdr.ScVal | undefined;
     if (!Array.isArray(topics) || topics.length < 2 || !data) return null;
 
-type ScValSwitchable = { switch?: () => number; sym?: () => { toString(): string } };
 
 // Narrow by capability instead of comparing enum values
 type HasSym = { sym?: () => { toString(): string } };
