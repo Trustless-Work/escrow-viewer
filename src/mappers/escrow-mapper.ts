@@ -37,6 +37,74 @@ export interface OrganizedEscrowData {
 }
 
 /* ---------------- helpers ---------------- */
+function getStr(m: Record<string, EscrowValue>, k: string): string | undefined {
+  const v = m[k] as unknown;
+  return isStrLike(v) ? v.string : undefined;
+}
+function getAddr(m: Record<string, EscrowValue>, k: string): string | undefined {
+  const v = m[k] as unknown;
+  return isAddrLike(v) ? v.address : undefined;
+}
+function getBool(m: Record<string, EscrowValue>, k: string): boolean | undefined {
+  const v = m[k] as unknown;
+  return isBoolLike(v) ? v.bool : undefined;
+}
+function getMap(m: Record<string, EscrowValue>, k: string): MapEntry[] | undefined {
+  const v = m[k] as unknown;
+  return isMapLike(v) ? v.map : undefined;
+}
+function getI128(m: Record<string, EscrowValue>, k: string): I128Like | undefined {
+  const v = m[k] as unknown;
+  return isI128Like(v) ? (v as I128Like) : undefined;
+}
+
+
+
+type BoolLike = { bool: boolean };
+type StrLikePresent = { string: string };
+type AddrLikePresent = { address: string };
+type MapEntry = { key: { symbol: string }; val: EscrowValue };
+type MapLikePresent = { map: MapEntry[] };
+type VecLikePresent = { vec: Array<{ map?: MapEntry[] } & Record<string, EscrowValue>> };
+type I128Parts = { hi?: number | string; lo?: number | string };
+type I128Like = { i128: string | I128Parts };
+
+function isBoolLike(v: unknown): v is BoolLike {
+  return !!v && typeof (v as any).bool === "boolean";
+}
+function isStrLike(v: unknown): v is StrLikePresent {
+  return !!v && typeof (v as any).string === "string";
+}
+function isAddrLike(v: unknown): v is AddrLikePresent {
+  return !!v && typeof (v as any).address === "string";
+}
+function isMapLike(v: unknown): v is MapLikePresent {
+  return !!v && Array.isArray((v as any).map);
+}
+function isVecLike(v: unknown): v is VecLikePresent {
+  return !!v && Array.isArray((v as any).vec);
+}
+function isI128Like(v: unknown): v is I128Like {
+  return !!v && typeof v === "object" && "i128" in (v as Record<string, unknown>);
+}
+
+function i128ToBigIntFlexibleSafe(v: I128Like): bigint | null {
+  const raw = v.i128;
+  if (typeof raw === "string") {
+    try {
+      return BigInt(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (raw && typeof raw === "object") {
+    const hi = BigInt(String((raw as I128Parts).hi ?? 0));
+    const lo = BigInt(String((raw as I128Parts).lo ?? 0));
+    return (hi << BigInt(64)) + lo;
+  }
+  return null;
+}
+
 
 function getDecimalsFromEscrowMap(data: EscrowMap | null): number | undefined {
   if (!data) return undefined;
@@ -119,36 +187,33 @@ export const extractValue = (
   if (!data) return "N/A";
   const item = data.find((entry) => entry.key.symbol === key);
   if (!item) return "N/A";
-  const val: EscrowValue = item.val;
-  if (!val) return "N/A";
+ const val: unknown = item.val;   // ⬅️ was EscrowValue
+if (val == null) return "N/A";
 
-  if (typeof (val as any).bool === "boolean")
-    return (val as any).bool ? "True" : "False";
-  if (typeof (val as any).string === "string")
-    return (val as any).string;
-  if (typeof (val as any).address === "string")
-    return isAddress
-      ? truncateAddress((val as any).address, isMobile)
-      : (val as any).address;
+if (isBoolLike(val)) return val.bool ? "True" : "False";
+if (isStrLike(val)) return val.string;  // ✅ no more “never”
+if (isAddrLike(val)) return isAddress ? truncateAddress(val.address, isMobile) : val.address;
 
-  if ((val as any).map && key === "trustline") {
-    const tm = (val as any).map as { key: { symbol: string }; val: EscrowValue }[];
-    const address =
-      tm.find((e) => e.key.symbol === "address")?.val?.address ??
-      tm.find((e) => e.key.symbol === "contract_id")?.val?.string;
-    return typeof address === "string" ? address : "N/A";
+if (isMapLike(val) && key === "trustline") {
+  const tm: MapEntry[] = (val.map ?? []);
+  const addrVal = tm.find(e => e.key.symbol === "address")?.val;
+  const cidVal  = tm.find(e => e.key.symbol === "contract_id")?.val;
+  const addr = isAddrLike(addrVal) ? addrVal.address : undefined;
+  const cid  = isStrLike(cidVal)  ? cidVal.string      : undefined;
+  return addr ?? cid ?? "N/A";
+}
+
+if (isI128Like(val)) {
+  if (key === "platform_fee") {
+    const big = i128ToBigIntFlexibleSafe(val);
+    if (big === null) return "N/A";
+    return (Number(big) / 100).toFixed(2) + "%";
   }
-
-  if ((val as any).i128 !== undefined) {
-    if (key === "platform_fee") {
-      const big = i128ToBigIntFlexible(val);
-      if (big === null) return "N/A";
-      const percent = Number(big) / 100; // basis points → percent
-      return percent.toFixed(2) + "%";
-    }
-    const decimals = getDecimalsFromEscrowMap(data);
-    return formatAmountFromI128(val, decimals);
-  }
+  const d = safeDecimals(getDecimalsFromEscrowMap(data));
+  const big = i128ToBigIntFlexibleSafe(val);
+  if (big === null) return "N/A";
+  return (Number(big) / Math.pow(10, d)).toFixed(d);
+}
 
   return "N/A";
 };
@@ -175,57 +240,66 @@ export const extractMilestones = (
     // --- NEW: handle nested flags map ---
     // either flags live under milestoneMap.flags.map[...] or as flat *_flag keys
     type FlagEntry = { key: { symbol: string }; val: EscrowValue };
-    const nestedFlags: FlagEntry[] | undefined =
-      (milestoneMap as any).flags?.map && Array.isArray((milestoneMap as any).flags.map)
-        ? ((milestoneMap as any).flags.map as FlagEntry[])
-        : undefined;
+ // nested flags map (if present)
+// --- flags: nested or flat ---
+const nestedFlags: MapEntry[] | undefined = getMap(milestoneMap, "flags");
 
-    const getNestedFlag = (name: string): boolean =>
-      !!nestedFlags?.find((f) => f.key.symbol === name)?.val?.bool;
+const getNestedFlag = (name: "approved" | "released" | "disputed" | "resolved"): boolean =>
+  !!nestedFlags?.find((f: MapEntry) => f.key.symbol === name)?.val?.bool;
 
-    const approved =
-      getNestedFlag("approved") ||
-      Boolean((milestoneMap as any).approved?.bool) ||
-      Boolean((milestoneMap as any).approved_flag?.bool);
+const approved =
+  getNestedFlag("approved") ||
+  !!getBool(milestoneMap, "approved") ||
+  !!getBool(milestoneMap, "approved_flag");
 
-    const release_flag =
-      getNestedFlag("released") ||
-      Boolean((milestoneMap as any).release_flag?.bool);
+const release_flag =
+  getNestedFlag("released") || !!getBool(milestoneMap, "release_flag");
 
-    const dispute_flag =
-      getNestedFlag("disputed") ||
-      Boolean((milestoneMap as any).dispute_flag?.bool);
+const dispute_flag =
+  getNestedFlag("disputed") || !!getBool(milestoneMap, "dispute_flag");
 
-    const resolved_flag =
-      getNestedFlag("resolved") ||
-      Boolean((milestoneMap as any).resolved_flag?.bool);
+const resolved_flag =
+  getNestedFlag("resolved") || !!getBool(milestoneMap, "resolved_flag");
 
-    const base: ParsedMilestone = {
-      id: index,
-      title: milestoneMap.title?.string || `Milestone ${index + 1}`,
-      description: milestoneMap.description?.string || `Milestone ${index + 1}`,
-      status: milestoneMap.status?.string || "pending",
-      approved,
-    };
+// --- required strings (ensure plain string, not string|undefined) ---
+const title = getStr(milestoneMap, "title") ?? `Milestone ${index + 1}`;
+const description = getStr(milestoneMap, "description") ?? `Milestone ${index + 1}`;
+const status = getStr(milestoneMap, "status") ?? "pending";
 
-    if (escrowType === "multi-release") {
-      const amountStr = milestoneMap.amount
-        ? formatAmountFromI128(milestoneMap.amount, decimals)
-        : undefined;
+const base: ParsedMilestone = {
+  id: index,
+  title,
+  description,
+  status,
+  approved,
+};
 
-      return [
-        ...acc,
-        {
-          ...base,
-          amount: amountStr ? formatFixed(Number(amountStr), 2) : undefined, // keep 2dp display
-          release_flag,
-          dispute_flag,
-          resolved_flag,
-          signer: (milestoneMap as any).signer?.address,
-          approver: (milestoneMap as any).approver?.address,
-        },
-      ];
+if (escrowType === "multi-release") {
+  let amountStr: string | undefined;
+  const i128 = getI128(milestoneMap, "amount");
+  if (i128) {
+    const big = i128ToBigIntFlexibleSafe(i128);
+    if (big !== null) {
+      const d = safeDecimals(decimals);
+      amountStr = (Number(big) / Math.pow(10, d)).toFixed(2);
     }
+  }
+
+  return [
+    ...acc,
+    {
+      ...base,
+      amount: amountStr,
+      release_flag,
+      dispute_flag,
+      resolved_flag,
+      signer: getAddr(milestoneMap, "signer"),
+      approver: getAddr(milestoneMap, "approver"),
+    },
+  ];
+}
+
+
 
     return [...acc, base];
   }, []);
@@ -297,12 +371,14 @@ export const organizeEscrowData = (
   }
 
   // balance
-  let balance = String(extractValue(escrowData, "balance", isMobile));
-  const balanceRaw = escrowData.find((e) => e.key.symbol === "balance")?.val;
-  if ((balanceRaw as any)?.i128 !== undefined) {
-    const big = i128ToBigIntFlexible(balanceRaw) ?? 0n;
-    balance = formatFixed(Number(big) / Math.pow(10, decimals), decimals);
-  }
+let balance = String(extractValue(escrowData, "balance", isMobile));
+const balanceRaw = escrowData.find((e) => e.key.symbol === "balance")?.val;
+if (isI128Like(balanceRaw)) {
+  const big = i128ToBigIntFlexibleSafe(balanceRaw);
+  const d = safeDecimals(getDecimalsFromEscrowMap(escrowData));
+  balance = big === null ? balance : (Number(big) / Math.pow(10, d)).toFixed(d);
+}
+
 
 // total amount (UI-friendly → 2 decimals)
 const displayAmount = Number(totalAmount) ? Number(totalAmount).toFixed(2) : "0.00";

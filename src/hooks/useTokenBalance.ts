@@ -8,9 +8,32 @@ import {
 import { Networks } from "@stellar/stellar-sdk";
 import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
 
+type I128Parts = { hi?: number | string; lo?: number | string };
+type I128Like = { i128?: string | I128Parts };
+
+function isI128Like(v: unknown): v is I128Like {
+  return !!v && typeof v === "object" && "i128" in (v as Record<string, unknown>);
+}
+
+function i128ToBigIntSafe(v: I128Like): bigint | null {
+  const i = v.i128;
+  if (typeof i === "string") {
+    try {
+      return BigInt(i);
+    } catch {
+      return null;
+    }
+  }
+  if (i && typeof i === "object") {
+    const hi = BigInt(String((i as I128Parts).hi ?? 0));
+    const lo = BigInt(String((i as I128Parts).lo ?? 0));
+    return (hi << BigInt(64)) + lo;
+  }
+  return null;
+}
+
 function dbg(...args: unknown[]) {
   if (process.env.NEXT_PUBLIC_DEBUG_ESCROW === "1") {
-    // eslint-disable-next-line no-console
     console.log("[useTokenBalance]", ...args);
   }
 }
@@ -137,11 +160,10 @@ export function useTokenBalance(
           } catch {
             big = null;
           }
-        } else if (be.i128 && typeof be.i128 === "object") {
-          const hi = BigInt(String((be.i128 as any).hi ?? 0));
-          const lo = BigInt(String((be.i128 as any).lo ?? 0));
-          big = (hi << BigInt(64)) + lo;
-        }
+} else if (be && isI128Like(be) && be.i128 && typeof be.i128 === "object") {
+  const bigFromParts = i128ToBigIntSafe(be);
+  big = bigFromParts;
+}
         if (big !== null) stored = Number(big) / Math.pow(10, d);
       }
 

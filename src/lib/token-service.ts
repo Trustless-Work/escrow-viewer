@@ -14,10 +14,61 @@ import { getLatestLedger, simulateTransaction as rpcSimulate } from "@/lib/rpc";
 /** gated logger (enable with NEXT_PUBLIC_DEBUG_ESCROW=1) */
 function dbg(...args: unknown[]) {
   if (process.env.NEXT_PUBLIC_DEBUG_ESCROW === "1") {
-    // eslint-disable-next-line no-console
     console.log("[token-service]", ...args);
   }
 }
+
+// XDR helper types to avoid "any"
+type ContractEventV0Like = {
+  topics?: () => xdr.ScVal[]; // some SDKs expose methods
+  data?: () => xdr.ScVal;
+} & {
+  topics?: xdr.ScVal[]; // some expose fields
+  data?: xdr.ScVal;
+};
+
+type ContractEventBodyV0Getter = {
+  v0?: () => ContractEventV0Like;
+};
+
+type ContractEventBodyLike = {
+  // some SDKs expose .body().v0()
+  body?: () => ContractEventBodyV0Getter;
+};
+
+type DiagnosticEventFactory = {
+  fromXDR?: (b64: string, fmt: "base64") => { event?: () => xdr.ContractEvent };
+};
+
+function getMaybeDiagnosticEventFactory(): DiagnosticEventFactory | undefined {
+  const maybe = (xdr as unknown as { DiagnosticEvent?: DiagnosticEventFactory }).DiagnosticEvent;
+  return maybe && typeof maybe.fromXDR === "function" ? maybe : undefined;
+}
+
+function tryGetContractEventFromDiagnostic(b64: string): xdr.ContractEvent | null {
+  const fac = getMaybeDiagnosticEventFactory();
+  if (!fac) return null;
+  try {
+    const dev = fac.fromXDR!(b64, "base64");
+    if (dev && typeof dev.event === "function") {
+      return dev.event() as xdr.ContractEvent;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function getEventV0Safely(ce: xdr.ContractEvent): ContractEventV0Like | null {
+  try {
+    const bodyLike = (ce as unknown as ContractEventBodyLike).body?.();
+    const v0Like = bodyLike?.v0?.();
+    return v0Like ?? null;
+  } catch {
+    return null;
+  }
+}
+
 
 /** Derive Stellar Asset Contract ID (SAC) from classic asset */
 export function sacContractIdFromAsset(
@@ -61,47 +112,37 @@ function findRetval(node: unknown): string | undefined {
   return undefined;
 }
 
-/** Try to parse a Diagnostic/Contract event and extract the return value for fn_return(funcName) */
 function parseFnReturnFromEventB64(
   evB64: string,
   expectFunc: string
 ): xdr.ScVal | null {
   try {
     // 1) Try DiagnosticEvent → ContractEvent
-    let ce: xdr.ContractEvent | null = null;
-    try {
-      // Some SDK versions expose DiagnosticEvent; some don’t.
-      const maybeDiag = (xdr as unknown as Record<string, any>).DiagnosticEvent;
-      if (maybeDiag && typeof maybeDiag.fromXDR === "function") {
-        const dev = maybeDiag.fromXDR(evB64, "base64");
-        if (dev && typeof dev.event === "function") {
-          ce = dev.event() as xdr.ContractEvent;
-        }
-      }
-    } catch {
-      // ignore and try raw ContractEvent
-    }
+    let ce: xdr.ContractEvent | null = tryGetContractEventFromDiagnostic(evB64);
 
     // 2) Fallback: parse as raw ContractEvent
     if (!ce) {
-      ce = xdr.ContractEvent.fromXDR(evB64, "base64");
+      try {
+        ce = xdr.ContractEvent.fromXDR(evB64, "base64");
+      } catch {
+        return null;
+      }
     }
+    if (!ce) return null;
 
-    // 3) Access v0 body without checking enum (SDKs differ on ContractEventBodyType export)
-    let v0: any = null;
-    try {
-      v0 = (ce as any).body().v0();
-    } catch {
-      return null;
-    }
+    // 3) Access v0 safely (different SDKs expose differently)
+    const v0 = getEventV0Safely(ce);
     if (!v0) return null;
 
-    const topics: xdr.ScVal[] = v0.topics?.() ?? v0.topics ?? [];
-    const data: xdr.ScVal = typeof v0.data === "function" ? v0.data() : v0.data;
+    const topics =
+      (typeof v0.topics === "function" ? v0.topics() : v0.topics) ?? [];
+    const data =
+      (typeof v0.data === "function" ? v0.data() : v0.data) as xdr.ScVal | undefined;
     if (!Array.isArray(topics) || topics.length < 2 || !data) return null;
 
     const isSym = (sv: xdr.ScVal) =>
-      sv.switch && sv.switch() === xdr.ScValType.scvSymbol();
+      typeof (sv as any).switch === "function" &&
+      (sv as any).switch() === xdr.ScValType.scvSymbol();
 
     const topic0 = topics[0];
     const topic1 = topics[1];
@@ -117,7 +158,7 @@ function parseFnReturnFromEventB64(
   }
 }
 
-/** Parse all events to locate fn_return(funcName) */
+
 function parseFnReturnFromEvents(
   events: unknown,
   expectFunc: string
@@ -130,6 +171,7 @@ function parseFnReturnFromEvents(
   }
   return null;
 }
+
 
 /** Simulate a built tx via JSON-RPC and return retval ScVal (or null if unavailable)
  * - First look for a `retval` field in the JSON
@@ -155,8 +197,10 @@ async function simulateAndGetRetval(
   // Fallback: parse events (fn_return)
   if (funcNameForEvent) {
     try {
-      const evRet = parseFnReturnFromEvents((sim as any).events, funcNameForEvent);
-      if (evRet) {
+const evRet = parseFnReturnFromEvents(
+  (sim as unknown as { events?: unknown }).events,
+  funcNameForEvent
+);      if (evRet) {
         dbg("simulate: used fn_return fallback for", funcNameForEvent);
         return evRet;
       }
