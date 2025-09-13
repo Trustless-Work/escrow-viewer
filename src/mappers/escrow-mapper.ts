@@ -133,28 +133,7 @@ function formatFixed(n: number, digits: number): string {
   return n.toFixed(digits);
 }
 
-function i128ToBigIntFlexible(v: EscrowValue | undefined): bigint | null {
-  if (!v) return null;
 
-  // { i128: { hi, lo } }
-  if ((v as any).i128 && typeof (v as any).i128 === "object") {
-    const i = (v as any).i128;
-    const hi = BigInt(String(i.hi ?? 0));
-    const lo = BigInt(String(i.lo ?? 0));
-    return (hi << BigInt(64)) + lo;
-  }
-
-  // { i128: "12345" }
-  if (typeof (v as any).i128 === "string") {
-    try {
-      return BigInt((v as any).i128);
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
-}
 
 
 
