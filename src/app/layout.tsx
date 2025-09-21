@@ -3,7 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from 'react'
 import { NetworkProvider } from "@/contexts/NetworkContext";
+import { AppProviders } from "./providers";
 
+
+// Use these imports to wrap your application (<ReactQueryClientProvider>, <TrustlessWorkProvider>, <WalletProvider> y <EscrowProvider>)
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,9 +42,11 @@ export default function RootLayout({
         {...customBodyProps}
       >
         <Suspense fallback={<div>Loading...</div>}>
+        <AppProviders>
           <NetworkProvider>
             {children}
           </NetworkProvider>
+          </AppProviders>
         </Suspense>
       </body>
     </html>

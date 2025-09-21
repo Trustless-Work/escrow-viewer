@@ -1,15 +1,9 @@
-import type { NextPage } from "next";
-import EscrowDetailsClient from "../../components/escrow/EscrowDetails";
+// Server Component (no "use client" here)
+import EscrowDetailsClient from "@/components/escrow/EscrowDetails";
 
-interface EscrowDetailsPageProps {
-  params: Promise<{ id: string }>;
-}
+type PageProps = { params: { id: string } };
 
-const EscrowDetailsPage: NextPage<EscrowDetailsPageProps> = async ({
-  params,
-}) => {
-  const { id } = await params;
+export default function EscrowDetailsPage({ params }: PageProps) {
+  const { id } = params; // not a Promise
   return <EscrowDetailsClient initialEscrowId={id} />;
-};
-
-export default EscrowDetailsPage;
+}

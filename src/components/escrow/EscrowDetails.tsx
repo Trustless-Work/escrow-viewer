@@ -10,7 +10,6 @@ import { LoadingLogo } from "@/components/shared/loading-logo";
 import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
-
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
 import { ErrorDisplay } from "@/components/escrow/error-display";
@@ -23,12 +22,14 @@ import {
   type TransactionResponse,
 } from "@/utils/transactionFetcher";
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
+import { useEscrowContext } from "@/components/tw-blocks/providers/EscrowProvider";
+import { useRef } from "react";
 
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useMemo } from "react"; // make sure this is imported
-
+import { FundEscrowDialog } from "@/components/tw-blocks/escrows/single-multi-release/fund-escrow/dialog/FundEscrow";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -41,7 +42,8 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 }) => {
   const router = useRouter();
   const { currentNetwork } = useNetwork();
-
+  const { setSelectedEscrowId, setSelectedEscrow } = (useEscrowContext?.() as any) || {};
+const lastPushedIdRef = useRef<string | null>(null);
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -113,12 +115,22 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     []
   );
 
-  // Initial + network-change fetch (escrow + txs)
+// Initial + network-change fetch (escrow + txs) + push id into Blocks context once per id
   useEffect(() => {
     if (!contractId) return;
-    // useEscrowData auto-refreshes on contractId change; just ensure txs loaded:
-    fetchTransactionData(contractId);
-  }, [contractId, currentNetwork, fetchTransactionData]);
+if (lastPushedIdRef.current !== contractId) {
+    if (typeof setSelectedEscrowId === "function") {
+   setSelectedEscrowId(contractId);
+ } else if (typeof setSelectedEscrow === "function") {
+     // fallback for builds without setSelectedEscrowId
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setSelectedEscrow({ contractId, type: "multi-release" } as any);
+
+    }
+    // and load txs
+    lastPushedIdRef.current = contractId;
+ }
+}, [contractId, currentNetwork, fetchTransactionData]);
 
   // Enter key in search
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -202,7 +214,6 @@ useEffect(() => {
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
           {/* Header Section */}
           <Header />
-
           {/* Logo display (only on initial screen) */}
           {!raw && !loading && !error && (
             <motion.div
@@ -232,6 +243,17 @@ useEffect(() => {
 
           {/* Content Section */}
           <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
+
+{/* Actions */}
+  <section className="mt-10 rounded-xl border p-4 bg-white">
+    <h2 className="text-lg font-semibold mb-3">Actions</h2>
+    <FundEscrowDialog />
+    {/*
+      If you ever want a one-click fixed amount:
+      import { FundEscrowButton } from ".../FundEscrow";
+      <FundEscrowButton amount={100} />
+    */}
+  </section>
 
           {/* Live ledger balance (from token contract) */}
           {raw && ledgerBalance && (
