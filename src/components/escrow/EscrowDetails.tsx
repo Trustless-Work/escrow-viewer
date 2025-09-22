@@ -24,7 +24,7 @@ import FAQAccordion from "@/components/investor/FAQAccordion";
 import RaiseProgress from "@/components/investor/RaiseProgress";
 
 const inter = Inter({ subsets: ["latin"] });
-const TARGET_USDC = 500; // <- your client’s raise goal
+const TARGET_USDC = 5000; // <- your client’s raise goal
 const EscrowDetailsClient: React.FC = () => {
 const params = useParams<{ id: string }>();
 const initialEscrowId = params?.id as string;
@@ -107,7 +107,7 @@ useEffect(() => {
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
+      <div className={`min-h-screen bg-transparent ${inter.className}`}>
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">

@@ -18,12 +18,24 @@ const WalletButton = dynamic(
 
 export function NavbarSimple() {
   return (
-    <div className={`flex items-center justify-between bg-white rounded shadow-sm py-5 px-6 ${inter.className}`}>
-      <div className="flex items-center gap-2">
-        <Image src="/logo.png" alt="Trustless work logo" width={27} height={10} priority />
-        <h1 className="text-base font-bold">Trustless Work</h1>
+    <div
+      className={`sticky top-0 z-40 border-b border-[var(--lux-line)] bg-[var(--lux-bg)]/80 backdrop-blur ${inter.className}`}
+    >
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/logo.png"
+            alt="Trustless Work"
+            width={28}
+            height={28}
+            priority
+          />
+          <span className="font-[var(--font-display)] text-lg tracking-tight text-[var(--lux-text)]">
+            Trustless Work
+          </span>
+        </div>
+        <WalletButton />
       </div>
-      <WalletButton />
-   </div>
+    </div>
   )
 }

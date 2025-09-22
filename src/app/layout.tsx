@@ -1,13 +1,14 @@
+// src/app/layout.tsx (top)
+
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Suspense } from 'react'
 import { NetworkProvider } from "@/contexts/NetworkContext";
 import { AppProviders } from "./providers";
 
 
-// Use these imports to wrap your application (<ReactQueryClientProvider>, <TrustlessWorkProvider>, <WalletProvider> y <EscrowProvider>)
-
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-display" });
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -38,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${playfair.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-lux-bg text-lux-text`}
         {...customBodyProps}
       >
         <Suspense fallback={<div>Loading...</div>}>

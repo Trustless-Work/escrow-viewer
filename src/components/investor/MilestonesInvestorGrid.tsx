@@ -11,8 +11,10 @@ export default function MilestonesInvestorGrid({ milestones }: Props) {
   if (!milestones?.length) {
     return (
       <section className="mt-8">
-        <h2 className="mb-3 text-xl font-semibold text-gray-900">Milestones</h2>
-        <div className="rounded-xl border bg-white p-6 text-sm text-gray-600">
+        <h2 className="mb-3 font-[var(--font-display)] text-xl tracking-tight text-[var(--lux-text)]">
+          Milestones
+        </h2>
+        <div className="rounded-2xl border border-[var(--lux-line)] bg-[var(--lux-panel)] p-6 text-sm text-[var(--lux-muted)]">
           No milestones defined for this escrow.
         </div>
       </section>
@@ -22,8 +24,10 @@ export default function MilestonesInvestorGrid({ milestones }: Props) {
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">Milestones</h2>
-        <span className="text-sm text-gray-500">{milestones.length} total</span>
+        <h2 className="font-[var(--font-display)] text-xl tracking-tight text-[var(--lux-text)]">
+          Milestones
+        </h2>
+        <span className="text-sm text-[var(--lux-muted)]">{milestones.length} total</span>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -32,15 +36,15 @@ export default function MilestonesInvestorGrid({ milestones }: Props) {
           return (
             <article
               key={m.id}
-              className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-2xl border border-[var(--lux-line)] bg-[var(--lux-panel)] p-4 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)] transition-transform hover:translate-y-[-2px] hover:shadow-[0_14px_36px_-12px_rgba(0,0,0,0.45)]"
             >
               <div className="mb-2 flex items-start justify-between">
                 <div className="mr-2">
-                  <h3 className="text-base font-semibold text-gray-900">
+                  <h3 className="text-base font-semibold text-[var(--lux-text)]">
                     {m.title || `Milestone ${m.id + 1}`}
                   </h3>
                   {m.amount && (
-                    <div className="mt-0.5 text-sm font-medium text-gray-800">
+                    <div className="mt-0.5 text-sm font-medium text-[var(--lux-text)]">
                       {formatAmount(m.amount)} USDC
                     </div>
                   )}
@@ -49,7 +53,7 @@ export default function MilestonesInvestorGrid({ milestones }: Props) {
               </div>
 
               {m.description && (
-                <p className="text-sm text-gray-600">{m.description}</p>
+                <p className="text-sm leading-relaxed text-[var(--lux-muted)]">{m.description}</p>
               )}
             </article>
           );
@@ -61,7 +65,9 @@ export default function MilestonesInvestorGrid({ milestones }: Props) {
 
 /* -------- helpers -------- */
 
-function computeStatus(m: ParsedMilestone): "Disputed" | "Resolved" | "Released" | "Approved" | "Pending" {
+function computeStatus(
+  m: ParsedMilestone
+): "Disputed" | "Resolved" | "Released" | "Approved" | "Pending" {
   if (m.dispute_flag && !m.resolved_flag) return "Disputed";
   if (m.resolved_flag) return "Resolved";
   if (m.release_flag) return "Released";
@@ -70,17 +76,19 @@ function computeStatus(m: ParsedMilestone): "Disputed" | "Resolved" | "Released"
 }
 
 function StatusBadge({ status }: { status: ReturnType<typeof computeStatus> }) {
+  // neutral lux pill, icon color varies subtly by status
   const map = {
-    Disputed: { class: "bg-rose-50 text-rose-700 border-rose-200", icon: <AlertTriangle className="h-3.5 w-3.5" /> },
-    Resolved: { class: "bg-slate-50 text-slate-700 border-slate-200", icon: <BadgeCheck className="h-3.5 w-3.5" /> },
-    Released: { class: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: <ArrowUpRight className="h-3.5 w-3.5" /> },
-    Approved: { class: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    Pending:  { class: "bg-amber-50 text-amber-700 border-amber-200", icon: <Clock className="h-3.5 w-3.5" /> },
+    Disputed: { icon: <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />, text: "text-rose-300" },
+    Resolved: { icon: <BadgeCheck className="h-3.5 w-3.5 text-slate-300" />, text: "text-slate-200" },
+    Released: { icon: <ArrowUpRight className="h-3.5 w-3.5 text-indigo-300" />, text: "text-indigo-200" },
+    Approved: { icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />, text: "text-emerald-200" },
+    Pending:  { icon: <Clock className="h-3.5 w-3.5 text-amber-300" />, text: "text-amber-200" },
   } as const;
 
   const v = map[status];
+
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${v.class}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full border border-[var(--lux-line)] bg-[var(--lux-elev)]/70 px-2 py-1 text-xs font-semibold ${v.text}`}>
       {v.icon} {status}
     </span>
   );

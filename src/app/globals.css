@@ -42,6 +42,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+    --color-lux-bg: var(--lux-bg);           /* NEW */
+  --color-lux-panel: var(--lux-panel);     /* NEW */
+  --color-lux-elev: var(--lux-elev);       /* NEW */
+  --color-lux-text: var(--lux-text);       /* NEW */
+  --color-lux-muted: var(--lux-muted);     /* NEW */
+  --color-lux-gold: var(--lux-gold);       /* NEW */
+  --color-lux-gold-2: var(--lux-gold-2);   /* NEW */
+  --color-lux-line: var(--lux-line);       /* NEW */
 }
 
 :root {
@@ -77,6 +85,14 @@
   --sidebar-ring: oklch(0.708 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+    --lux-bg: #0f0f11;              /* deep charcoal */
+  --lux-panel: #151618;           /* panel */
+  --lux-elev: #1b1c1f;            /* elevated cards */
+  --lux-text: #e9e9ec;            /* main text */
+  --lux-muted: #a3a3ad;           /* secondary */
+  --lux-gold: #c6a15b;            /* primary accent */
+  --lux-gold-2: #e1c16d;          /* bright accent */
+  --lux-line: #232428;            /* hairlines */
 }
 
 .dark {
@@ -118,7 +134,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-lux-bg text-lux-text;
   }
 }
 
@@ -153,6 +169,7 @@
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
 }
+html, body { background: var(--lux-bg); color: var(--lux-text); }
 
 .fade-in {
   animation: fadeIn 0.5s ease-out forwards;
@@ -196,3 +213,20 @@
   transform: translateY(-3px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
+
+/* Luxury helpers */
+.lux-card      { @apply bg-lux-panel border border-lux-line rounded-2xl shadow/[0_8px_24px_-12px_rgba(0,0,0,0.35)]; }
+.lux-elev      { @apply bg-lux-elev  border border-lux-line rounded-2xl shadow/[0_14px_36px_-12px_rgba(0,0,0,0.45)]; }
+.lux-title     { @apply font-[var(--font-display)] text-2xl md:text-3xl tracking-tight text-lux-text; }
+.lux-sub       { @apply text-sm text-lux-muted; }
+.lux-badge     { @apply inline-flex items-center gap-1 rounded-full border border-lux-line/60 bg-lux-elev/60 text-lux-muted px-2.5 py-0.5 text-xs; }
+.lux-chip      { @apply rounded-md bg-lux-elev/60 text-lux-muted border border-lux-line/60 px-2 py-0.5 text-xs; }
+.lux-cta       { @apply bg-[--lux-gold] text-black hover:bg-[--lux-gold-2] rounded-xl h-10 px-5 font-medium transition-colors; }
+
+.lux-divider   { @apply h-px bg-lux-line; }
+.lux-kpi       { @apply text-sm text-lux-muted; }
+.lux-kpi b     { @apply text-lux-text font-semibold; }
+
+/* Progress bar theme (reuse by any progress component) */
+.lux-progress-rail  { @apply h-2 rounded-full bg-lux-elev; }
+.lux-progress-fill  { @apply h-2 rounded-full bg-[--lux-gold]; }

@@ -4,17 +4,11 @@ import * as React from "react";
 import clsx from "clsx";
 
 type Props = {
-  /** Current amount raised (USDC). Accepts number or numeric string. */
   raised: number | string;
-  /** Target amount to raise (USDC). Accepts number or numeric string. */
   target: number | string;
-  /** Labeling only. Defaults to "USDC". */
   currency?: string;
-  /** Show numeric summary above the bar. Defaults to true. */
   showNumbers?: boolean;
-  /** Visual height of the bar. */
   size?: "sm" | "md" | "lg";
-  /** Extra classNames for outer wrapper. */
   className?: string;
 };
 
@@ -35,21 +29,24 @@ export default function RaiseProgress({
   }, [r, t]);
 
   const remaining = Math.max(t - r, 0);
-
   const height = size === "sm" ? "h-2" : size === "lg" ? "h-4" : "h-3";
 
   return (
     <section className={clsx("w-full", className)}>
       {showNumbers && (
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
-          <div className="text-sm text-gray-700">
-            <span className="font-semibold">Raised:</span>{" "}
-            <span className="font-mono">{fmt(r)} {currency}</span>
+          <div className="text-sm text-[var(--lux-muted)]">
+            <span className="font-semibold text-[var(--lux-text)]">Raised:</span>{" "}
+            <span className="font-mono text-[var(--lux-text)]">
+              {fmt(r)} {currency}
+            </span>
             {" / "}
-            <span className="font-semibold">Target:</span>{" "}
-            <span className="font-mono">{fmt(t)} {currency}</span>
+            <span className="font-semibold text-[var(--lux-text)]">Target:</span>{" "}
+            <span className="font-mono text-[var(--lux-text)]">
+              {fmt(t)} {currency}
+            </span>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-[var(--lux-muted)]">
             <span className="font-medium">Remaining:</span>{" "}
             <span className="font-mono">{fmt(remaining)} {currency}</span>
           </div>
@@ -58,7 +55,7 @@ export default function RaiseProgress({
 
       <div
         className={clsx(
-          "relative w-full overflow-hidden rounded-full border border-gray-200 bg-gray-100",
+          "relative w-full overflow-hidden rounded-full border border-[var(--lux-line)] bg-[var(--lux-elev)]",
           height
         )}
         role="progressbar"
@@ -71,22 +68,20 @@ export default function RaiseProgress({
         <div
           className={clsx(
             "h-full transition-[width] duration-500 ease-out",
-            // a soft brand-ish gradient
-            "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"
+            "bg-[var(--lux-gold)]"
           )}
           style={{ width: `${percent}%` }}
         />
       </div>
 
-      <div className="mt-1 text-right text-xs text-gray-500">
+      <div className="mt-1 text-right text-xs text-[var(--lux-muted)]">
         {percent.toFixed(1)}% funded
       </div>
     </section>
   );
 }
 
-/* ---------------- helpers ---------------- */
-
+/* helpers */
 function toNumber(v: number | string | null | undefined): number {
   if (typeof v === "number") return Number.isFinite(v) ? v : 0;
   if (typeof v === "string") {
@@ -95,11 +90,9 @@ function toNumber(v: number | string | null | undefined): number {
   }
   return 0;
 }
-
 function fmt(n: number): string {
   return Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(n);
 }
-
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }

@@ -6,7 +6,7 @@ import ContractIdLauncher from "@/components/investor/ContractIdLauncher";
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-blue-50">
+    <main className="min-h-screen bg-transparent">
       <NavbarSimple />
       <div className="container mx-auto max-w-5xl px-4 py-6 md:py-10">
         <Header />

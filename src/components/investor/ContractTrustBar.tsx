@@ -30,25 +30,26 @@ export default function ContractTrustBar({ contractId, networkLabel }: Props) {
   };
 
   return (
-    <div className="mt-4 mb-6 rounded-xl border bg-white px-4 py-3 shadow-sm">
+    <div className="mt-4 mb-6 rounded-xl border border-[var(--lux-line)] bg-[var(--lux-panel)] px-4 py-3 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)]">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <Shield className="h-4 w-4 text-emerald-600" />
+          <span className="inline-flex items-center gap-2 text-sm text-[var(--lux-text)]">
+            <Shield className="h-4 w-4 text-[var(--lux-gold)]" />
             <span className="font-medium">Smart Contract</span>
           </span>
 
-          <span className="hidden h-3 w-px bg-gray-200 md:inline-block" />
+          <span className="hidden h-3 w-px bg-[var(--lux-line)] md:inline-block" />
 
-          <span className="text-sm text-gray-600">
-            Escrow ID: <span className="font-mono text-gray-900">{shortId}</span>
+          <span className="text-sm text-[var(--lux-muted)]">
+            Escrow ID:{" "}
+            <span className="font-mono text-[var(--lux-text)]">{shortId}</span>
           </span>
 
           <Button
             variant="ghost"
             size="sm"
             onClick={copy}
-            className="h-8 px-2"
+            className="h-8 px-2 text-[var(--lux-muted)] hover:bg-[var(--lux-elev)]"
             aria-label="Copy escrow id"
           >
             {copied ? (
@@ -64,7 +65,7 @@ export default function ContractTrustBar({ contractId, networkLabel }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="rounded-full border bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700">
+          <span className="inline-flex items-center rounded-full border border-[var(--lux-line)] bg-[var(--lux-elev)]/60 px-3 py-1 text-xs font-medium text-[var(--lux-muted)]">
             {networkLabel}
           </span>
 
@@ -72,7 +73,7 @@ export default function ContractTrustBar({ contractId, networkLabel }: Props) {
             href={url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-gray-800 hover:bg-gray-50"
+            className="inline-flex items-center gap-1 rounded-md border border-[var(--lux-line)] bg-[var(--lux-elev)] px-3 py-1.5 text-sm font-medium text-[var(--lux-text)] hover:bg-[var(--lux-elev)]/70"
           >
             View on Explorer <ExternalLink className="h-4 w-4" />
           </a>

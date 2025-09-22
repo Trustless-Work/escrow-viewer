@@ -24,21 +24,21 @@ export default function InvestorHero({
   cta,
 }: Props) {
   return (
-    <section className="mb-6 rounded-3xl border bg-white/95 p-6 shadow-xl">
+    <section className="mb-6 rounded-2xl border border-[var(--lux-line)] bg-[var(--lux-panel)] p-6 shadow-[0_14px_36px_-12px_rgba(0,0,0,0.45)]">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="max-w-2xl">
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
+          <h1 className="font-[var(--font-display)] text-2xl tracking-tight text-[var(--lux-text)] md:text-3xl">
             {title}
           </h1>
           {subtitle ? (
-            <p className="mt-2 text-gray-600">{subtitle}</p>
+            <p className="mt-2 text-[var(--lux-muted)]">{subtitle}</p>
           ) : null}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--lux-line)] bg-[var(--lux-elev)]/60 px-3 py-1 text-xs font-medium text-[var(--lux-muted)]">
               Multi-Release
             </span>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--lux-line)] bg-[var(--lux-elev)]/60 px-3 py-1 text-xs font-medium text-[var(--lux-muted)]">
               {status}
             </span>
           </div>
@@ -49,7 +49,8 @@ export default function InvestorHero({
           {cta ? (
             cta
           ) : (
-            <Button className="h-10 w-full">Fund with USDC</Button>
+            <Button className="h-10 w-full rounded-xl bg-[var(--lux-gold)] text-black hover:bg-[var(--lux-gold-2)]">
+              Fund with USDC</Button>
           )}
 
           {/* Quick stats */}
@@ -88,12 +89,13 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border bg-white px-3 py-2">
+    <div className="rounded-xl border border-[var(--lux-line)] bg-[var(--lux-elev)] px-3 py-2">
       <div className="flex items-center gap-2 text-xs text-gray-500">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="mt-1 text-sm font-semibold text-gray-900">{value}</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--lux-text)]">
+        {value}</div>
     </div>
   );
 }
