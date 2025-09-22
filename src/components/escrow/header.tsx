@@ -12,10 +12,10 @@ export const Header = () => {
     >
       <div className="flex flex-col w-full md:w-auto">
         <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2 md:mb-4">
-          Escrow Data <span className="text-blue-600">Viewer</span>
+          Investor<span className="text-blue-600"> Page</span>
         </h1>
         <p className="text-gray-600 max-w-2xl mx-auto md:mx-0 text-lg">
-          View detailed information about any escrow contract on the Stellar
+          Access information on the investment escrow contract on the Stellar
           blockchain.
         </p>
       </div>
