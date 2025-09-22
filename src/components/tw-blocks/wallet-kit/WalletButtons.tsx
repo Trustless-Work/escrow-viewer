@@ -28,7 +28,7 @@ export const WalletButton = () => {
       await navigator.clipboard.writeText(walletAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch (_) {
+    } catch {
       // noop
     }
   };
