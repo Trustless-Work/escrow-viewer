@@ -46,6 +46,7 @@ type EscrowContextType = {
     escrow?: SingleEscrowPayload | MultiEscrowPayload
   ) => void;
   setUserRolesInEscrow: (roles: string[]) => void;
+  setSelectedEscrowId: (id: string) => void;
 };
 
 const EscrowContext = createContext<EscrowContextType | undefined>(undefined);
@@ -126,6 +127,23 @@ export const EscrowProvider = ({ children }: { children: ReactNode }) => {
     persist(null);
   };
 
+/**
+   * Set only the contractId of the selected escrow.
+   * If there is already an escrow in state, keep its other fields.
+   * If not, seed a minimal object (contractId only).
+   */
+  const setSelectedEscrowId = useCallback((id: string) => {
+    setSelectedEscrowState((current) => {
+      if (current?.contractId === id) return current;
+      const next = current
+        ? ({ ...current, contractId: id } as Escrow)
+        // seed a minimal object; consumers who only need contractId can read it
+        : ({ contractId: id } as unknown as Escrow);
+      persist(next);
+      return next;
+    });
+  }, []);
+
   /**
    * Set the user roles in the escrow
    *
@@ -161,6 +179,8 @@ export const EscrowProvider = ({ children }: { children: ReactNode }) => {
           setSelectedEscrowState((value as unknown as Escrow) ?? null),
         setUserRolesInEscrow,
         userRolesInEscrow,
+        setSelectedEscrowId,
+
       }}
     >
       {children}

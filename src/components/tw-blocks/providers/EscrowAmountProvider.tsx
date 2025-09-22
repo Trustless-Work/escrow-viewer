@@ -70,6 +70,7 @@ export const EscrowAmountProvider = ({ children }: { children: ReactNode }) => {
       receiverResolve,
       approverResolve,
       amountMoonpay,
+      setAmounts,
     ]
   );
 

@@ -1,6 +1,6 @@
-// app/[id]/page.tsx — Server Component (no "use client")
+// src/app/[id]/page.tsx
 import EscrowDetailsClient from "@/components/escrow/EscrowDetails";
 
-export default function Page({ params }: { params: { id: string } }) {
-  return <EscrowDetailsClient initialEscrowId={params.id} />;
+export default function Page() {
+  return <EscrowDetailsClient />;
 }
