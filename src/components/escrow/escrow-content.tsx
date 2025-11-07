@@ -8,6 +8,9 @@ import { DesktopView } from "@/components/escrow/desktop-view"
 import { WelcomeState } from "@/components/escrow/welcome-state"
 import error from "next/error"
 import { useNetwork } from "@/contexts/NetworkContext"; // Add this line
+ import { Button } from "@/components/ui/button"
+ import { exportEscrowReport } from "@/utils/pdf/exportEscrowReport"
+import { FileDown } from "lucide-react"
 
 
 interface EscrowContentProps {
@@ -48,7 +51,8 @@ export const EscrowContent = ({
 						variants={staggerContainer}
 						className="w-full max-w-5xl"
 					>
-						{/* Title Card */}
+						{/* Title Card */
+						}
 						<TitleCard
 							title={typeof organized.title === "string" ? organized.title : ""}
 							description={
@@ -59,6 +63,18 @@ export const EscrowContent = ({
 							progress={organized.progress}
 							escrowType={organized.escrowType}
 						/>
+
+						<div className="w-full flex justify-end mb-4">
+							<Button
+								variant="default"
+								size="lg"
+								aria-label="Export escrow as PDF"
+								onClick={() => exportEscrowReport(organized, currentNetwork)}
+							>
+								<FileDown className="h-4 w-4" />
+								<span>Export to PDF</span>
+							</Button>
+						</div>
 
 						{/* Mobile view: Use tabs for compact display */}
 						{isMobile && <TabView organized={organized} network={currentNetwork}/>}
