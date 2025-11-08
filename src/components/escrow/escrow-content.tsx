@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react"
 import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
 import { staggerContainer } from "@/utils/animations/animation-variants"
 import { LoadingLogo } from "@/components/shared/loading-logo"
@@ -10,7 +11,8 @@ import error from "next/error"
 import { useNetwork } from "@/contexts/NetworkContext"; // Add this line
  import { Button } from "@/components/ui/button"
  import { exportEscrowReport } from "@/utils/pdf/exportEscrowReport"
-import { FileDown } from "lucide-react"
+import { FileDown, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 
 interface EscrowContentProps {
@@ -25,6 +27,7 @@ export const EscrowContent = ({
 	isMobile,
 }: EscrowContentProps) => {
 	const { currentNetwork } = useNetwork(); // Get network from context
+	const [exporting, setExporting] = useState(false)
 
 	return (
 		<div className="flex flex-col items-center">
@@ -69,10 +72,33 @@ export const EscrowContent = ({
 								variant="default"
 								size="lg"
 								aria-label="Export escrow as PDF"
-								onClick={() => exportEscrowReport(organized, currentNetwork)}
+								disabled={exporting}
+								onClick={async () => {
+									if (!organized) return
+									setExporting(true)
+									try {
+										await exportEscrowReport(organized, currentNetwork)
+										toast.success("PDF exported successfully")
+									} catch (e) {
+										const errorMessage = e instanceof Error ? e.message : "Failed to export PDF"
+										console.error("PDF export error:", e)
+										toast.error(`Failed to export PDF: ${errorMessage}`)
+									} finally {
+										setExporting(false)
+									}
+								}}
 							>
-								<FileDown className="h-4 w-4" />
-								<span>Export to PDF</span>
+								{exporting ? (
+									<>
+										<Loader2 className="h-4 w-4 animate-spin mr-2" />
+										<span>Exporting…</span>
+									</>
+								) : (
+									<>
+										<FileDown className="h-4 w-4 mr-2" />
+										<span>Export to PDF</span>
+									</>
+								)}
 							</Button>
 						</div>
 
