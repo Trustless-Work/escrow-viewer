@@ -1,6 +1,6 @@
 import { motion } from "framer-motion"
 import { fadeIn } from "@/utils/animations/animation-variants"
-import { NetworkToggle } from "../shared/network-toggle"
+// Network toggle moved to the Navbar
 
 export const Header = () => {
   return (
@@ -20,7 +20,7 @@ export const Header = () => {
         </p>
       </div>
       <div className="w-full flex justify-center md:justify-end md:w-auto">
-        <NetworkToggle />
+        {/* network toggle moved to navbar */}
       </div>
     </motion.div>
   )

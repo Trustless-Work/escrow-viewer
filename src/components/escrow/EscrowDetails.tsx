@@ -3,7 +3,7 @@
 
 import { Inter } from "next/font/google";
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { NavbarSimple } from "@/components/Navbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingLogo } from "@/components/shared/loading-logo";
@@ -81,6 +81,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   const [transactionResponse, setTransactionResponse] = useState<TransactionResponse | null>(null);
   const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [showTransactions, setShowTransactions] = useState<boolean>(false);
 
   // Check if viewport is mobile
   useEffect(() => {
@@ -113,12 +114,13 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     []
   );
 
-  // Initial + network-change fetch (escrow + txs)
+  // Only fetch transactions when user requests them (to avoid long scrolls)
   useEffect(() => {
     if (!contractId) return;
-    // useEscrowData auto-refreshes on contractId change; just ensure txs loaded:
-    fetchTransactionData(contractId);
-  }, [contractId, currentNetwork, fetchTransactionData]);
+    if (showTransactions) {
+      fetchTransactionData(contractId);
+    }
+  }, [contractId, currentNetwork, fetchTransactionData, showTransactions]);
 
   // Enter key in search
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -230,15 +232,22 @@ useEffect(() => {
           {/* Error Display */}
           <ErrorDisplay error={error} />
 
-          {/* Content Section */}
-          <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
+          {/* Content + Sidebar layout */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              {/* Content Section */}
+              <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
+            </div>
 
-          {/* Live ledger balance (from token contract) */}
-          {raw && ledgerBalance && (
-            <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
-          )}
+            <aside className="md:col-span-1">
+              {/* Live ledger balance (from token contract) */}
+              {raw && ledgerBalance && (
+                <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
+              )}
+            </aside>
+          </div>
 
-          {/* Transaction History Section */}
+          {/* Transaction History Section (hidden behind a user toggle to avoid long scrolls) */}
           {raw && (
             <motion.div
               className="mt-12"
@@ -247,95 +256,78 @@ useEffect(() => {
               transition={{ delay: 0.3, duration: 0.6 }}
             >
               {/* Section header */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <motion.div
-                    className="flex items-center gap-4"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4, duration: 0.5 }}
-                  >
-                    <motion.div
-                      className="w-3 h-12 bg-gradient-to-b from-blue-500 via-purple-500 to-blue-600 rounded-full"
-                      initial={{ scaleY: 0 }}
-                      animate={{ scaleY: 1 }}
-                      transition={{ delay: 0.5, duration: 0.6 }}
-                    />
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-4">
+                    <div className="w-3 h-12 bg-gradient-to-b from-blue-500 via-purple-500 to-blue-600 rounded-full" />
                     <div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-foreground">
                         Transaction History
                       </h2>
-                      <p className="text-sm text-gray-600 mt-2">
-                        Complete blockchain activity record for this escrow contract
-                      </p>
+                      <div className="mt-2">
+                        <button
+                          onClick={() => setShowTransactions((s) => !s)}
+                          aria-expanded={showTransactions}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-800 dark:bg-input/30 dark:text-muted-foreground border border-blue-100/60"
+                        >
+                          {showTransactions ? "Hide Transaction History" : "Show Transaction History"}
+                        </button>
+                      </div>
                     </div>
-                  </motion.div>
+                  </div>
                   {transactions.length > 0 && (
                     <motion.div
                       className="hidden md:flex items-center gap-3"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.6, duration: 0.3 }}
+                      transition={{ delay: 0.2, duration: 0.3 }}
                     >
-                      <motion.div
-                        className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-4 py-2 rounded-full font-semibold border border-blue-200/50"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                      <div className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-4 py-2 rounded-full font-semibold border border-blue-200/50">
                         {transactions.length} transaction{transactions.length !== 1 ? "s" : ""}
-                      </motion.div>
+                      </div>
                     </motion.div>
                   )}
                 </div>
-
-                {/* Divider */}
-                <motion.div
-                  className="relative"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7, duration: 0.5 }}
-                >
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t-2 border-gray-200"></div>
-                  </div>
-                  <div className="relative flex justify-center">
-                    <div className="bg-gradient-to-b from-gray-50 to-blue-50 px-6">
-                      <motion.div
-                        className="w-16 h-2 bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: "4rem" }}
-                        transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
               </div>
 
-              {/* Table */}
-              <motion.div
-                className="relative"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9, duration: 0.5 }}
-              >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
-                  animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                />
-                <div className="relative bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 overflow-hidden hover:shadow-3xl transition-all duration-700">
-                  <TransactionTable
-                    transactions={transactions}
-                    loading={transactionLoading}
-                    error={transactionError}
-                    retentionNotice={transactionResponse?.retentionNotice}
-                    hasMore={transactionResponse?.hasMore || false}
-                    onLoadMore={handleLoadMoreTransactions}
-                    onTransactionClick={handleTransactionClick}
-                    isMobile={isMobile}
-                  />
-                </div>
-              </motion.div>
+              {/* Collapsible table */}
+              <AnimatePresence>
+                {showTransactions && (
+                  <motion.div
+                    key="tx-table"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="overflow-hidden"
+                  >
+                    <motion.div
+                      className="relative"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05, duration: 0.4 }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
+                        animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+                        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                      />
+                      <div className="relative bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 overflow-hidden hover:shadow-3xl transition-all duration-700">
+                        <TransactionTable
+                          transactions={transactions}
+                          loading={transactionLoading}
+                          error={transactionError}
+                          retentionNotice={transactionResponse?.retentionNotice}
+                          hasMore={transactionResponse?.hasMore || false}
+                          onLoadMore={handleLoadMoreTransactions}
+                          onTransactionClick={handleTransactionClick}
+                          isMobile={isMobile}
+                        />
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
