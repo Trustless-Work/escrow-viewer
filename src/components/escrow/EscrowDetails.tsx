@@ -2,8 +2,8 @@
 "use client";
 
 import { Inter } from "next/font/google";
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { motion } from "framer-motion";
 import { NavbarSimple } from "@/components/Navbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LoadingLogo } from "@/components/shared/loading-logo";
@@ -27,7 +27,7 @@ import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
-import { useMemo } from "react"; // make sure this is imported
+// (useMemo is consolidated in the import above)
 
 
 const inter = Inter({ subsets: ["latin"] });
@@ -81,7 +81,8 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   const [transactionResponse, setTransactionResponse] = useState<TransactionResponse | null>(null);
   const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [showTransactions, setShowTransactions] = useState<boolean>(false);
+  const [showOnlyTransactions, setShowOnlyTransactions] = useState<boolean>(false);
+  const txRef = useRef<HTMLDivElement | null>(null);
 
   // Check if viewport is mobile
   useEffect(() => {
@@ -114,13 +115,12 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     []
   );
 
-  // Only fetch transactions when user requests them (to avoid long scrolls)
+  // Initial + network-change fetch (escrow + txs)
   useEffect(() => {
     if (!contractId) return;
-    if (showTransactions) {
-      fetchTransactionData(contractId);
-    }
-  }, [contractId, currentNetwork, fetchTransactionData, showTransactions]);
+    // useEscrowData auto-refreshes on contractId change; just ensure txs loaded:
+    fetchTransactionData(contractId);
+  }, [contractId, currentNetwork, fetchTransactionData]);
 
   // Enter key in search
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -166,6 +166,17 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
       fetchTransactionData(contractId, transactionResponse.cursor);
     }
   };
+
+  // When user toggles to show transactions, scroll the section into view
+  useEffect(() => {
+    if (showOnlyTransactions && txRef.current) {
+      try {
+        txRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (e) {
+        // ignore scroll failures
+      }
+    }
+  }, [showOnlyTransactions]);
 
 // === DEBUG LOGGING (EscrowDetails) ===
 const DEBUG = true;
@@ -217,117 +228,101 @@ useEffect(() => {
             </motion.div>
           )}
 
-          {/* Search Card */}
-          <SearchCard
-            contractId={contractId}
-            setContractId={setContractId}
-            loading={loading}
-            isSearchFocused={isSearchFocused}
-            setIsSearchFocused={setIsSearchFocused}
-            handleKeyDown={handleKeyDown}
-            fetchEscrowData={handleFetch}
-            handleUseExample={handleUseExample}
-          />
+          {/* Search Card + View Transactions button (flexed together) */}
+          {!showOnlyTransactions && (
+            <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
+              <div className="flex-1 max-w-lg">
+                <SearchCard
+                  contractId={contractId}
+                  setContractId={setContractId}
+                  loading={loading}
+                  isSearchFocused={isSearchFocused}
+                  setIsSearchFocused={setIsSearchFocused}
+                  handleKeyDown={handleKeyDown}
+                  fetchEscrowData={handleFetch}
+                  handleUseExample={handleUseExample}
+                />
+              </div>
+
+              {raw && (
+                <div className="w-full max-w-lg">
+                  <button
+                    onClick={() => setShowOnlyTransactions(true)}
+                    aria-label="View Transaction History"
+                    className="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground shadow-sm hover:shadow-md transition cursor-pointer"
+                  >
+                    View Transaction History
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Error Display */}
           <ErrorDisplay error={error} />
 
-          {/* Content + Sidebar layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-              {/* Content Section */}
-              <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
-            </div>
+          {/* Content Section (hidden when showing transactions as a page) */}
+          {!showOnlyTransactions && (
+            <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
+          )}
 
-            <aside className="md:col-span-1">
-              {/* Live ledger balance (from token contract) */}
-              {raw && ledgerBalance && (
-                <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
-              )}
-            </aside>
-          </div>
+          {/* Live ledger balance (from token contract) */}
+          {!showOnlyTransactions && raw && ledgerBalance && (
+            <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
+          )}
 
-          {/* Transaction History Section (hidden behind a user toggle to avoid long scrolls) */}
-          {raw && (
+          {/* Transaction History Section (renders only when requested) */}
+          {raw && showOnlyTransactions && (
             <motion.div
-              className="mt-12"
-              initial={{ opacity: 0, y: 30 }}
+              ref={txRef}
+              className="mt-6"
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
             >
-              {/* Section header */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-4">
-                    <div className="w-3 h-12 bg-gradient-to-b from-blue-500 via-purple-500 to-blue-600 rounded-full" />
-                    <div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-foreground">
-                        Transaction History
-                      </h2>
-                      <div className="mt-2">
-                        <button
-                          onClick={() => setShowTransactions((s) => !s)}
-                          aria-expanded={showTransactions}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-800 dark:bg-input/30 dark:text-muted-foreground border border-blue-100/60"
-                        >
-                          {showTransactions ? "Hide Transaction History" : "Show Transaction History"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {transactions.length > 0 && (
-                    <motion.div
-                      className="hidden md:flex items-center gap-3"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2, duration: 0.3 }}
-                    >
-                      <div className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-4 py-2 rounded-full font-semibold border border-blue-200/50">
-                        {transactions.length} transaction{transactions.length !== 1 ? "s" : ""}
-                      </div>
-                    </motion.div>
-                  )}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold">Transaction History</h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowOnlyTransactions(false)}
+                    aria-label="Back to details"
+                    className="px-3 py-2 rounded-md bg-primary/10 text-primary font-semibold border border-primary/20 hover:bg-primary/20 cursor-pointer text-sm"
+                  >
+                    Back to Details
+                  </button>
                 </div>
               </div>
 
-              {/* Collapsible table */}
-              <AnimatePresence>
-                {showTransactions && (
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Complete blockchain activity record for this escrow contract</p>
+              </div>
+
+              <div>
+                <motion.div
+                  className="relative"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05, duration: 0.4 }}
+                >
                   <motion.div
-                    key="tx-table"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.35 }}
-                    className="overflow-hidden"
-                  >
-                    <motion.div
-                      className="relative"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05, duration: 0.4 }}
-                    >
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
-                        animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-                        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                      />
-                      <div className="relative bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 overflow-hidden hover:shadow-3xl transition-all duration-700">
-                        <TransactionTable
-                          transactions={transactions}
-                          loading={transactionLoading}
-                          error={transactionError}
-                          retentionNotice={transactionResponse?.retentionNotice}
-                          hasMore={transactionResponse?.hasMore || false}
-                          onLoadMore={handleLoadMoreTransactions}
-                          onTransactionClick={handleTransactionClick}
-                          isMobile={isMobile}
-                        />
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
+                    animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                  />
+                    <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700">
+                    <TransactionTable
+                      transactions={transactions}
+                      loading={transactionLoading}
+                      error={transactionError}
+                      retentionNotice={transactionResponse?.retentionNotice}
+                      hasMore={transactionResponse?.hasMore || false}
+                      onLoadMore={handleLoadMoreTransactions}
+                      onTransactionClick={handleTransactionClick}
+                      isMobile={isMobile}
+                    />
+                  </div>
+                </motion.div>
+              </div>
             </motion.div>
           )}
 

@@ -38,9 +38,9 @@ export const MilestoneCard = ({
   };
 
   return (
-    <motion.div variants={cardVariants}>
+    <motion.div variants={cardVariants} whileHover={{ y: -6, scale: 1.01 }} transition={{ type: "spring", stiffness: 300 }}>
       <Card
-        className={`mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative
+        className={`mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent
           ${approved ? "border-green-100" : "border-amber-100"}`}
       >
         {/* Fixed top line that respects border radius */}

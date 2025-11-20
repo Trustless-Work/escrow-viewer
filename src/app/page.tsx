@@ -60,7 +60,7 @@ const Home: NextPage = () => {
               <section className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-16">
 
             {/* Left: text */}
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
               <motion.h1
                 className="text-4xl md:text-5xl font-extrabold text-foreground leading-tight"
                 initial={{ opacity: 0, y: 8 }}
@@ -79,7 +79,7 @@ const Home: NextPage = () => {
                 View detailed information about any escrow contract on the Stellar blockchain.
               </motion.p>
 
-              <div className="mt-6">
+              <div className="mt-6 w-full max-w-lg">
                 {/* Keep the existing search card for discoverability */}
                 <SearchCard
                   contractId={contractId}

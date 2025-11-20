@@ -56,21 +56,47 @@ key === "trustline" ? (
           </SectionCard>
         </motion.div>
 
-        {/* Status Card */}
-        <motion.div variants={cardVariants}>
-          <StatusPanel
-            flags={{
-              dispute_flag: String(organized.flags.dispute_flag),
-              release_flag: String(organized.flags.release_flag),
-              resolved_flag: String(organized.flags.resolved_flag),
-            }}
-            tooltips={FIELD_TOOLTIPS}
-          />
-        </motion.div>
+        {/* Right column: Status + Assigned Roles stacked */}
+        <div className="space-y-1">
+          <motion.div variants={cardVariants}>
+            <StatusPanel
+              flags={{
+                dispute_flag: String(organized.flags.dispute_flag),
+                release_flag: String(organized.flags.release_flag),
+                resolved_flag: String(organized.flags.resolved_flag),
+              }}
+              tooltips={FIELD_TOOLTIPS}
+            />
+          </motion.div>
+
+          <motion.div variants={cardVariants}>
+            <SectionCard
+              title="Assigned Roles"
+              icon={Users}
+              className="hover:shadow-lg hover:border-blue-200 transition-all duration-300"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {Object.entries(organized.roles).map(([key, value], index) => (
+                  <motion.div key={key} variants={cardVariants} custom={index}>
+                    <RoleCard
+                      title={ROLE_MAPPING[key] || key.replace(/_/g, " ")}
+                      address={String(value)}
+                      description={
+                        ROLE_PERMISSIONS[ROLE_MAPPING[key]] ||
+                        "No description available"
+                      }
+                      tooltips={FIELD_TOOLTIPS}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </SectionCard>
+          </motion.div>
+        </div>
       </div>
 
       {/* Roles Card */}
-      <motion.div variants={cardVariants}>
+      {/* <motion.div variants={cardVariants}>
         <SectionCard
           title="Assigned Roles"
           icon={Users}
@@ -92,7 +118,7 @@ key === "trustline" ? (
             ))}
           </div>
         </SectionCard>
-      </motion.div>
+      </motion.div> */}
 
       {/* Milestones Card */}
       <motion.div variants={cardVariants}>

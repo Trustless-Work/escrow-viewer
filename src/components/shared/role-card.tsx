@@ -23,8 +23,8 @@ export const RoleCard = ({
   };
   
   return (
-    <motion.div variants={cardVariants}>
-      <Card className="mb-6 shadow-md hover:shadow-lg hover:border-blue-400 transition-all duration-300 rounded-xl relative group">        
+    <motion.div variants={cardVariants} whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 260 }}>
+  <Card className="mb-6 shadow-md hover:shadow-lg hover:border-blue-400 transition-all duration-300 rounded-xl relative group hover-lift edge-accent">        
         <CardHeader className="pt-4 pb-2">
           <div className="flex items-center gap-3">
             <motion.div 

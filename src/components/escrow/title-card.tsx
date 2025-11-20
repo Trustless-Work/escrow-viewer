@@ -25,14 +25,14 @@ export const TitleCard = ({
   escrowType 
 }: TitleCardProps) => {
   return (
-    <motion.div variants={cardVariants}>
-      <Card className="mb-6 border-blue-100 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative">
+    <motion.div variants={cardVariants} whileHover={{ scale: 1.01 }} className="transform-gpu">
+      <Card className="mb-6 border-blue-100 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative hover-lift edge-accent">
         {/* Fixed gradient line that spans the full width */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-blue-500 rounded-t-xl" />
         <CardHeader className="pt-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div className="flex items-center gap-3">
-              <DollarSign className="text-blue-500 h-6 w-6" />
+              <DollarSign className="text-blue-500 h-6 w-6 dark:text-[#6fbfe6]" />
               <CardTitle className="text-xl sm:text-2xl text-blue-600 font-bold flex items-center gap-2">
                 {title}
                 {escrowType && (

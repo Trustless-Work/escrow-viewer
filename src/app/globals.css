@@ -205,3 +205,49 @@
   transform: translateY(-3px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
+
+/* Edge accent for cards: subtle inset highlight and depth that adapts to dark mode */
+.edge-accent {
+  position: relative;
+  border-radius: var(--radius);
+}
+
+/* subtle vertical accent on the right edge to 'lighten' the card edge */
+.edge-accent::after {
+  content: "";
+  position: absolute;
+  /* slightly overflow so the accent hugs the edge */
+  top: -2px;
+  right: -2px;
+  height: calc(100% + 4px);
+  width: 8px;
+  pointer-events: none;
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  /* light-mode accent: subtle but visible */
+  background: linear-gradient(180deg, rgba(14,165,255,0.28), rgba(59,130,246,0.12));
+  background-size: 100% 200%;
+  animation: edgeMove 6s linear infinite;
+  mix-blend-mode: normal; /* use normal blend on light backgrounds so the accent is visible */
+  z-index: 10;
+}
+
+.dark .edge-accent::after {
+  background: linear-gradient(180deg, rgba(127,239,253,0.98), rgba(127,239,253,0.16));
+  background-size: 100% 200%;
+  animation: edgeMove 6s linear infinite;
+  mix-blend-mode: screen; /* keep screen for a brighter sheen on dark backgrounds */
+  z-index: 10;
+}
+
+@keyframes edgeMove {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 0% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edge-accent::after {
+    animation: none;
+  }
+}

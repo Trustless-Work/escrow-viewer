@@ -5,22 +5,19 @@ import { fadeIn } from "@/utils/animations/animation-variants"
 export const Header = () => {
   return (
     <motion.div 
-      className="mb-10 flex flex-col-reverse items-center gap-6 md:flex-row md:justify-between md:items-end text-center md:text-left"
+      className="mb-10 flex flex-col items-center gap-6 text-center"
       initial="hidden"
       animate="visible"
       variants={fadeIn}
     >
-      <div className="flex flex-col w-full md:w-auto">
+      <div className="flex flex-col w-full items-center">
         <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-2 md:mb-4">
           Escrow Data <span className="text-blue-600">Viewer</span>
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto md:mx-0 text-lg">
+        <p className="text-gray-600 max-w-2xl mx-auto text-center text-lg">
           View detailed information about any escrow contract on the Stellar
           blockchain.
         </p>
-      </div>
-      <div className="w-full flex justify-center md:justify-end md:w-auto">
-        {/* network toggle moved to navbar */}
       </div>
     </motion.div>
   )
