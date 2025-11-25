@@ -38,17 +38,17 @@ export const SearchCard = ({
       animate="visible"
       variants={cardVariants}
     >
-      <Card className={`max-w-2xl mx-auto mb-10 border ${isSearchFocused ? 'border-blue-300 shadow-lg shadow-blue-100' : 'border-blue-100 shadow-md'} rounded-xl transition-all duration-300`}>
+      <Card className={`max-w-2xl mx-auto mb-10 border ${isSearchFocused ? 'border-blue-300 shadow-lg shadow-blue-100' : 'border-blue-100 shadow-md'} rounded-xl transition-all duration-300 edge-accent`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-700">
-            <Search className="h-5 w-5 text-blue-500" />
+          <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-[#BFEFFD]">
+            <Search className="h-5 w-5 text-blue-500 dark:text-[#6fbfe6]" />
             Contract Lookup
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-grow">
-              <Input
+                <Input
                 type="text"
                 placeholder="Enter escrow contract ID"
                 value={contractId}
@@ -57,13 +57,13 @@ export const SearchCard = ({
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
                 disabled={loading}
-                className="pr-10 border-blue-200 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                className="pr-10 border-blue-200 focus:ring-2 focus:ring-blue-500 dark:focus:ring-[#6fbfe6] transition-all duration-200"
               />
             </div>
             <Button
               onClick={fetchEscrowData}
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 active:scale-95"
+              className="bg-blue-600 hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 active:scale-95 dark:bg-[#0EA5FF] dark:hover:bg-[#0bb7ff]"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
@@ -79,13 +79,13 @@ export const SearchCard = ({
             </Button>
           </div>
         </CardContent>
-        <CardFooter className="text-xs text-gray-500 pt-0">
+            <CardFooter className="text-xs text-gray-500 pt-0">
           <div className="flex items-center">
             <span>Example ID:</span>
             <Button
               variant="link"
               size="sm"
-              className="text-xs text-blue-600 p-0 pl-1 h-auto"
+                  className="text-xs text-blue-600 dark:text-[#BFEFFD] p-0 pl-1 h-auto"
               onClick={handleUseExample}
             >
               Click to use example

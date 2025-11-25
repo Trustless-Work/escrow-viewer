@@ -40,11 +40,11 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "SUCCESS":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700/40";
       case "FAILED":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700/40";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-[#BFEFFD] dark:border-[rgba(255,255,255,0.06)]";
     }
   };
 
@@ -54,13 +54,13 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         <div className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-800">Recent Transactions</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-[#BFEFFD]">Recent Transactions</h3>
             <InfoTooltip content="Recent transaction history fetched from Soroban RPC. Note: RPC typically retains 24h-7 days of history. For older data, consider using full indexers like Hubble or BigQuery." />
           </div>
           <div className="flex justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="text-sm text-gray-600">Loading transaction history...</p>
+              <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Loading transaction history...</p>
             </div>
           </div>
         </div>
@@ -74,11 +74,11 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         <div className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-gray-800">Recent Transactions</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-[#BFEFFD]">Recent Transactions</h3>
           </div>
-          <div className="flex items-center gap-2 text-red-600 py-6 bg-red-50 rounded-lg px-4">
+          <div className="flex items-center gap-2 text-red-600 py-6 bg-red-50 rounded-lg px-4 dark:bg-red-900/25">
             <AlertCircle className="h-5 w-5" />
-            <span>{error}</span>
+            <span className="dark:text-red-200">{error}</span>
           </div>
         </div>
       </div>
@@ -90,14 +90,14 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       <div className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-800">Recent Transactions</h3>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-[#BFEFFD]">Recent Transactions</h3>
           <InfoTooltip content="Recent transaction history fetched from Soroban RPC. Click on any transaction to view detailed information including signers, function calls, and results." />
         </div>
         {retentionNotice && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl shadow-sm"
+            className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl shadow-sm dark:bg-amber-900/20 dark:border-amber-700/30"
           >
             <div className="flex items-start gap-3">
               <div className="bg-amber-100 rounded-full p-1">
@@ -136,11 +136,11 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
               <Clock className="h-8 w-8 text-blue-500" />
             </div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">No Transactions Found</h4>
-            <p className="text-sm text-gray-600 max-w-md mx-auto">
+            <h4 className="text-lg font-semibold text-gray-800 dark:text-[#BFEFFD] mb-2">No Transactions Found</h4>
+            <p className="text-sm text-gray-600 dark:text-[#6fbfe6] max-w-md mx-auto">
               This could be due to RPC retention limits, no recent activity, or the contract has not been used yet.
             </p>
-            <div className="mt-4 text-xs text-gray-500">
+            <div className="mt-4 text-xs text-gray-500 dark:text-[#6fbfe6]">
               <p>Tip: Transaction history is typically available for the last 24 hours to 7 days</p>
             </div>
           </div>
@@ -155,7 +155,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-white/50 backdrop-blur-sm border border-gray-200 rounded-xl p-4 hover:shadow-md hover:bg-white/80 cursor-pointer transition-all duration-200"
+                    className="bg-white/50 backdrop-blur-sm border border-gray-200 rounded-xl p-4 hover:shadow-md hover:bg-white/80 cursor-pointer transition-all duration-200 dark:bg-[#070708] dark:border-[rgba(255,255,255,0.04)] dark:hover:bg-[#0b1115]"
                     onClick={() => onTransactionClick(tx.txHash)}
                   >
                     <div className="space-y-3">
@@ -171,7 +171,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1 text-gray-600">
+                        <div className="flex items-center gap-1 text-gray-600 dark:text-[#6fbfe6]">
                           <span className="font-medium">Ledger:</span>
                           <span>{tx.ledger.toLocaleString()}</span>
                         </div>
@@ -187,32 +187,32 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
-                        <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm">
+                      <tr className="bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200 dark:bg-[#080809] dark:border-[rgba(255,255,255,0.04)]">
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700 dark:text-[#BFEFFD] text-sm">
                           Transaction Hash
                         </th>
-                        <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm">
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700 dark:text-[#BFEFFD] text-sm">
                           Ledger
                         </th>
-                        <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm">
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700 dark:text-[#BFEFFD] text-sm">
                           Time
                         </th>
-                        <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm">
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700 dark:text-[#BFEFFD] text-sm">
                           Status
                         </th>
-                        <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm">
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700 dark:text-[#BFEFFD] text-sm">
                           Actions
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {transactions.map((tx, index) => (
-                        <motion.tr
+                          <motion.tr
                           key={tx.txHash}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="hover:bg-blue-50/50 cursor-pointer transition-all duration-200 group"
+                          className="hover:bg-blue-50/50 cursor-pointer transition-all duration-200 group dark:hover:bg-[#081014]/40"
                           onClick={() => onTransactionClick(tx.txHash)}
                         >
                           <td className="py-4 px-6">
@@ -223,10 +223,10 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                               </span>
                             </div>
                           </td>
-                          <td className="py-4 px-6 text-sm font-medium text-gray-700">
+                          <td className="py-4 px-6 text-sm font-medium text-gray-700 dark:text-[#BFEFFD]">
                             {tx.ledger.toLocaleString()}
                           </td>
-                          <td className="py-4 px-6 text-sm text-gray-600">
+                          <td className="py-4 px-6 text-sm text-gray-600 dark:text-[#6fbfe6]">
                             {formatTransactionTime(tx.createdAt)}
                           </td>
                           <td className="py-4 px-6">
@@ -264,7 +264,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                   onClick={onLoadMore}
                   disabled={loading}
                   variant="outline"
-                  className="flex items-center gap-2 bg-white/80 backdrop-blur-sm hover:bg-white border-blue-200 text-blue-600 hover:text-blue-700 px-6 py-2"
+                  className="flex items-center gap-2 bg-white/80 backdrop-blur-sm hover:bg-white border-blue-200 text-blue-600 hover:text-blue-700 px-6 py-2 dark:bg-[#070708] dark:border-[rgba(255,255,255,0.04)] dark:text-[#BFEFFD]"
                 >
                   {loading ? (
                     <>
