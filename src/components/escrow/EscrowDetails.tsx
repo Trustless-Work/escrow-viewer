@@ -23,6 +23,8 @@ import {
   type TransactionResponse,
 } from "@/utils/transactionFetcher";
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
+import { useIsMobile } from "@/hooks/useIsMobile";
+
 
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
@@ -44,7 +46,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+const isMobile = useIsMobile();
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
   // Escrow data hook (raw + organized)
@@ -84,13 +86,6 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   const [showOnlyTransactions, setShowOnlyTransactions] = useState<boolean>(false);
   const txRef = useRef<HTMLDivElement | null>(null);
 
-  // Check if viewport is mobile
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Fetch transaction data
   const fetchTransactionData = useCallback(
@@ -172,7 +167,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     if (showOnlyTransactions && txRef.current) {
       try {
         txRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch (e) {
+      } catch  {
         // ignore scroll failures
       }
     }

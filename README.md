@@ -63,10 +63,90 @@ A decentralized escrow viewer for Trustless Work, built with Next.js and TypeScr
 
 ## Project Structure
 
-- `app/page.tsx`: Main page component that renders the UI and handles data fetching.
-- `utils/ledgerkeycontract.ts`: Contains the logic to fetch escrow data from the Stellar blockchain using Soroban.
-- `components/`: Custom components like `NavbarSimple` for navigation.
-- `public/`: Static assets, including the hexagonal logo (`escrow-background.png`).
+## Project Structure
+
+This application uses a modular, scalable architecture optimized for Web3 dApps. It separates UI, logic, state, blockchain interactions, and component primitives across a clean structure.
+
+```bash
+.
+├── .env / .env.local              # Environment variables (RPC endpoints, configs)
+├── next.config.ts                 # Next.js config (can include rewrites, base path, etc.)
+├── tsconfig.json                  # TypeScript configuration
+├── public/                        # Static assets (logos, SVGs, background image)
+│
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx            # Root layout with global providers and theme
+│   │   ├── globals.css           # Tailwind + global style imports
+│   │   ├── page.tsx              # Home page (default viewer UI)
+│   │   └── [id]/page.tsx         # Dynamic route to display specific escrow contract by ID
+│   │
+│   ├── components/
+│   │   ├── Navbar.tsx            # Global top navigation
+│   │   ├── escrow/               # Escrow-specific smart contract display logic
+│   │   │   ├── EscrowDetails.tsx          # Composes the full escrow contract view
+│   │   │   ├── LedgerBalancePanel.tsx     # Shows XLM/token balance for the contract
+│   │   │   ├── TransactionDetailModal.tsx # Modal for displaying transaction info
+│   │   │   ├── TransactionTable.tsx       # Table of associated transactions
+│   │   │   ├── desktop-view.tsx           # Full-page desktop viewer layout
+│   │   │   ├── error-display.tsx          # Renders user-friendly error messages
+│   │   │   ├── escrow-content.tsx         # Extracted contract content view
+│   │   │   ├── header.tsx                 # Header within the escrow section
+│   │   │   ├── search-card.tsx            # Search input and controls for contract ID
+│   │   │   ├── tab-view.tsx               # Handles view switching (tabs for data views)
+│   │   │   ├── title-card.tsx             # Title banner (contract info / name)
+│   │   │   └── welcome-state.tsx          # Shown before a contract is searched
+│   │   │
+│   │   ├── shared/               # Reusable layout/rendering widgets
+│   │   │   ├── detail-row.tsx            # Label + value row, used in many info cards
+│   │   │   ├── info-tooltip.tsx          # Simple tooltip wrapper
+│   │   │   ├── loading-logo.tsx          # Loading animation component
+│   │   │   ├── milestone-card.tsx        # Shows milestone details and progress
+│   │   │   ├── network-toggle.tsx        # Switch between testnet/mainnet
+│   │   │   ├── progress-bar.tsx          # Dynamic progress bar (milestone/status)
+│   │   │   ├── role-card.tsx             # Card view for contract roles
+│   │   │   ├── role-icon.tsx             # Icon representation of a role (dev, approver, etc.)
+│   │   │   ├── section-card.tsx          # Wrapper for section layout
+│   │   │   ├── status-badge.tsx          # Shows current status with color badge
+│   │   │   └── status-panel.tsx          # High-level status overview box
+│   │   │
+│   │   └── ui/                   # Primitive UI building blocks (used app-wide)
+│   │       ├── badge.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── dialog.tsx
+│   │       ├── dropdown-menu.tsx
+│   │       ├── input.tsx
+│   │       ├── progress.tsx
+│   │       ├── separator.tsx
+│   │       ├── tabs.tsx
+│   │       ├── theme-toggle.tsx
+│   │       └── tooltip.tsx
+│   │
+│   ├── contexts/
+│   │   └── NetworkContext.tsx    # Provides current network (testnet/mainnet) to the app
+│   │
+│   ├── hooks/
+│   │   ├── useEscrowData.ts      # Custom hook to fetch and parse escrow data
+│   │   └── useTokenBalance.ts    # Fetch token balance for escrow accounts
+│   │
+│   ├── lib/
+│   │   ├── amount-format.ts      # Utility for converting token balances to readable values
+│   │   ├── escrow-constants.ts   # Roles, keys, and other static mappings
+│   │   ├── network-config.ts     # RPC URLs, passphrases, and network meta info
+│   │   ├── rpc.ts                # Soroban RPC client wrapper
+│   │   ├── token-service.ts      # Helper to query tokens held by an address
+│   │   └── utils.ts              # Misc reusable logic
+│   │
+│   ├── mappers/
+│   │   └── escrow-mapper.ts      # Transforms raw ledger data into app-ready structure
+│   │
+│   └── utils/
+│       ├── animations/
+│       │   └── animation-variants.ts # Motion configs for framer-motion animation
+│       ├── ledgerkeycontract.ts     # Core contract data parser for Stellar ledger
+│       ├── token-balance.ts         # Utility to fetch token balances from Soroban
+│       └── transactionFetcher.ts    # Logic to retrieve transactions for a given address
 
 ## Technical Details
 
