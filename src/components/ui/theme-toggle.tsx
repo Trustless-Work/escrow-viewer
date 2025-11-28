@@ -9,7 +9,7 @@ export function ThemeToggle() {
       const stored = localStorage.getItem("theme");
       if (stored) return stored === "dark";
       return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    } catch (e) {
+    } catch  {
       return false;
     }
   });
@@ -20,7 +20,7 @@ export function ThemeToggle() {
     else root.classList.remove("dark");
     try {
       localStorage.setItem("theme", isDark ? "dark" : "light");
-    } catch (e) {
+    } catch  {
       // ignore
     }
   }, [isDark]);

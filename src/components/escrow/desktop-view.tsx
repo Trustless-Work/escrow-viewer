@@ -69,7 +69,12 @@ key === "trustline" ? (
             />
           </motion.div>
 
-          <motion.div variants={cardVariants}>
+          
+        </div>
+      </div>
+
+      {/* Roles Card */}
+<motion.div variants={cardVariants}>
             <SectionCard
               title="Assigned Roles"
               icon={Users}
@@ -92,33 +97,6 @@ key === "trustline" ? (
               </div>
             </SectionCard>
           </motion.div>
-        </div>
-      </div>
-
-      {/* Roles Card */}
-      {/* <motion.div variants={cardVariants}>
-        <SectionCard
-          title="Assigned Roles"
-          icon={Users}
-          className="hover:shadow-lg hover:border-blue-200 transition-all duration-300"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {Object.entries(organized.roles).map(([key, value], index) => (
-              <motion.div key={key} variants={cardVariants} custom={index}>
-                <RoleCard
-                  title={ROLE_MAPPING[key] || key.replace(/_/g, " ")}
-                  address={String(value)}
-                  description={
-                    ROLE_PERMISSIONS[ROLE_MAPPING[key]] ||
-                    "No description available"
-                  }
-                  tooltips={FIELD_TOOLTIPS}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </SectionCard>
-      </motion.div> */}
 
       {/* Milestones Card */}
       <motion.div variants={cardVariants}>

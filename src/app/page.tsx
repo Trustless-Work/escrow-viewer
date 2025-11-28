@@ -1,7 +1,7 @@
 "use client";
 
 import { Inter } from "next/font/google";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { NavbarSimple } from "@/components/Navbar";
@@ -13,6 +13,7 @@ import type { NextPage } from "next";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
 
+
 const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
@@ -23,13 +24,6 @@ const Home: NextPage = () => {
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
   // Responsive: detect mobile for SearchCard behaviour
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const handleNavigate = async () => {
     if (!contractId) {
