@@ -1,15 +1,15 @@
-import { motion } from "framer-motion"
-import { DollarSign, CheckSquare } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion";
+import { DollarSign, CheckSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { ProgressBar } from "@/components/shared/progress-bar"
-import { cardVariants } from "@/utils/animations/animation-variants"
-import type { EscrowType } from "@/mappers/escrow-mapper"
+} from "@/components/ui/card";
+import { ProgressBar } from "@/components/shared/progress-bar";
+import { cardVariants } from "@/utils/animations/animation-variants";
+import type { EscrowType } from "@/mappers/escrow-mapper";
 
 interface TitleCardProps {
   title: string;
@@ -18,30 +18,35 @@ interface TitleCardProps {
   escrowType?: EscrowType;
 }
 
-export const TitleCard = ({ 
-  title, 
-  description, 
-  progress, 
-  escrowType 
+export const TitleCard = ({
+  title,
+  description,
+  progress,
+  escrowType,
 }: TitleCardProps) => {
   return (
-    <motion.div variants={cardVariants} whileHover={{ scale: 1.01 }} className="transform-gpu">
-      <Card className="mb-6 border-blue-100 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative hover-lift edge-accent">
-        {/* Fixed gradient line that spans the full width */}
-        <div className="absolute top-0 left-0 right-0 h-2 bg-blue-500 rounded-t-xl" />
+    <motion.div
+      variants={cardVariants}
+      whileHover={{ scale: 1.01 }}
+      className="transform-gpu"
+    >
+      <Card className="mb-6 border border-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative hover-lift edge-accent">
+        {/* Top gradient accent bar */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-primary rounded-t-xl" />
+
         <CardHeader className="pt-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div className="flex items-center gap-3">
-              <DollarSign className="text-blue-500 h-6 w-6 dark:text-[#6fbfe6]" />
-              <CardTitle className="text-xl sm:text-2xl text-blue-600 font-bold flex items-center gap-2">
+              <DollarSign className="h-6 w-6 text-primary" />
+              <CardTitle className="text-xl sm:text-2xl text-card-foreground font-bold flex items-center gap-2">
                 {title}
                 {escrowType && (
                   <Badge
                     variant={escrowType === "multi-release" ? "default" : "secondary"}
                     className={
                       escrowType === "multi-release"
-                        ? "bg-blue-100 text-blue-700 border-blue-200"
-                        : "bg-green-100 text-green-700 border-green-200"
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border border-green-200 dark:border-green-800"
                     }
                   >
                     {escrowType === "multi-release" ? "Multi-Release" : "Single-Release"}
@@ -49,9 +54,10 @@ export const TitleCard = ({
                 )}
               </CardTitle>
             </div>
+
             <Badge
               variant="outline"
-              className="bg-gray-50 text-gray-700 py-1 px-3 font-medium border-gray-200"
+              className="bg-muted text-muted-foreground py-1 px-3 font-medium border border-border"
             >
               {progress === 100 ? (
                 <span className="flex items-center">
@@ -63,17 +69,15 @@ export const TitleCard = ({
               )}
             </Badge>
           </div>
-          <p className="text-gray-600 mt-3 text-base">
-            {description}
-          </p>
+
+          {/* ✅ Description with theme-aware color */}
+          <p className="text-muted-foreground mt-3 text-base">{description}</p>
         </CardHeader>
+
         <CardContent className="pt-2">
-          <ProgressBar
-            value={progress}
-            label="Milestone Progress"
-          />
+          <ProgressBar value={progress} label="Milestone Progress" />
         </CardContent>
       </Card>
     </motion.div>
-  )
-}
+  );
+};
