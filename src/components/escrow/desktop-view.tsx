@@ -78,7 +78,7 @@ key === "trustline" ? (
             <SectionCard
               title="Assigned Roles"
               icon={Users}
-              className="hover:shadow-lg hover:border-blue-200 transition-all duration-300"
+              className="bg-card text-card-foreground"
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {Object.entries(organized.roles).map(([key, value], index) => (

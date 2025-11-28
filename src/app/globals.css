@@ -80,44 +80,38 @@
 }
 
 .dark {
-  /* Dark theme: shiny black background with vibrant blue foreground */
   --background: #000000;
-  --foreground: #7EE3FF; /* bright cyan-blue text */
+  --foreground: #E2E8F0; /* bright neutral, readable text */
+  
+  --card: #070708;
+  --card-foreground: #F1F5F9; /* bright text on cards */
 
-  --card: #070708; /* very dark card surface */
-  --card-foreground: #BFEFFD; /* lighter blue text on cards */
   --popover: #080809;
-  --popover-foreground: #BFEFFD;
+  --popover-foreground: #F1F5F9;
 
-  --primary: #0EA5FF; /* azure primary */
+  --primary: #0EA5FF;
   --primary-foreground: #001219;
 
-  --secondary: #083358;
-  --secondary-foreground: #7EE3FF;
+  --secondary: #1E293B;
+  --secondary-foreground: #E2E8F0;
 
-  --muted: #0b1115;
-  --muted-foreground: #6fbfe6;
+  --muted: #0f1b2d;
+  --muted-foreground: #94A3B8; /* slate-400 for softer, still legible text */
 
   --accent: #075985;
-  --accent-foreground: #7EE3FF;
+  --accent-foreground: #F1F5F9;
 
-  --destructive: #ff6b6b;
-  --border: rgba(255,255,255,0.06);
-  --input: rgba(255,255,255,0.03);
+  --destructive: #EF4444;
+  --border: #1E293B;
+  --input: #1E293B;
   --ring: rgba(14,165,255,0.25);
 
-  --chart-1: #3dd6ff;
-  --chart-2: #1fb6ff;
-  --chart-3: #79e0ff;
-  --chart-4: #4cc0ff;
-  --chart-5: #2bb0ff;
-
-  --sidebar: #040608;
-  --sidebar-foreground: #7EE3FF;
-  --sidebar-primary: #062037;
-  --sidebar-primary-foreground: #7EE3FF;
+  --sidebar: #0F172A;
+  --sidebar-foreground: #E2E8F0;
+  --sidebar-primary: #1E3A8A;
+  --sidebar-primary-foreground: #E2E8F0;
   --sidebar-accent: #075985;
-  --sidebar-accent-foreground: #BFEFFD;
+  --sidebar-accent-foreground: #F1F5F9;
   --sidebar-border: rgba(255,255,255,0.04);
   --sidebar-ring: rgba(14,165,255,0.18);
 }
