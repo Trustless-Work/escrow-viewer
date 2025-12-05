@@ -172,12 +172,9 @@ if (key === "platform_fee") {
   // Check if it's a string (might already be formatted)
   if (isStrLike(val)) {
     const str = val.string.trim();
-    // If it already has %, return as-is
-    if (str.includes('%')) {
-      return str;
-    }
-    // Otherwise, try to parse as number
-    const num = parseFloat(str);
+    // Remove % if present and parse the number
+    const cleanStr = str.replace('%', '').trim();
+    const num = parseFloat(cleanStr);
     if (!isNaN(num)) {
       // If > 100, treat as basis points; otherwise as percentage
       return (num > 100 ? num / 100 : num).toFixed(2) + "%";
