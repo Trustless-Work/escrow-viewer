@@ -161,12 +161,58 @@ export const extractValue = (
 ): EscrowExtractedValue => {
   if (!data) return "N/A";
   const item = data.find((entry) => entry.key.symbol === key);
-  if (!item) return "N/A";
+  if (!item) {
+    // Log when platform_fee is not found
+    if (key === "platform_fee") {
+      console.warn("[DEBUG] Platform fee entry not found. Available keys:", 
+        data.map(e => e.key.symbol));
+    }
+    return "N/A";
+  }
  const val: unknown = item.val;   // ⬅️ was EscrowValue
 if (val == null) return "N/A";
 
+// Handle platform_fee with multiple possible formats
+if (key === "platform_fee") {
+  console.log("[DEBUG] Platform fee raw value from RPC:", JSON.stringify(val, null, 2));
+  
+  // Check if it's a string (might already be formatted)
+  if (isStrLike(val)) {
+    const str = val.string.trim();
+    // If it already has %, return as-is
+    if (str.includes('%')) {
+      return str;
+    }
+    // Otherwise, try to parse as number
+    const num = parseFloat(str);
+    if (!isNaN(num)) {
+      // If > 100, treat as basis points; otherwise as percentage
+      return (num > 100 ? num / 100 : num).toFixed(2) + "%";
+    }
+    return str;
+  }
+  
+  // Check for u32 format
+  const u32Val = val as { u32?: number };
+  if (u32Val && typeof u32Val.u32 === "number") {
+    console.log("[DEBUG] Platform fee as u32:", u32Val.u32);
+    const num = u32Val.u32;
+    return (num > 100 ? num / 100 : num).toFixed(2) + "%";
+  }
+  
+  // Check for u64 format
+  const u64Val = val as { u64?: string | number };
+  if (u64Val && u64Val.u64 !== undefined) {
+    const num = typeof u64Val.u64 === "string" ? parseInt(u64Val.u64, 10) : u64Val.u64;
+    if (!isNaN(num)) {
+      console.log("[DEBUG] Platform fee as u64:", num);
+      return (num > 100 ? num / 100 : num).toFixed(2) + "%";
+    }
+  }
+}
+
 if (isBoolLike(val)) return val.bool ? "True" : "False";
-if (isStrLike(val)) return val.string;  // ✅ no more “never”
+if (isStrLike(val)) return val.string;  // ✅ no more "never"
 if (isAddrLike(val)) return isAddress ? truncateAddress(val.address, isMobile) : val.address;
 
 if (isMapLike(val) && key === "trustline") {
@@ -182,7 +228,29 @@ if (isI128Like(val)) {
   if (key === "platform_fee") {
     const big = i128ToBigIntFlexibleSafe(val);
     if (big === null) return "N/A";
-    return (Number(big) / 100).toFixed(2) + "%";
+    
+    // Log the raw value to understand the format
+    console.log("[DEBUG] Platform fee raw i128 value:", {
+      raw: val,
+      bigInt: big.toString(),
+      number: Number(big)
+    });
+    
+    // Platform fee might come as:
+    // - Basis points (500 = 5%) - divide by 100
+    // - Direct percentage (5 = 5%) - use as-is
+    // - Percentage with decimals (500 = 5.00%) - divide by 100
+    // Let's check the actual value to determine the format
+    const numValue = Number(big);
+    
+    // If value is > 100, it's likely basis points (divide by 100)
+    // If value is <= 100, it might be direct percentage
+    if (numValue > 100) {
+      return (numValue / 100).toFixed(2) + "%";
+    } else {
+      // Value is <= 100, treat as direct percentage
+      return numValue.toFixed(2) + "%";
+    }
   }
   const d = safeDecimals(getDecimalsFromEscrowMap(data));
   const big = i128ToBigIntFlexibleSafe(val);
