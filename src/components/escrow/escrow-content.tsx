@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react"
 import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
 import { staggerContainer } from "@/utils/animations/animation-variants"
 import { LoadingLogo } from "@/components/shared/loading-logo"
@@ -8,6 +9,10 @@ import { DesktopView } from "@/components/escrow/desktop-view"
 import { WelcomeState } from "@/components/escrow/welcome-state"
 import error from "next/error"
 import { useNetwork } from "@/contexts/NetworkContext"; // Add this line
+ import { Button } from "@/components/ui/button"
+ import { exportEscrowReport } from "@/utils/pdf/exportEscrowReport"
+import { FileDown, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 
 interface EscrowContentProps {
@@ -22,6 +27,7 @@ export const EscrowContent = ({
 	isMobile,
 }: EscrowContentProps) => {
 	const { currentNetwork } = useNetwork(); // Get network from context
+	const [exporting, setExporting] = useState(false)
 
 	return (
 		<div className="flex flex-col items-center">
@@ -48,7 +54,8 @@ export const EscrowContent = ({
 						variants={staggerContainer}
 						className="w-full max-w-5xl"
 					>
-						{/* Title Card */}
+						{/* Title Card */
+						}
 						<TitleCard
 							title={typeof organized.title === "string" ? organized.title : ""}
 							description={
@@ -59,6 +66,41 @@ export const EscrowContent = ({
 							progress={organized.progress}
 							escrowType={organized.escrowType}
 						/>
+
+						<div className="w-full flex justify-end mb-4">
+							<Button
+								variant="default"
+								size="lg"
+								aria-label="Export escrow as PDF"
+								disabled={exporting}
+								onClick={async () => {
+									if (!organized) return
+									setExporting(true)
+									try {
+										await exportEscrowReport(organized, currentNetwork)
+										toast.success("PDF exported successfully")
+									} catch (e) {
+										const errorMessage = e instanceof Error ? e.message : "Failed to export PDF"
+										console.error("PDF export error:", e)
+										toast.error(`Failed to export PDF: ${errorMessage}`)
+									} finally {
+										setExporting(false)
+									}
+								}}
+							>
+								{exporting ? (
+									<>
+										<Loader2 className="h-4 w-4 animate-spin mr-2" />
+										<span>Exporting…</span>
+									</>
+								) : (
+									<>
+										<FileDown className="h-4 w-4 mr-2" />
+										<span>Export to PDF</span>
+									</>
+								)}
+							</Button>
+						</div>
 
 						{/* Mobile view: Use tabs for compact display */}
 						{isMobile && <TabView organized={organized} network={currentNetwork}/>}
