@@ -193,7 +193,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   }, [showOnlyTransactions]);
 
   // === DEBUG LOGGING (EscrowDetails) ===
-  const DEBUG = true;
+  const DEBUG = process.env.NODE_ENV === "development";
 
   useEffect(() => {
     if (!DEBUG) return;
@@ -263,18 +263,18 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
                   {isValidStellarExpertUrl && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button className="w-full flex justify-center items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground shadow-sm hover:shadow-md transition cursor-pointer">
-                          <a
-                            href={stellarExpertUrl ?? undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="View on Stellar Expert"
-                          >
-                            View on Stellar Expert
-                          </a>
+                        <a
+                          href={stellarExpertUrl ?? undefined}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="View on Stellar Expert"
+                          className="w-full flex justify-center items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground shadow-sm hover:shadow-md transition cursor-pointer"
+                        >
+                          View on Stellar Expert
                           <ExternalLink className="w-4 h-4" />
-                        </button>
+                        </a>
                       </TooltipTrigger>
+
                       <TooltipContent>
                         <p className="text-white font-semibold">View this contract on Stellar Expert explorer</p>
                       </TooltipContent>
