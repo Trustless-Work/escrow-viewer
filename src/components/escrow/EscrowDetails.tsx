@@ -5,7 +5,7 @@ import { Inter } from "next/font/google";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { NavbarSimple } from "@/components/Navbar";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LoadingLogo } from "@/components/shared/loading-logo";
 import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import { useRouter } from "next/navigation";
@@ -29,6 +29,8 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { ExternalLink } from "lucide-react";
+import { Tooltip } from "@radix-ui/react-tooltip";
 // (useMemo is consolidated in the import above)
 
 
@@ -46,7 +48,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
-const isMobile = useIsMobile();
+  const isMobile = useIsMobile();
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
   // Escrow data hook (raw + organized)
@@ -64,16 +66,33 @@ const isMobile = useIsMobile();
   );
 
   const organizedWithLive = useMemo(() => {
-  if (!organized) return null;
-  if (!ledgerBalance) return organized; // nothing to override
-  return {
-    ...organized,
-    properties: {
-      ...organized.properties,
-      balance: ledgerBalance, // <- replace storage balance with live one
-    },
-  };
-}, [organized, ledgerBalance]);
+    if (!organized) return null;
+    if (!ledgerBalance) return organized; // nothing to override
+    return {
+      ...organized,
+      properties: {
+        ...organized.properties,
+        balance: ledgerBalance, // <- replace storage balance with live one
+      },
+    };
+  }, [organized, ledgerBalance]);
+
+
+
+  // Stellar Expert URL
+  const stellarExpertUrl = useMemo(() => {
+    if (!contractId) return null;
+
+    const networkPath =
+      currentNetwork === "testnet" ? "testnet" : "public";
+
+    return `https://stellar.expert/explorer/${networkPath}/contract/${contractId}`;
+  }, [contractId, currentNetwork]);
+
+  const isValidStellarExpertUrl = Boolean(
+    stellarExpertUrl &&
+    (currentNetwork === "testnet" || currentNetwork === "mainnet")
+  );
 
 
   // Transaction-related state (kept here for now)
@@ -167,39 +186,39 @@ const isMobile = useIsMobile();
     if (showOnlyTransactions && txRef.current) {
       try {
         txRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch  {
+      } catch {
         // ignore scroll failures
       }
     }
   }, [showOnlyTransactions]);
 
-// === DEBUG LOGGING (EscrowDetails) ===
-const DEBUG = true;
+  // === DEBUG LOGGING (EscrowDetails) ===
+  const DEBUG = true;
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] network:", currentNetwork);
-  console.log("[DBG][EscrowDetails] contractId:", contractId);
-}, [currentNetwork, contractId]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] network:", currentNetwork);
+    console.log("[DBG][EscrowDetails] contractId:", contractId);
+  }, [currentNetwork, contractId]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] raw escrow map:", raw);
-}, [raw]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] raw escrow map:", raw);
+  }, [raw]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] organized data:", organized);
-}, [organized]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] organized data:", organized);
+  }, [organized]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] token live balance:", {
-    ledgerBalance,
-    decimals,
-    mismatch,
-  });
-}, [ledgerBalance, decimals, mismatch]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] token live balance:", {
+      ledgerBalance,
+      decimals,
+      mismatch,
+    });
+  }, [ledgerBalance, decimals, mismatch]);
 
 
   return (
@@ -240,7 +259,28 @@ useEffect(() => {
               </div>
 
               {raw && (
-                <div className="w-full max-w-lg">
+                <div className="w-full max-w-lg space-y-3">
+                  {isValidStellarExpertUrl && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="w-full flex justify-center items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground shadow-sm hover:shadow-md transition cursor-pointer">
+                          <a
+                            href={stellarExpertUrl ?? undefined}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="View on Stellar Expert"
+                          >
+                            View on Stellar Expert
+                          </a>
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-white font-semibold">View this contract on Stellar Expert explorer</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+
                   <button
                     onClick={() => setShowOnlyTransactions(true)}
                     aria-label="View Transaction History"
@@ -304,7 +344,7 @@ useEffect(() => {
                     animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                   />
-                    <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700">
+                  <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700">
                     <TransactionTable
                       transactions={transactions}
                       loading={transactionLoading}
