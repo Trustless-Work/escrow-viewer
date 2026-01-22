@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { rpc } from '@stellar/stellar-sdk';
-import { getNetworkConfig, type NetworkType } from '@/lib/network-config';
+import { type NetworkType } from '@/lib/network-config';
 
 export interface ContractEvent {
   id: string;
@@ -33,36 +32,76 @@ export function useRecentEvents(
     setError(null);
 
     try {
-      const config = getNetworkConfig(network);
-      const server = new rpc.Server(config.rpcUrl);
-
       // Get latest ledger
-      const latestLedger = await server.getLatestLedger();
-      const endLedger = latestLedger.sequence;
+      const latestLedgerResponse = await fetch('/api/rpc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          network,
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getLatestLedger',
+        }),
+      });
+
+      if (!latestLedgerResponse.ok) {
+        throw new Error('Failed to get latest ledger');
+      }
+
+      const latestLedgerData = await latestLedgerResponse.json();
+      const endLedger = latestLedgerData.result.sequence;
 
       // Approximate 7 days: ~5 seconds per ledger, 7*24*3600/5 ≈ 12096
       const sevenDaysLedgers = Math.floor((7 * 24 * 3600) / 5);
       const startLedger = Math.max(1, endLedger - sevenDaysLedgers);
 
-      const response = await server.getEvents({
-        startLedger,
-        filters: [
-          {
-            contractIds: [contractId],
-            type: 'contract',
+      // Get events
+      const eventsResponse = await fetch('/api/rpc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          network,
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'getEvents',
+          params: {
+            startLedger,
+            filters: [
+              {
+                contractIds: [contractId],
+                type: 'contract',
+              },
+            ],
+            limit: 100,
           },
-        ],
-        limit: 100, // reasonable limit
+        }),
       });
 
+      if (!eventsResponse.ok) {
+        throw new Error('Failed to get events');
+      }
+
+      const eventsData = await eventsResponse.json();
+
+      if (eventsData.error) {
+        throw new Error(eventsData.error.message || 'Failed to fetch events');
+      }
+
       // Map to our interface
-      const mappedEvents: ContractEvent[] = response.events.map((event) => ({
+      const mappedEvents: ContractEvent[] = (eventsData.result?.events || []).map((event: {
+        id: string;
+        type: string;
+        ledger: number;
+        contractId?: string;
+        topic: string[];
+        value: string;
+      }) => ({
         id: event.id,
         type: event.type,
         ledger: event.ledger,
-        contractId: event.contractId?.toString(),
-        topics: event.topic.map((topic) => topic.toXDR('base64')),
-        value: event.value.toXDR('base64'),
+        contractId: event.contractId,
+        topics: event.topic,
+        value: event.value,
       }));
 
       // Sort by ledger descending (most recent first)

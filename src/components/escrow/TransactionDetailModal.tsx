@@ -29,12 +29,14 @@ import {
   formatTransactionTime,
   truncateHash,
 } from "@/utils/transactionFetcher";
+import { NetworkType } from "@/lib/network-config";
 
 interface TransactionDetailModalProps {
   txHash: string | null;
   isOpen: boolean;
   onClose: () => void;
   isMobile: boolean;
+  network: NetworkType;
 }
 
 export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
@@ -42,6 +44,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   isOpen,
   onClose,
   isMobile,
+  network,
 }) => {
   const [details, setDetails] = useState<TransactionDetails | null>(null);
   const [loading, setLoading] = useState(false);
@@ -54,7 +57,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
     setError(null);
     
     try {
-      const transactionDetails = await fetchTransactionDetails(txHash);
+      const transactionDetails = await fetchTransactionDetails(txHash, network);
       setDetails(transactionDetails);
     } catch (err) {
       setError("Failed to fetch transaction details");
@@ -62,7 +65,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [txHash]);
+  }, [txHash, network]);
 
   const copyToClipboard = async (text: string) => {
   try {

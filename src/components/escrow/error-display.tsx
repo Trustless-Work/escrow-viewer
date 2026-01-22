@@ -1,14 +1,28 @@
 import { motion, AnimatePresence } from "framer-motion"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface ErrorDisplayProps {
   error: string | null
+  onSwitchNetwork?: (network: 'testnet' | 'mainnet') => void
+  onRetry?: () => void
 }
 
-export const ErrorDisplay = ({ error }: ErrorDisplayProps) => {
+export const ErrorDisplay = ({ error, onSwitchNetwork, onRetry }: ErrorDisplayProps) => {
   if (!error) return null;
 
   const parts = error.split('•').map(part => part.trim()).filter(part => part);
+
+  // Check if error suggests switching networks
+  const switchSuggestion = parts.find(part => part.includes('Try switching to'));
+  let targetNetwork: 'testnet' | 'mainnet' | null = null;
+  if (switchSuggestion) {
+    if (switchSuggestion.includes('mainnet')) {
+      targetNetwork = 'mainnet';
+    } else if (switchSuggestion.includes('testnet')) {
+      targetNetwork = 'testnet';
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -20,7 +34,7 @@ export const ErrorDisplay = ({ error }: ErrorDisplayProps) => {
       >
         <div className="flex items-start gap-2">
           <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
-          <div>
+          <div className="flex-1">
             {parts.length > 1 ? (
               <div>
                 <p className="font-medium mb-2">{parts[0]}</p>
@@ -33,6 +47,30 @@ export const ErrorDisplay = ({ error }: ErrorDisplayProps) => {
             ) : (
               <p>{error}</p>
             )}
+            {/* Action buttons */}
+            <div className="flex gap-2 mt-3">
+              {targetNetwork && onSwitchNetwork && (
+                <Button
+                  onClick={() => onSwitchNetwork(targetNetwork!)}
+                  size="sm"
+                  variant="outline"
+                  className="bg-white hover:bg-gray-50 border-red-200 text-red-700"
+                >
+                  Switch to {targetNetwork === 'testnet' ? 'Testnet' : 'Mainnet'}
+                </Button>
+              )}
+              {onRetry && (
+                <Button
+                  onClick={onRetry}
+                  size="sm"
+                  variant="outline"
+                  className="bg-white hover:bg-gray-50 border-red-200 text-red-700"
+                >
+                  <RefreshCw size={14} className="mr-1" />
+                  Retry
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>

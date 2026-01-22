@@ -1,5 +1,5 @@
 import { Contract } from "@stellar/stellar-sdk";
-import { NetworkType, getNetworkConfig } from "@/lib/network-config";
+import { NetworkType } from "@/lib/network-config";
 
 // Define types for the escrow data map
 interface EscrowKey {
@@ -46,13 +46,12 @@ export async function getLedgerKeyContractCode(
       },
     };
 
-    const networkConfig = getNetworkConfig(network);
-    const res = await fetch(networkConfig.rpcUrl, {
+    const res = await fetch('/api/rpc', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({ network, ...requestBody }),
     });
 
     if (!res.ok) {

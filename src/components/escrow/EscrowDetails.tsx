@@ -43,10 +43,22 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   initialEscrowId,
 }) => {
   const router = useRouter();
-  const { currentNetwork } = useNetwork();
+  const { currentNetwork, setNetwork } = useNetwork();
 
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
+
+  // Handle network switch, updating contract ID for examples
+  const handleSwitchNetwork = useCallback((network: 'testnet' | 'mainnet') => {
+    setNetwork(network);
+    // If current contract is an example, switch to the example for the new network
+    if (contractId === EXAMPLE_CONTRACT_IDS.testnet || contractId === EXAMPLE_CONTRACT_IDS.mainnet) {
+      const newContractId = EXAMPLE_CONTRACT_IDS[network];
+      setContractId(newContractId);
+      // Update URL
+      router.replace(`/${newContractId}`);
+    }
+  }, [contractId, setNetwork, router, setContractId]);
 const isMobile = useIsMobile();
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
@@ -101,7 +113,7 @@ const isMobile = useIsMobile();
       setTransactionLoading(true);
       setTransactionError(null);
       try {
-        const response = await fetchTransactions(id, { cursor, limit: 20 });
+        const response = await fetchTransactions(id, currentNetwork, { cursor, limit: 20 });
         setTransactionResponse(response);
         if (cursor) {
           setTransactions((prev) => [...prev, ...response.transactions]);
@@ -114,7 +126,7 @@ const isMobile = useIsMobile();
         setTransactionLoading(false);
       }
     },
-    []
+    [currentNetwork]
   );
 
   // Initial + network-change fetch (escrow + txs)
@@ -261,7 +273,11 @@ useEffect(() => {
           )}
 
           {/* Error Display */}
-          <ErrorDisplay error={error} />
+          <ErrorDisplay
+            error={error}
+            onSwitchNetwork={handleSwitchNetwork}
+            onRetry={refresh}
+          />
 
           {/* Content Section (hidden when showing transactions as a page) */}
           {!showOnlyTransactions && (
@@ -410,6 +426,7 @@ useEffect(() => {
             isOpen={isModalOpen}
             onClose={handleModalClose}
             isMobile={isMobile}
+            network={currentNetwork}
           />
         </main>
       </div>

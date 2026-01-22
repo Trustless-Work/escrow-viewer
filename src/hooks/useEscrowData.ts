@@ -47,7 +47,7 @@ export function useEscrowData(contractId: string, network: NetworkType, isMobile
         const isExampleContract = contractId === EXAMPLE_CONTRACT_IDS.testnet || contractId === EXAMPLE_CONTRACT_IDS.mainnet;
         const baseMessage = `No ledger entry found for contract ID "${contractId}".`;
         const suggestions = isExampleContract
-          ? `•This example contract may not be deployed on ${network}•Try switching to ${network === 'testnet' ? 'mainnet' : 'testnet'} or use a different contract ID•The contract was recently deployed and not yet indexed`
+          ? `•This example contract may not be deployed on ${network}•Use a different contract ID•The contract was recently deployed and not yet indexed`
           : `•The contract ID is invalid or doesn't exist on ${network}•The contract exists on a different network•The contract was recently deployed and not yet indexed`;
         setError(`${baseMessage}${suggestions}`);
       } else {
@@ -57,7 +57,11 @@ export function useEscrowData(contractId: string, network: NetworkType, isMobile
     } catch (e) {
       setRaw(null);
       setOrganized(null);
-      setError(e instanceof Error ? e.message : "Failed to fetch escrow data");
+      const errorMessage = e instanceof Error ? e.message : "Failed to fetch escrow data";
+      const userFriendlyMessage = errorMessage === "Failed to fetch"
+        ? "Network error: Unable to connect to Stellar RPC. Please check your internet connection or try again later."
+        : errorMessage;
+      setError(userFriendlyMessage);
     } finally {
       setLoading(false);
     }
