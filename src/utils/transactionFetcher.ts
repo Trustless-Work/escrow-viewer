@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Contract } from "@stellar/stellar-sdk";
+import { jsonRpcCall } from "@/lib/rpc";
 
 // Types for transaction data
 export interface TransactionMetadata {
@@ -163,11 +164,18 @@ export async function fetchEvents(
   limit: number = 50
 ): Promise<EventResponse> {
   try {
+    // Get latest ledger to calculate startLedger for ~7 days
+    const latestLedgerResponse = await jsonRpcCall<{ sequence: number }>(rpcUrl, "getLatestLedger");
+    const latestLedger = latestLedgerResponse.sequence;
+    // Approximate 7 days: ~121,000 ledgers (5 sec blocks)
+    const startLedger = Math.max(1, latestLedger - 121000);
+
     const requestBody = {
       jsonrpc: "2.0",
       id: 1,
       method: "getEvents",
       params: {
+        startLedger,
         filters: [
           {
             type: "contract",
