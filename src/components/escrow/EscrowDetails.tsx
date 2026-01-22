@@ -10,6 +10,9 @@ import { LoadingLogo } from "@/components/shared/loading-logo";
 import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { getStellarLabUrl } from "@/lib/network-config";
+import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
@@ -204,7 +207,7 @@ useEffect(() => {
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
+      <div className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 ${inter.className}`}>
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -240,7 +243,7 @@ useEffect(() => {
               </div>
 
               {raw && (
-                <div className="w-full max-w-lg">
+                <div className="w-full max-w-lg flex flex-col gap-2">
                   <button
                     onClick={() => setShowOnlyTransactions(true)}
                     aria-label="View Transaction History"
@@ -248,6 +251,39 @@ useEffect(() => {
                   >
                     View Transaction History
                   </button>
+                  <Button
+                    onClick={() => {
+                      // Get escrow_id from organized data as the most reliable source
+                      const escrowIdFromData = organized?.properties?.escrow_id as string | undefined;
+                      
+                      // CONTRACT ID IS REQUIRED - try multiple sources in order of reliability:
+                      // 1. escrow_id from organized data (most reliable - what was actually loaded)
+                      // 2. contractId state
+                      // 3. initialEscrowId prop
+                      const idToUse = 
+                        (escrowIdFromData && escrowIdFromData.trim()) ||
+                        (contractId && contractId.trim()) || 
+                        (initialEscrowId && initialEscrowId.trim());
+                      
+                      if (!idToUse || idToUse.trim() === '') {
+                        alert('Error: Contract ID is required to open in Stellar Lab. Please ensure an escrow contract is loaded.');
+                        return;
+                      }
+                      
+                      try {
+                        const labUrl = getStellarLabUrl(currentNetwork, idToUse);
+                        window.open(labUrl, "_blank");
+                      } catch (error) {
+                        alert(`Error opening Stellar Lab: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full inline-flex justify-center items-center gap-2"
+                    title="Open contract in Stellar Lab"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open in Stellar Lab
+                  </Button>
                 </div>
               )}
             </div>
