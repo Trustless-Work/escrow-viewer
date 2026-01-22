@@ -27,7 +27,7 @@ export const DesktopView = ({ organized, network }: DesktopViewProps) => {
           <SectionCard
             title="Escrow Details"
             icon={FileText}
-            className="hover:shadow-lg hover:border-green-300 transition-all duration-300"
+            className="hover:shadow-lg hover:border-green-300 dark:hover:border-green-700/50 transition-all duration-300"
           >
             <div className="space-y-1">
               {Object.entries(organized.properties).map(([key, value]) => (
@@ -103,7 +103,7 @@ key === "trustline" ? (
         <SectionCard
           title="Milestones"
           icon={ListChecks}
-          className="hover:shadow-lg hover:border-blue-200 transition-all duration-300"
+          className="hover:shadow-lg hover:border-primary/30 transition-all duration-300"
         >
           {organized.milestones.length > 0 ? (
             <div className="grid md:grid-cols-2 gap-4">
@@ -128,7 +128,7 @@ key === "trustline" ? (
             </div>
           ) : (
             <div className="text-center py-6">
-              <p className="text-gray-500">No milestones found</p>
+              <p className="text-muted-foreground">No milestones found</p>
             </div>
           )}
         </SectionCard>

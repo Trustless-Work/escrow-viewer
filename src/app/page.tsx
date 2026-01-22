@@ -44,13 +44,13 @@ const Home: NextPage = () => {
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
+      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}>
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-12">
           {/* HERO */}
           <div className="relative">
-            <div className="relative bg-white/95 dark:bg-card rounded-3xl p-8 md:p-12 shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.04)]">
+            <div className="relative bg-white/95 dark:bg-card rounded-3xl p-8 md:p-12 shadow-2xl border border-gray-200/60 dark:border-border">
               <section className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-16">
 
             {/* Left: text */}

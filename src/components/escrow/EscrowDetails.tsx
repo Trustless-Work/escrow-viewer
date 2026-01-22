@@ -204,7 +204,7 @@ useEffect(() => {
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
+      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}>
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -289,7 +289,7 @@ useEffect(() => {
               </div>
 
               <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Complete blockchain activity record for this escrow contract</p>
+                <p className="text-sm text-muted-foreground">Complete blockchain activity record for this escrow contract</p>
               </div>
 
               <div>
@@ -300,11 +300,11 @@ useEffect(() => {
                   transition={{ delay: 0.05, duration: 0.4 }}
                 >
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
+                    className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 dark:from-primary/5 dark:to-accent/5 rounded-3xl -z-10"
                     animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                   />
-                    <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700">
+                    <div className="relative bg-white/95 dark:bg-card backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-border overflow-hidden hover:shadow-3xl transition-all duration-700">
                     <TransactionTable
                       transactions={transactions}
                       loading={transactionLoading}
