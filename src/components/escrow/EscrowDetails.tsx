@@ -6,8 +6,10 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { NavbarSimple } from "@/components/Navbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingLogo } from "@/components/shared/loading-logo";
 import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
+import { getNetworkConfig } from "@/lib/network-config";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
 
@@ -16,11 +18,15 @@ import { SearchCard } from "@/components/escrow/search-card";
 import { ErrorDisplay } from "@/components/escrow/error-display";
 import { EscrowContent } from "@/components/escrow/escrow-content";
 import { TransactionTable } from "@/components/escrow/TransactionTable";
+import { EventTable } from "@/components/escrow/EventTable";
 import { TransactionDetailModal } from "@/components/escrow/TransactionDetailModal";
 import {
   fetchTransactions,
+  fetchEvents,
   type TransactionMetadata,
   type TransactionResponse,
+  type EventMetadata,
+  type EventResponse,
 } from "@/utils/transactionFetcher";
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -86,6 +92,13 @@ const isMobile = useIsMobile();
   const [showOnlyTransactions, setShowOnlyTransactions] = useState<boolean>(false);
   const txRef = useRef<HTMLDivElement | null>(null);
 
+  // Event-related state
+  const [events, setEvents] = useState<EventMetadata[]>([]);
+  const [eventLoading, setEventLoading] = useState<boolean>(false);
+  const [eventError, setEventError] = useState<string | null>(null);
+  const [eventResponse, setEventResponse] = useState<EventResponse | null>(null);
+  const [activeTab, setActiveTab] = useState<'transactions' | 'events'>('transactions');
+
 
   // Fetch transaction data
   const fetchTransactionData = useCallback(
@@ -110,12 +123,37 @@ const isMobile = useIsMobile();
     []
   );
 
-  // Initial + network-change fetch (escrow + txs)
+  // Fetch event data
+  const fetchEventData = useCallback(
+    async (id: string, rpcUrl: string, cursor?: string) => {
+      if (!id) return;
+      setEventLoading(true);
+      setEventError(null);
+      try {
+        const response = await fetchEvents(id, rpcUrl, cursor, 20);
+        setEventResponse(response);
+        if (cursor) {
+          setEvents((prev) => [...prev, ...response.events]);
+        } else {
+          setEvents(response.events);
+        }
+      } catch (err: any) {
+        setEventError(err.message || "Failed to fetch events");
+      } finally {
+        setEventLoading(false);
+      }
+    },
+    []
+  );
+
+  // Initial + network-change fetch (escrow + txs + events)
   useEffect(() => {
     if (!contractId) return;
-    // useEscrowData auto-refreshes on contractId change; just ensure txs loaded:
+    // useEscrowData auto-refreshes on contractId change; just ensure txs and events loaded:
     fetchTransactionData(contractId);
-  }, [contractId, currentNetwork, fetchTransactionData]);
+    const { rpcUrl } = getNetworkConfig(currentNetwork);
+    fetchEventData(contractId, rpcUrl);
+  }, [contractId, currentNetwork, fetchTransactionData, fetchEventData]);
 
   // Enter key in search
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -126,6 +164,8 @@ const isMobile = useIsMobile();
       }
       void refresh();
       fetchTransactionData(contractId);
+      const { rpcUrl } = getNetworkConfig(currentNetwork);
+      fetchEventData(contractId, rpcUrl);
     }
   };
 
@@ -145,6 +185,8 @@ const isMobile = useIsMobile();
     }
     await refresh();
     fetchTransactionData(contractId);
+    const { rpcUrl } = getNetworkConfig(currentNetwork);
+    fetchEventData(contractId, rpcUrl);
   };
 
   // Transactions UI handlers
@@ -159,6 +201,13 @@ const isMobile = useIsMobile();
   const handleLoadMoreTransactions = () => {
     if (transactionResponse?.cursor && contractId) {
       fetchTransactionData(contractId, transactionResponse.cursor);
+    }
+  };
+
+  const handleLoadMoreEvents = () => {
+    if (eventResponse?.cursor && contractId) {
+      const { rpcUrl } = getNetworkConfig(currentNetwork);
+      fetchEventData(contractId, rpcUrl, eventResponse.cursor);
     }
   };
 
@@ -180,17 +229,17 @@ useEffect(() => {
   if (!DEBUG) return;
   console.log("[DBG][EscrowDetails] network:", currentNetwork);
   console.log("[DBG][EscrowDetails] contractId:", contractId);
-}, [currentNetwork, contractId]);
+}, [currentNetwork, contractId, DEBUG]);
 
 useEffect(() => {
   if (!DEBUG) return;
   console.log("[DBG][EscrowDetails] raw escrow map:", raw);
-}, [raw]);
+}, [raw, DEBUG]);
 
 useEffect(() => {
   if (!DEBUG) return;
   console.log("[DBG][EscrowDetails] organized data:", organized);
-}, [organized]);
+}, [organized, DEBUG]);
 
 useEffect(() => {
   if (!DEBUG) return;
@@ -199,7 +248,7 @@ useEffect(() => {
     decimals,
     mismatch,
   });
-}, [ledgerBalance, decimals, mismatch]);
+}, [ledgerBalance, decimals, mismatch, DEBUG]);
 
 
   return (
@@ -276,7 +325,7 @@ useEffect(() => {
               transition={{ delay: 0.1, duration: 0.4 }}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold">Transaction History</h2>
+                <h2 className="text-2xl md:text-3xl font-bold">Contract Activity</h2>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowOnlyTransactions(false)}
@@ -289,7 +338,7 @@ useEffect(() => {
               </div>
 
               <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Complete blockchain activity record for this escrow contract</p>
+                <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Recent transactions and contract events for this escrow</p>
               </div>
 
               <div>
@@ -305,16 +354,34 @@ useEffect(() => {
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                   />
                     <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700">
-                    <TransactionTable
-                      transactions={transactions}
-                      loading={transactionLoading}
-                      error={transactionError}
-                      retentionNotice={transactionResponse?.retentionNotice}
-                      hasMore={transactionResponse?.hasMore || false}
-                      onLoadMore={handleLoadMoreTransactions}
-                      onTransactionClick={handleTransactionClick}
-                      isMobile={isMobile}
-                    />
+                    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'transactions' | 'events')} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 mb-4 mx-6 mt-6">
+                        <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                        <TabsTrigger value="events">Recent Events</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="events" className="mt-0">
+                        <EventTable
+                          events={events}
+                          loading={eventLoading}
+                          error={eventError}
+                          hasMore={eventResponse?.hasMore || false}
+                          onLoadMore={handleLoadMoreEvents}
+                          isMobile={isMobile}
+                        />
+                      </TabsContent>
+                      <TabsContent value="transactions" className="mt-0">
+                        <TransactionTable
+                          transactions={transactions}
+                          loading={transactionLoading}
+                          error={transactionError}
+                          retentionNotice={transactionResponse?.retentionNotice}
+                          hasMore={transactionResponse?.hasMore || false}
+                          onLoadMore={handleLoadMoreTransactions}
+                          onTransactionClick={handleTransactionClick}
+                          isMobile={isMobile}
+                        />
+                      </TabsContent>
+                    </Tabs>
                   </div>
                 </motion.div>
               </div>

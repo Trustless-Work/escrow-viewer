@@ -38,6 +38,24 @@ export interface TransactionResponse {
   retentionNotice?: string;
 }
 
+// Types for event data
+export interface EventMetadata {
+  id: string;
+  type: string;
+  ledger: number;
+  contractId: string;
+  topics: string[]; // base64 encoded
+  value: string; // base64 encoded
+  inSuccessfulContractCall: boolean;
+}
+
+export interface EventResponse {
+  events: EventMetadata[];
+  latestLedger: number;
+  cursor?: string;
+  hasMore: boolean;
+}
+
 const SOROBAN_RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
 
 /**
@@ -122,7 +140,7 @@ export async function fetchTransactions(
 
   } catch (error) {
     console.error("Error fetching transactions:", error);
-    
+
     // Return graceful error response
     return {
       transactions: [],
@@ -130,6 +148,81 @@ export async function fetchTransactions(
       oldestLedger: 0,
       hasMore: false,
       retentionNotice: "Unable to fetch transaction history. This may be due to retention limits or network issues."
+    };
+  }
+}
+
+/**
+ * Fetches recent events for a contract using Soroban JSON-RPC getEvents
+ * Limited to ~7 days retention by RPC
+ */
+export async function fetchEvents(
+  contractId: string,
+  rpcUrl: string,
+  cursor?: string,
+  limit: number = 50
+): Promise<EventResponse> {
+  try {
+    const requestBody = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getEvents",
+      params: {
+        filters: [
+          {
+            type: "contract",
+            contractIds: [contractId]
+          }
+        ],
+        cursor,
+        limit
+      }
+    };
+
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || "Failed to fetch events");
+    }
+
+    const result = data.result;
+    const events: EventMetadata[] = (result.events || []).map((event: any) => ({
+      id: event.id,
+      type: event.type,
+      ledger: event.ledger,
+      contractId: event.contractId,
+      topics: event.topics || [],
+      value: event.value || "",
+      inSuccessfulContractCall: event.inSuccessfulContractCall
+    }));
+
+    return {
+      events,
+      latestLedger: result.latestLedger || 0,
+      cursor: result.cursor,
+      hasMore: !!result.cursor
+    };
+
+  } catch (error) {
+    console.error("Error fetching events:", error);
+
+    // Return graceful error response
+    return {
+      events: [],
+      latestLedger: 0,
+      hasMore: false
     };
   }
 }
