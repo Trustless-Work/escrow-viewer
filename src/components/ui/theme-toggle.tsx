@@ -1,31 +1,41 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    try {
-      if (typeof window === "undefined") return false;
-      const stored = localStorage.getItem("theme");
-      if (stored) return stored === "dark";
-      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    } catch  {
-      return false;
-    }
-  });
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) root.classList.add("dark");
-    else root.classList.remove("dark");
-    try {
-      localStorage.setItem("theme", isDark ? "dark" : "light");
-    } catch  {
-      // ignore
-    }
-  }, [isDark]);
+    setMounted(true);
+  }, []);
 
-  const toggle = () => setIsDark((v) => !v);
+  if (!mounted) {
+    return (
+      <button
+        aria-label="Toggle dark mode"
+        className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:shadow-sm transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2"></path>
+          <path d="M12 21v2"></path>
+          <path d="M4.22 4.22l1.42 1.42"></path>
+          <path d="M18.36 18.36l1.42 1.42"></path>
+          <path d="M1 12h2"></path>
+          <path d="M21 12h2"></path>
+          <path d="M4.22 19.78l1.42-1.42"></path>
+          <path d="M18.36 5.64l1.42-1.42"></path>
+        </svg>
+        <span className="sr-only">Theme</span>
+        <span className="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-200">Light</span>
+      </button>
+    );
+  }
+
+  const isDark = resolvedTheme === "dark";
+  const toggle = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <button

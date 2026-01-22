@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from 'react'
 import { NetworkProvider } from "@/contexts/NetworkContext";
+import { ThemeProvider } from "next-themes";
 
 
 const geistSans = Geist({
@@ -33,15 +34,22 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         {...customBodyProps}
       >
         <Suspense fallback={<div>Loading...</div>}>
-          <NetworkProvider>
-            {children}
-          </NetworkProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NetworkProvider>
+              {children}
+            </NetworkProvider>
+          </ThemeProvider>
         </Suspense>
       </body>
     </html>

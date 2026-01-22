@@ -12,16 +12,26 @@ import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import type { NextPage } from "next";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { getNetworkConfig } from "@/lib/network-config";
 
 
 const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
   const router = useRouter();
-  const { currentNetwork } = useNetwork();
+  const { currentNetwork, setNetwork } = useNetwork();
   const [contractId, setContractId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
+
+  // Network switching for error recovery
+  const otherNetwork = currentNetwork === 'testnet' ? 'mainnet' : 'testnet';
+  const switchNetworkLabel = `Try ${getNetworkConfig(otherNetwork).name}`;
+  const handleSwitchNetwork = () => {
+    setNetwork(otherNetwork);
+    // Clear error when switching networks
+    setError(null);
+  };
 
   // Responsive: detect mobile for SearchCard behaviour
 
@@ -86,7 +96,11 @@ const Home: NextPage = () => {
                   handleUseExample={handleUseExample}
                 />
 
-                <ErrorDisplay error={error} />
+                <ErrorDisplay
+                  error={error}
+                  onSwitchNetwork={handleSwitchNetwork}
+                  switchNetworkLabel={switchNetworkLabel}
+                />
               </div>
             </div>
 
