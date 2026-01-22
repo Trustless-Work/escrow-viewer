@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Contract } from "@stellar/stellar-sdk";
+import { NetworkType } from "@/lib/network-config";
 
 // Types for transaction data
 export interface TransactionMetadata {
@@ -38,14 +39,13 @@ export interface TransactionResponse {
   retentionNotice?: string;
 }
 
-const SOROBAN_RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
-
 /**
  * Fetches recent transactions for a contract using Soroban JSON-RPC
  * Gracefully handles retention-related errors
  */
 export async function fetchTransactions(
   contractId: string,
+  network: NetworkType,
   options: FetchTransactionsOptions = {}
 ): Promise<TransactionResponse> {
   try {
@@ -72,12 +72,12 @@ export async function fetchTransactions(
       }
     };
 
-    const response = await fetch(SOROBAN_RPC_URL, {
+    const response = await fetch('/api/rpc', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({ network, ...requestBody }),
     });
 
     if (!response.ok) {
@@ -138,7 +138,7 @@ export async function fetchTransactions(
  * Fetches detailed information for a specific transaction
  * Returns full details with XDR decoded as JSON
  */
-export async function fetchTransactionDetails(txHash: string): Promise<TransactionDetails | null> {
+export async function fetchTransactionDetails(txHash: string, network: NetworkType): Promise<TransactionDetails | null> {
   try {
     const requestBody = {
       jsonrpc: "2.0",
@@ -149,12 +149,12 @@ export async function fetchTransactionDetails(txHash: string): Promise<Transacti
       }
     };
 
-    const response = await fetch(SOROBAN_RPC_URL, {
+    const response = await fetch('/api/rpc', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({ network, ...requestBody }),
     });
 
     if (!response.ok) {

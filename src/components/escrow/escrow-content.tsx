@@ -6,8 +6,7 @@ import { TitleCard } from "@/components/escrow/title-card"
 import { TabView } from "@/components/escrow/tab-view"
 import { DesktopView } from "@/components/escrow/desktop-view"
 import { WelcomeState } from "@/components/escrow/welcome-state"
-import error from "next/error"
-import { useNetwork } from "@/contexts/NetworkContext"; // Add this line
+import { useNetwork } from "@/contexts/NetworkContext";
 
 
 interface EscrowContentProps {
@@ -70,7 +69,7 @@ export const EscrowContent = ({
 			</AnimatePresence>
 
 			{/* No data state */}
-			<WelcomeState showWelcome={!organized && !loading && !error} />
+			<WelcomeState showWelcome={!organized && !loading} network={currentNetwork} />
 		</div>
 	)
 }
