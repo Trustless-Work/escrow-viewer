@@ -20,6 +20,7 @@ import { EscrowContent } from "@/components/escrow/escrow-content";
 import { TransactionTable } from "@/components/escrow/TransactionTable";
 import { EventTable } from "@/components/escrow/EventTable";
 import { TransactionDetailModal } from "@/components/escrow/TransactionDetailModal";
+import { TransactionHistoryModal } from "@/components/escrow/TransactionHistoryModal";
 import {
   fetchTransactions,
   fetchEvents,
@@ -69,6 +70,16 @@ const isMobile = useIsMobile();
     currentNetwork
   );
 
+  // Network switching for error recovery
+  const { setNetwork } = useNetwork();
+  const otherNetwork = currentNetwork === 'testnet' ? 'mainnet' : 'testnet';
+  const switchNetworkLabel = `Try ${getNetworkConfig(otherNetwork).name}`;
+  const handleSwitchNetwork = () => {
+    setNetwork(otherNetwork);
+    router.push(`/${contractId}`);
+    // The network change will trigger a re-fetch automatically
+  };
+
   const organizedWithLive = useMemo(() => {
   if (!organized) return null;
   if (!ledgerBalance) return organized; // nothing to override
@@ -89,15 +100,13 @@ const isMobile = useIsMobile();
   const [transactionResponse, setTransactionResponse] = useState<TransactionResponse | null>(null);
   const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [showOnlyTransactions, setShowOnlyTransactions] = useState<boolean>(false);
-  const txRef = useRef<HTMLDivElement | null>(null);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState<boolean>(false);
 
   // Event-related state
   const [events, setEvents] = useState<EventMetadata[]>([]);
   const [eventLoading, setEventLoading] = useState<boolean>(false);
   const [eventError, setEventError] = useState<string | null>(null);
   const [eventResponse, setEventResponse] = useState<EventResponse | null>(null);
-  const [activeTab, setActiveTab] = useState<'transactions' | 'events'>('transactions');
 
 
   // Fetch transaction data
@@ -107,7 +116,7 @@ const isMobile = useIsMobile();
       setTransactionLoading(true);
       setTransactionError(null);
       try {
-        const response = await fetchTransactions(id, { cursor, limit: 20 });
+        const response = await fetchTransactions(id, currentNetwork, { cursor, limit: 20 });
         setTransactionResponse(response);
         if (cursor) {
           setTransactions((prev) => [...prev, ...response.transactions]);
@@ -120,7 +129,7 @@ const isMobile = useIsMobile();
         setTransactionLoading(false);
       }
     },
-    []
+    [currentNetwork]
   );
 
   // Fetch event data
@@ -229,16 +238,6 @@ const isMobile = useIsMobile();
     }
   };
 
-  // When user toggles to show transactions, scroll the section into view
-  useEffect(() => {
-    if (showOnlyTransactions && txRef.current) {
-      try {
-        txRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch  {
-        // ignore scroll failures
-      }
-    }
-  }, [showOnlyTransactions]);
 
 // === DEBUG LOGGING (EscrowDetails) ===
 const DEBUG = true;
@@ -291,120 +290,48 @@ useEffect(() => {
           )}
 
           {/* Search Card + View Transactions button (flexed together) */}
-          {!showOnlyTransactions && (
-            <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
-              <div className="flex-1 max-w-lg">
-                <SearchCard
-                  contractId={contractId}
-                  setContractId={setContractId}
-                  loading={loading}
-                  isSearchFocused={isSearchFocused}
-                  setIsSearchFocused={setIsSearchFocused}
-                  handleKeyDown={handleKeyDown}
-                  fetchEscrowData={handleFetch}
-                  handleUseExample={handleUseExample}
-                />
-              </div>
-
-              {raw && (
-                <div className="w-full max-w-lg">
-                  <button
-                    onClick={() => setShowOnlyTransactions(true)}
-                    aria-label="View Transaction History"
-                    className="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground shadow-sm hover:shadow-md transition cursor-pointer"
-                  >
-                    View Transaction History
-                  </button>
-                </div>
-              )}
+          <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
+            <div className="flex-1 max-w-lg">
+              <SearchCard
+                contractId={contractId}
+                setContractId={setContractId}
+                loading={loading}
+                isSearchFocused={isSearchFocused}
+                setIsSearchFocused={setIsSearchFocused}
+                handleKeyDown={handleKeyDown}
+                fetchEscrowData={handleFetch}
+                handleUseExample={handleUseExample}
+              />
             </div>
-          )}
+
+            {raw && (
+              <div className="w-full max-w-lg">
+                <button
+                  onClick={() => setIsHistoryModalOpen(true)}
+                  aria-label="View Transaction History"
+                  className="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground shadow-sm hover:shadow-md transition cursor-pointer"
+                >
+                  View Transaction History
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Error Display */}
-          <ErrorDisplay error={error} />
+          <ErrorDisplay
+            error={error}
+            onSwitchNetwork={handleSwitchNetwork}
+            switchNetworkLabel={switchNetworkLabel}
+          />
 
-          {/* Content Section (hidden when showing transactions as a page) */}
-          {!showOnlyTransactions && (
-            <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
-          )}
+          {/* Content Section */}
+          <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
 
           {/* Live ledger balance (from token contract) */}
-          {!showOnlyTransactions && raw && ledgerBalance && (
+          {raw && ledgerBalance && (
             <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
           )}
 
-          {/* Transaction History Section (renders only when requested) */}
-          {raw && showOnlyTransactions && (
-            <motion.div
-              ref={txRef}
-              className="mt-6"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.4 }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold">Contract Activity</h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowOnlyTransactions(false)}
-                    aria-label="Back to details"
-                    className="px-3 py-2 rounded-md bg-primary/10 text-primary font-semibold border border-primary/20 hover:bg-primary/20 cursor-pointer text-sm"
-                  >
-                    Back to Details
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Recent transactions and contract events for this escrow</p>
-              </div>
-
-              <div>
-                <motion.div
-                  className="relative"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05, duration: 0.4 }}
-                >
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
-                    animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                  />
-                    <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700">
-                    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'transactions' | 'events')} className="w-full">
-                      <TabsList className="grid w-full grid-cols-2 mb-4 mx-6 mt-6">
-                        <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                        <TabsTrigger value="events">Recent Events</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="events" className="mt-0">
-                        <EventTable
-                          events={events}
-                          loading={eventLoading}
-                          error={eventError}
-                          hasMore={eventResponse?.hasMore || false}
-                          onLoadMore={handleLoadMoreEvents}
-                          isMobile={isMobile}
-                        />
-                      </TabsContent>
-                      <TabsContent value="transactions" className="mt-0">
-                        <TransactionTable
-                          transactions={transactions}
-                          loading={transactionLoading}
-                          error={transactionError}
-                          retentionNotice={transactionResponse?.retentionNotice}
-                          hasMore={transactionResponse?.hasMore || false}
-                          onLoadMore={handleLoadMoreTransactions}
-                          onTransactionClick={handleTransactionClick}
-                          isMobile={isMobile}
-                        />
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
 
           {/* Transaction Detail Modal */}
           <TransactionDetailModal
@@ -412,6 +339,25 @@ useEffect(() => {
             isOpen={isModalOpen}
             onClose={handleModalClose}
             isMobile={isMobile}
+            network={currentNetwork}
+          />
+
+          {/* Transaction History Modal */}
+          <TransactionHistoryModal
+            isOpen={isHistoryModalOpen}
+            onClose={() => setIsHistoryModalOpen(false)}
+            isMobile={isMobile}
+            transactions={transactions}
+            transactionLoading={transactionLoading}
+            transactionError={transactionError}
+            transactionResponse={transactionResponse}
+            onLoadMoreTransactions={handleLoadMoreTransactions}
+            onTransactionClick={handleTransactionClick}
+            events={events}
+            eventLoading={eventLoading}
+            eventError={eventError}
+            eventResponse={eventResponse}
+            onLoadMoreEvents={handleLoadMoreEvents}
           />
         </main>
       </div>
