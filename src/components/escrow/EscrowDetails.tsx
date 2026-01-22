@@ -127,6 +127,13 @@ const isMobile = useIsMobile();
   const fetchEventData = useCallback(
     async (id: string, rpcUrl: string, cursor?: string) => {
       if (!id) return;
+
+      // Basic validation for contract ID format
+      if (!/^C[A-Z0-9]{55}$/.test(id)) {
+        setEventError("Invalid contract ID format for event fetching.");
+        return;
+      }
+
       setEventLoading(true);
       setEventError(null);
       try {
@@ -191,7 +198,6 @@ const isMobile = useIsMobile();
 
   // Fetch button click
   const handleFetch = async () => {
-    if (!contractId) return;
     if (contractId !== initialEscrowId) {
       router.push(`/${contractId}`);
     }

@@ -15,7 +15,20 @@ export function useEscrowData(contractId: string, network: NetworkType, isMobile
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!contractId) return;
+    if (!contractId) {
+      setError("Please enter a contract ID");
+      return;
+    }
+
+    // Basic validation for contract ID format
+    if (!/^C[A-Z0-9]{55}$/.test(contractId)) {
+      setError("Invalid contract ID format. Contract IDs should start with 'C' followed by 55 alphanumeric characters.");
+      setRaw(null);
+      setOrganized(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
