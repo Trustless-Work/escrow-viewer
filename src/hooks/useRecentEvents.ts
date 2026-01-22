@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { SorobanRpc } from '@stellar/stellar-sdk';
+import { rpc } from '@stellar/stellar-sdk';
 import { getNetworkConfig, type NetworkType } from '@/lib/network-config';
 
 export interface ContractEvent {
   id: string;
   type: string;
   ledger: number;
-  contractId: string;
-  topics: string[]; // base64 or decoded
-  value: string; // base64 or decoded
+  contractId?: string;
+  topics: string[]; // base64
+  value: string; // base64
 }
 
 export interface UseRecentEventsResult {
@@ -34,7 +34,7 @@ export function useRecentEvents(
 
     try {
       const config = getNetworkConfig(network);
-      const server = new SorobanRpc.Server(config.rpcUrl);
+      const server = new rpc.Server(config.rpcUrl);
 
       // Get latest ledger
       const latestLedger = await server.getLatestLedger();
@@ -60,9 +60,9 @@ export function useRecentEvents(
         id: event.id,
         type: event.type,
         ledger: event.ledger,
-        contractId: event.contractId,
-        topics: event.topic.map((topic) => topic.toString('base64')), // keep as base64 for now
-        value: event.value.toString('base64'), // keep as base64
+        contractId: event.contractId?.toString(),
+        topics: event.topic.map((topic) => topic.toXDR('base64')),
+        value: event.value.toXDR('base64'),
       }));
 
       // Sort by ledger descending (most recent first)

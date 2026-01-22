@@ -67,7 +67,7 @@ export async function getLedgerKeyContractCode(
 
     const entry = json.result.entries[0];
     if (!entry) {
-      throw new Error("No ledger entry found for this contract ID");
+      return [];
     }
 
     const contractData = entry?.dataJson?.contract_data?.val?.contract_instance;

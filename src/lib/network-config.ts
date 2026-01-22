@@ -27,5 +27,5 @@ export function getNetworkConfig(network: NetworkType): NetworkConfig {
 }
 
 export function getDefaultNetwork(): NetworkType {
-  return 'testnet';
+  return 'mainnet';
 } 

@@ -1,17 +1,21 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants"
+import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants"
+import type { NetworkType } from "@/lib/network-config"
 
 interface WelcomeStateProps {
   showWelcome: boolean;
   handleUseExample?: () => void;
+  network?: NetworkType;
 }
 
-export const WelcomeState = ({ 
+export const WelcomeState = ({
   showWelcome,
-  handleUseExample 
+  handleUseExample,
+  network = 'mainnet'
 }: WelcomeStateProps) => {
   const useExample = handleUseExample || (() => {});
+  const exampleId = EXAMPLE_CONTRACT_IDS[network];
 
   return (
     <AnimatePresence>
@@ -55,7 +59,7 @@ export const WelcomeState = ({
                   className="text-sm text-blue-600 p-0 h-auto"
                   onClick={useExample}
                 >
-                  {EXAMPLE_CONTRACT_ID}
+                  {exampleId}
                 </Button>
               </p>
             </motion.div>
