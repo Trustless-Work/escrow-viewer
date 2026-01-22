@@ -138,7 +138,19 @@ const isMobile = useIsMobile();
           setEvents(response.events);
         }
       } catch (err: any) {
-        setEventError(err.message || "Failed to fetch events");
+        let errorMessage = "Failed to fetch contract events";
+
+        if (err instanceof Error) {
+          if (err.message.includes("startLedger must be within")) {
+            errorMessage = "Unable to fetch recent events due to RPC retention limits.";
+          } else if (err.message.includes("HTTP error")) {
+            errorMessage = "Network error while fetching events. Please try again.";
+          } else {
+            errorMessage = err.message;
+          }
+        }
+
+        setEventError(errorMessage);
       } finally {
         setEventLoading(false);
       }

@@ -26,7 +26,19 @@ export function useEscrowData(contractId: string, network: NetworkType, isMobile
     } catch (e) {
       setRaw(null);
       setOrganized(null);
-      setError(e instanceof Error ? e.message : "Failed to fetch escrow data");
+      let errorMessage = "Failed to fetch escrow data";
+
+      if (e instanceof Error) {
+        if (e.message.includes("No ledger entry found")) {
+          errorMessage = "Contract not found. Please check the contract ID and network.";
+        } else if (e.message.includes("Invalid contract ID")) {
+          errorMessage = "Invalid contract ID format. Please enter a valid Soroban contract ID.";
+        } else {
+          errorMessage = e.message;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
