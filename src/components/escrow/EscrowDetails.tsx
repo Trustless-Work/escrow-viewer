@@ -24,6 +24,7 @@ import {
 } from "@/utils/transactionFetcher";
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { ExportPdfButton } from "./ExportPdfButton";
 
 
 // ⬇️ New hooks
@@ -240,7 +241,7 @@ useEffect(() => {
               </div>
 
               {raw && (
-                <div className="w-full max-w-lg">
+                <div className="w-full max-w-lg flex flex-col gap-2">
                   <button
                     onClick={() => setShowOnlyTransactions(true)}
                     aria-label="View Transaction History"
@@ -248,6 +249,14 @@ useEffect(() => {
                   >
                     View Transaction History
                   </button>
+                  {organizedWithLive && (
+                    <ExportPdfButton
+                      organized={organizedWithLive}
+                      network={currentNetwork}
+                      contractId={contractId}
+                      initialEscrowId={initialEscrowId}
+                    />
+                  )}
                 </div>
               )}
             </div>
