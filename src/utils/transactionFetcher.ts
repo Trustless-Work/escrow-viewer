@@ -164,42 +164,64 @@ export async function fetchEvents(
   limit: number = 50
 ): Promise<EventResponse> {
   try {
-    // Get latest ledger to calculate startLedger for ~7 days
-    const latestLedgerResponse = await jsonRpcCall<{ sequence: number }>(rpcUrl, "getLatestLedger");
-    const latestLedger = latestLedgerResponse.sequence;
-    // Approximate 7 days: ~121,000 ledgers (5 sec blocks)
-    const startLedger = Math.max(1, latestLedger - 121000);
-
-    const requestBody = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "getEvents",
-      params: {
-        startLedger,
-        filters: [
-          {
-            type: "contract",
-            contractIds: [contractId]
-          }
-        ],
-        cursor,
-        limit
-      }
+    // Build request params
+    const params: any = {
+      filters: [
+        {
+          type: "contract",
+          contractIds: [contractId]
+        }
+      ],
+      cursor,
+      limit
     };
 
-    const response = await fetch(rpcUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
+    // Only add startLedger if we can calculate a reasonable recent range
+    // RPC typically retains ~7 days, but we try to be more conservative
+    try {
+      const latestLedgerResponse = await jsonRpcCall<{ sequence: number }>(rpcUrl, "getLatestLedger");
+      const latestLedger = latestLedgerResponse.sequence;
+      // Conservative estimate: ~3 days (5 sec blocks * 86400 sec/day * 3 days)
+      const estimatedStartLedger = Math.max(1, latestLedger - 51840);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      // Only use startLedger if it's reasonably recent (avoid invalid range errors)
+      if (estimatedStartLedger > latestLedger - 100000) { // Within last ~6 days
+        params.startLedger = estimatedStartLedger;
+      }
+    } catch (ledgerError) {
+      // If we can't get latest ledger, proceed without startLedger
+      console.warn("Could not fetch latest ledger for events, using default range:", ledgerError);
     }
 
-    const data = await response.json();
+    const makeRequest = async (requestParams: any) => {
+      const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getEvents",
+          params: requestParams
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      return await response.json();
+    };
+
+    let data = await makeRequest(params);
+
+    // If startLedger is out of range, retry without it
+    if (data.error && data.error.message?.includes("startLedger must be within")) {
+      console.warn("startLedger out of range, retrying without startLedger");
+      delete params.startLedger;
+      data = await makeRequest(params);
+    }
 
     if (data.error) {
       throw new Error(data.error.message || "Failed to fetch events");
