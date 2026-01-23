@@ -18,7 +18,6 @@ interface NetworkProviderProps {
 
 export function NetworkProvider({ children }: NetworkProviderProps) {
   const [currentNetwork, setCurrentNetwork] = useState<NetworkType>(getDefaultNetwork());
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
