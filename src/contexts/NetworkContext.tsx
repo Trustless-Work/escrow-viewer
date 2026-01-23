@@ -28,6 +28,8 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
     }
   }, []);
 
+    if (!mounted) return null; 
+
   const setNetwork = (network: NetworkType) => {
     setCurrentNetwork(network);
     safeLocalStorage.setItem('escrow-viewer-network', network);
