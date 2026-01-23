@@ -18,7 +18,7 @@ export const StatusBadge = ({ status, type = "milestone" }: StatusBadgeProps) =>
     if (type === "resolve") text = "Resolved"
     
     return (
-      <Badge className="bg-blue-500 hover:bg-blue-600">
+      <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground">
         {icon} {text}
       </Badge>
     )
@@ -26,7 +26,7 @@ export const StatusBadge = ({ status, type = "milestone" }: StatusBadgeProps) =>
   
   if (lowerStatus === "approved" || lowerStatus === "completed") {
     return (
-      <Badge className="bg-green-500 hover:bg-green-600">
+      <Badge className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-400 text-white">
         <CheckCircle size={14} className="mr-1" /> {lowerStatus === "approved" ? "Approved" : "Completed"}
       </Badge>
     )
@@ -34,7 +34,7 @@ export const StatusBadge = ({ status, type = "milestone" }: StatusBadgeProps) =>
   
   if (lowerStatus === "pending") {
     return (
-      <Badge variant="outline" className="text-amber-600 border-amber-300">
+      <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-600">
         <AlertCircle size={14} className="mr-1" /> Pending
       </Badge>
     )
@@ -48,7 +48,7 @@ export const StatusBadge = ({ status, type = "milestone" }: StatusBadgeProps) =>
     if (type === "resolve") text = "Not Resolved";
     
     return (
-      <Badge variant="outline" className="text-gray-500">
+      <Badge variant="outline" className="text-muted-foreground border-border">
         <XCircle size={14} className="mr-1" /> {text}
       </Badge>
     )

@@ -46,7 +46,7 @@ export const TitleCard = ({
                     className={
                       escrowType === "multi-release"
                         ? "bg-primary/10 text-primary border border-primary/20"
-                        : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border border-green-200 dark:border-green-800"
+                        : "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-500/30"
                     }
                   >
                     {escrowType === "multi-release" ? "Multi-Release" : "Single-Release"}

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { NetworkType, getDefaultNetwork } from '@/lib/network-config';
+import { safeLocalStorage } from '@/utils/storage';
 
 interface NetworkContextType {
   currentNetwork: NetworkType;
@@ -17,26 +18,19 @@ interface NetworkProviderProps {
 
 export function NetworkProvider({ children }: NetworkProviderProps) {
   const [currentNetwork, setCurrentNetwork] = useState<NetworkType>(getDefaultNetwork());
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    try {
-      const savedNetwork = localStorage.getItem('escrow-viewer-network') as NetworkType;
-      if (savedNetwork && (savedNetwork === 'testnet' || savedNetwork === 'mainnet')) {
-        setCurrentNetwork(savedNetwork);
-      }
-    } catch (error) {
-      console.warn('Failed to access localStorage:', error);
-  
+    setMounted(true);
+    const savedNetwork = safeLocalStorage.getItem('escrow-viewer-network') as NetworkType;
+    if (savedNetwork && (savedNetwork === 'testnet' || savedNetwork === 'mainnet')) {
+      setCurrentNetwork(savedNetwork);
     }
   }, []);
 
   const setNetwork = (network: NetworkType) => {
     setCurrentNetwork(network);
-    try {
-      localStorage.setItem('escrow-viewer-network', network);
-    } catch (error) {
-      console.warn('Failed to save network preference:', error);
-    }
+    safeLocalStorage.setItem('escrow-viewer-network', network);
   };
 
   const toggleNetwork = () => {
@@ -57,4 +51,4 @@ export function useNetwork() {
     throw new Error('useNetwork must be used within a NetworkProvider');
   }
   return context;
-} 
+}
