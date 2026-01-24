@@ -27,6 +27,7 @@ import {
 } from "@/utils/transactionFetcher";
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { ExportPdfButton } from "./ExportPdfButton";
 
 
 // ⬇️ New hooks
@@ -209,7 +210,6 @@ useEffect(() => {
     <TooltipProvider>
 
       <div className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 ${inter.className}`}>
- main
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -253,6 +253,14 @@ useEffect(() => {
                   >
                     View Transaction History
                   </button>
+                  {organizedWithLive && (
+                    <ExportPdfButton
+                      organized={organizedWithLive}
+                      network={currentNetwork}
+                      contractId={contractId}
+                      initialEscrowId={initialEscrowId}
+                    />
+                  )}
                   <Button
                     onClick={() => {
                       // Get escrow_id from organized data as the most reliable source
