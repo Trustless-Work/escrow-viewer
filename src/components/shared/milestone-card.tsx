@@ -41,7 +41,7 @@ export const MilestoneCard = ({
     <motion.div variants={cardVariants} whileHover={{ y: -6, scale: 1.01 }} transition={{ type: "spring", stiffness: 300 }}>
       <Card
   className={`mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent
-    ${approved ? "border-green-100" : "border-amber-100"}`}
+    ${approved ? "border-green-200 dark:border-green-700/50" : "border-amber-200 dark:border-amber-700/50"}`}
 >
   <div className={`absolute top-0 left-0 right-0 h-2 rounded-t-xl ${approved ? "bg-green-500" : "bg-amber-500"}`} />
   <CardHeader className="pt-4 pb-2">
@@ -83,7 +83,7 @@ export const MilestoneCard = ({
             </span>
           )}
           {resolved_flag !== undefined && (
-            <span className={`px-2 py-0.5 rounded ${resolved_flag ? "bg-green-100 text-green-700 dark:text-green-300" : "bg-muted text-muted-foreground"}`}>
+            <span className={`px-2 py-0.5 rounded ${resolved_flag ? "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300" : "bg-muted text-muted-foreground"}`}>
               Resolved: {resolved_flag ? "Yes" : "No"}
             </span>
           )}

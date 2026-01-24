@@ -17,23 +17,23 @@ export function LedgerBalancePanel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white/80 backdrop-blur-sm border border-blue-100 rounded-2xl p-4 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white/80 dark:bg-card backdrop-blur-sm border border-primary/20 rounded-2xl p-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />
+          <div className="w-2 h-8 bg-gradient-to-b from-primary to-accent rounded-full" />
           <div>
-            <div className="text-sm text-gray-600">Ledger balance (from token contract)</div>
-            <div className="text-xl font-semibold text-gray-900">
+            <div className="text-sm text-muted-foreground">Ledger balance (from token contract)</div>
+            <div className="text-xl font-semibold text-foreground">
               {balance}
               {typeof decimals === "number" ? (
-                <span className="ml-1 text-gray-500 text-sm">(d={decimals})</span>
+                <span className="ml-1 text-muted-foreground text-sm">(d={decimals})</span>
               ) : null}
             </div>
           </div>
         </div>
 
         {mismatch && (
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-            <span className="text-xs font-semibold">⚠️ Mismatch</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
+            <span className="text-xs font-semibold">Mismatch</span>
             <span className="text-xs">Stored contract balance differs</span>
           </div>
         )}

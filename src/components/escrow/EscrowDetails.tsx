@@ -10,6 +10,9 @@ import { LoadingLogo } from "@/components/shared/loading-logo";
 import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { getStellarLabUrl } from "@/lib/network-config";
+import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
@@ -205,7 +208,8 @@ useEffect(() => {
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
+
+      <div className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 ${inter.className}`}>
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -257,6 +261,39 @@ useEffect(() => {
                       initialEscrowId={initialEscrowId}
                     />
                   )}
+                  <Button
+                    onClick={() => {
+                      // Get escrow_id from organized data as the most reliable source
+                      const escrowIdFromData = organized?.properties?.escrow_id as string | undefined;
+                      
+                      // CONTRACT ID IS REQUIRED - try multiple sources in order of reliability:
+                      // 1. escrow_id from organized data (most reliable - what was actually loaded)
+                      // 2. contractId state
+                      // 3. initialEscrowId prop
+                      const idToUse = 
+                        (escrowIdFromData && escrowIdFromData.trim()) ||
+                        (contractId && contractId.trim()) || 
+                        (initialEscrowId && initialEscrowId.trim());
+                      
+                      if (!idToUse || idToUse.trim() === '') {
+                        alert('Error: Contract ID is required to open in Stellar Lab. Please ensure an escrow contract is loaded.');
+                        return;
+                      }
+                      
+                      try {
+                        const labUrl = getStellarLabUrl(currentNetwork, idToUse);
+                        window.open(labUrl, "_blank");
+                      } catch (error) {
+                        alert(`Error opening Stellar Lab: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full inline-flex justify-center items-center gap-2"
+                    title="Open contract in Stellar Lab"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open in Stellar Lab
+                  </Button>
                 </div>
               )}
             </div>
@@ -298,7 +335,7 @@ useEffect(() => {
               </div>
 
               <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Complete blockchain activity record for this escrow contract</p>
+                <p className="text-sm text-muted-foreground">Complete blockchain activity record for this escrow contract</p>
               </div>
 
               <div>
@@ -309,11 +346,11 @@ useEffect(() => {
                   transition={{ delay: 0.05, duration: 0.4 }}
                 >
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
+                    className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 dark:from-primary/5 dark:to-accent/5 rounded-3xl -z-10"
                     animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                   />
-                    <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700">
+                    <div className="relative bg-white/95 dark:bg-card backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-border overflow-hidden hover:shadow-3xl transition-all duration-700">
                     <TransactionTable
                       transactions={transactions}
                       loading={transactionLoading}

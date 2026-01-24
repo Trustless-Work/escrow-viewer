@@ -77,22 +77,22 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "SUCCESS":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case "FAILED":
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
+        return <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "SUCCESS":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/30";
       case "FAILED":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-secondary text-secondary-foreground border-border";
     }
   };
   
@@ -123,12 +123,12 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
         {loading && (
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 text-red-600 py-4">
+          <div className="flex items-center gap-2 text-destructive py-4">
             <AlertCircle className="h-5 w-5" />
             <span>{error}</span>
           </div>
@@ -148,9 +148,9 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Hash</label>
+                    <label className="text-sm font-medium text-foreground">Hash</label>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                      <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
                         {isMobile ? truncateHash(details.txHash, true) : details.txHash}
                       </span>
                       <Button
@@ -172,7 +172,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <label className="text-sm font-medium text-foreground">Status</label>
                     <div className="flex items-center gap-2 mt-1">
                       {getStatusIcon(details.status)}
                       <Badge className={getStatusBadgeColor(details.status)}>
@@ -181,11 +181,11 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Ledger</label>
+                    <label className="text-sm font-medium text-foreground">Ledger</label>
                     <p className="text-sm mt-1">{details.ledger.toLocaleString()}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Time</label>
+                    <label className="text-sm font-medium text-foreground">Time</label>
                     <p className="text-sm mt-1">{formatTransactionTime(details.createdAt)}</p>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   <div className="space-y-2">
                     {details.signers.map((signer, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                        <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
                           {signer}
                         </span>
                         {signer !== "(Signature validation required)" && (
@@ -222,7 +222,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No signer information available</p>
+                  <p className="text-sm text-muted-foreground">No signer information available</p>
                 )}
               </CardContent>
             </Card>
@@ -238,16 +238,16 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Function</label>
-                    <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded mt-1">
+                    <label className="text-sm font-medium text-foreground">Function</label>
+                    <p className="font-mono text-sm bg-muted px-2 py-1 rounded mt-1">
                       {details.calledFunction}
                     </p>
                   </div>
                   
                   {details.args && details.args.length > 0 && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Arguments</label>
-                      <div className="mt-1 bg-gray-50 p-3 rounded-lg">
+                      <label className="text-sm font-medium text-foreground">Arguments</label>
+                      <div className="mt-1 bg-muted p-3 rounded-lg">
                         <pre className="text-xs overflow-x-auto">
                           {JSON.stringify(details.args, null, 2)}
                         </pre>
@@ -268,7 +268,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="bg-muted p-3 rounded-lg">
                     <pre className="text-xs overflow-x-auto">
                       {formatJsonValue(details.result)}
                     </pre>
@@ -284,10 +284,10 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               </CardHeader>
               <CardContent>
                 <details className="space-y-2">
-                  <summary className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-800">
+                  <summary className="cursor-pointer text-sm font-medium text-primary hover:text-primary/80">
                     Show Raw Data
                   </summary>
-                  <div className="mt-3 bg-gray-50 p-3 rounded-lg">
+                  <div className="mt-3 bg-muted p-3 rounded-lg">
                     <pre className="text-xs overflow-x-auto">
                       {JSON.stringify({
                         envelope: details.envelope,
