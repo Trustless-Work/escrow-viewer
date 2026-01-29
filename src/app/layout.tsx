@@ -4,6 +4,24 @@ import "./globals.css";
 import { Suspense } from 'react'
 import { NetworkProvider } from "@/contexts/NetworkContext";
 
+// Work around Node.js experimental localStorage mismatch in dev server
+// (prevents Next dev overlay from crashing when localStorage is non-standard)
+if (typeof window === 'undefined') {
+  const storage = (globalThis as { localStorage?: unknown }).localStorage;
+  if (!storage || typeof (storage as Storage).getItem !== 'function') {
+    (globalThis as { localStorage?: Storage }).localStorage = {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => undefined,
+      clear: () => undefined,
+      key: () => null,
+      get length() {
+        return 0;
+      },
+    } as Storage;
+  }
+}
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

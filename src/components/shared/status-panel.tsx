@@ -14,7 +14,7 @@ interface StatusPanelProps {
 
 export const StatusPanel = ({ flags, tooltips }: StatusPanelProps) => {
   return (
-    <SectionCard title="Escrow Status" icon={Flag} className="hover:shadow-lg hover:border-red-300 transition-all duration-300">
+    <SectionCard title="Escrow Status" icon={Flag} className="hover:shadow-lg hover:border-red-300 dark:hover:border-red-700/50 transition-all duration-300">
       <div className="space-y-4">
         <DetailRow
           label="Dispute Flag"

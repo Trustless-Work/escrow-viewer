@@ -37,7 +37,7 @@ export const WelcomeState = ({
               Welcome to Escrow Data Viewer
             </motion.h2>
             <motion.p 
-              className="text-gray-600 mb-6"
+              className="text-muted-foreground mb-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -46,17 +46,17 @@ export const WelcomeState = ({
               milestones, and assigned roles.
             </motion.p>
             <motion.div 
-              className="bg-blue-50 p-4 rounded-md border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-300"
+              className="bg-primary/5 dark:bg-primary/10 p-4 rounded-md border border-primary/20 hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-md transition-all duration-300"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <p className="text-sm text-blue-700">
+              <p className="text-sm text-foreground">
                 Example ID:{" "}
                 <Button
                   variant="link"
                   size="sm"
-                  className="text-sm text-blue-600 p-0 h-auto"
+                  className="text-sm text-primary p-0 h-auto"
                   onClick={useExample}
                 >
                   {exampleId}

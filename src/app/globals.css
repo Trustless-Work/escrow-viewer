@@ -80,40 +80,51 @@
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #E2E8F0; /* bright neutral, readable text */
+  /* Base: Professional dark slate - softer than pure black for eye comfort */
+  --background: #0F172A; /* slate-900 - professional, not harsh */
+  --foreground: #F8FAFC; /* slate-50 - bright, readable text */
   
-  --card: #070708;
-  --card-foreground: #F1F5F9; /* bright text on cards */
+  /* Cards: Elevated surfaces - clearly visible above background */
+  --card: #1E293B; /* slate-800 - clear elevation above bg */
+  --card-foreground: #F8FAFC; /* slate-50 - bright text on cards */
 
-  --popover: #080809;
-  --popover-foreground: #F1F5F9;
+  /* Popovers: Same elevation as cards */
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
 
+  /* Primary: Vibrant cyan-blue accent - good contrast in dark */
   --primary: #0EA5FF;
-  --primary-foreground: #001219;
+  --primary-foreground: #0F172A;
 
-  --secondary: #1E293B;
-  --secondary-foreground: #E2E8F0;
+  /* Secondary: Elevated surface for secondary actions */
+  --secondary: #334155; /* slate-700 - visible secondary surfaces */
+  --secondary-foreground: #F1F5F9;
 
-  --muted: #0f1b2d;
-  --muted-foreground: #94A3B8; /* slate-400 for softer, still legible text */
+  /* Muted: Subtle backgrounds and secondary text */
+  --muted: #334155; /* slate-700 - visible muted backgrounds */
+  --muted-foreground: #CBD5E1; /* slate-300 - readable secondary text */
 
-  --accent: #075985;
-  --accent-foreground: #F1F5F9;
+  /* Accent: Slightly brighter for visibility */
+  --accent: #0EA5E9; /* sky-500 - visible accent color */
+  --accent-foreground: #F8FAFC;
 
+  /* Destructive: Bright red for errors */
   --destructive: #EF4444;
-  --border: #1E293B;
-  --input: #1E293B;
-  --ring: rgba(14,165,255,0.25);
+  
+  /* Borders: Visible separators */
+  --border: #334155; /* slate-700 - actually visible borders */
+  --input: #334155; /* visible input borders */
+  --ring: rgba(14, 165, 255, 0.35); /* brighter focus ring */
 
-  --sidebar: #0F172A;
-  --sidebar-foreground: #E2E8F0;
-  --sidebar-primary: #1E3A8A;
-  --sidebar-primary-foreground: #E2E8F0;
-  --sidebar-accent: #075985;
-  --sidebar-accent-foreground: #F1F5F9;
-  --sidebar-border: rgba(255,255,255,0.04);
-  --sidebar-ring: rgba(14,165,255,0.18);
+  /* Sidebar: Consistent with card elevation */
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #0EA5FF;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: #0EA5E9;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #334155;
+  --sidebar-ring: rgba(14, 165, 255, 0.25);
 }
 
 @layer base {
@@ -200,6 +211,11 @@
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
+/* Dark mode hover shadow - more visible */
+.dark .hover-lift:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(14, 165, 255, 0.1);
+}
+
 /* Edge accent for cards: subtle inset highlight and depth that adapts to dark mode */
 .edge-accent {
   position: relative;
@@ -227,7 +243,7 @@
 }
 
 .dark .edge-accent::after {
-  background: linear-gradient(180deg, rgba(127,239,253,0.98), rgba(127,239,253,0.16));
+  background: linear-gradient(180deg, rgba(14, 165, 255, 0.6), rgba(14, 165, 255, 0.2));
   background-size: 100% 200%;
   animation: edgeMove 6s linear infinite;
   mix-blend-mode: screen; /* keep screen for a brighter sheen on dark backgrounds */
