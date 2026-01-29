@@ -32,6 +32,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useRecentEvents } from "@/hooks/useRecentEvents";
 // (useMemo is consolidated in the import above)
 
 
@@ -45,10 +46,22 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   initialEscrowId,
 }) => {
   const router = useRouter();
-  const { currentNetwork } = useNetwork();
+  const { currentNetwork, setNetwork } = useNetwork();
 
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
+
+  // Handle network switch, updating contract ID for examples
+  const handleSwitchNetwork = useCallback((network: 'testnet' | 'mainnet') => {
+    setNetwork(network);
+    // If current contract is an example, switch to the example for the new network
+    if (contractId === EXAMPLE_CONTRACT_IDS.testnet || contractId === EXAMPLE_CONTRACT_IDS.mainnet) {
+      const newContractId = EXAMPLE_CONTRACT_IDS[network];
+      setContractId(newContractId);
+      // Update URL
+      router.replace(`/${newContractId}`);
+    }
+  }, [contractId, setNetwork, router, setContractId]);
 const isMobile = useIsMobile();
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
@@ -63,6 +76,12 @@ const isMobile = useIsMobile();
   const { ledgerBalance, decimals, mismatch } = useTokenBalance(
     contractId,
     raw,
+    currentNetwork
+  );
+
+  // Recent events hook
+  const { events, loading: eventsLoading, error: eventsError } = useRecentEvents(
+    contractId,
     currentNetwork
   );
 
@@ -97,7 +116,7 @@ const isMobile = useIsMobile();
       setTransactionLoading(true);
       setTransactionError(null);
       try {
-        const response = await fetchTransactions(id, { cursor, limit: 20 });
+        const response = await fetchTransactions(id, currentNetwork, { cursor, limit: 20 });
         setTransactionResponse(response);
         if (cursor) {
           setTransactions((prev) => [...prev, ...response.transactions]);
@@ -110,7 +129,7 @@ const isMobile = useIsMobile();
         setTransactionLoading(false);
       }
     },
-    []
+    [currentNetwork]
   );
 
   // Initial + network-change fetch (escrow + txs)
@@ -292,7 +311,11 @@ useEffect(() => {
           )}
 
           {/* Error Display */}
-          <ErrorDisplay error={error} />
+          <ErrorDisplay
+            error={error}
+            onSwitchNetwork={handleSwitchNetwork}
+            onRetry={refresh}
+          />
 
           {/* Content Section (hidden when showing transactions as a page) */}
           {!showOnlyTransactions && (
@@ -356,6 +379,82 @@ useEffect(() => {
                   </div>
                 </motion.div>
               </div>
+
+              {/* Recent Contract Events Section */}
+              <motion.div
+                className="mt-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl md:text-3xl font-bold">Recent Contract Events</h2>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 dark:text-[#6fbfe6]">Last 7 days (RPC-limited)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    This view shows only events available via Stellar RPC (last ~7 days).
+                    Historical events will be available in future versions.
+                  </p>
+                </div>
+
+                <div>
+                  <motion.div
+                    className="relative"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05, duration: 0.4 }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 rounded-3xl -z-10"
+                      animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
+                      transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    />
+                      <div className="relative bg-white/95 dark:bg-[#070708] backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-[rgba(255,255,255,0.06)] dark:text-[#BFEFFD] overflow-hidden hover:shadow-3xl transition-all duration-700 p-6">
+                        {eventsLoading ? (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500">Loading recent events...</p>
+                          </div>
+                        ) : eventsError ? (
+                          <div className="text-center py-8">
+                            <p className="text-red-500">Unable to fetch recent events from Stellar RPC.</p>
+                          </div>
+                        ) : events.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500">No contract events found in the last 7 days.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {events.map((event) => (
+                              <div key={event.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+                                <div className="flex justify-between items-start mb-2">
+                                  <span className="font-semibold text-sm">Event Type: {event.type}</span>
+                                  <span className="text-xs text-gray-500">Ledger: {event.ledger}</span>
+                                </div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                  ID: {event.id}
+                                </div>
+                                <div className="mb-2">
+                                  <span className="font-medium text-xs">Topics:</span>
+                                  <div className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1">
+                                    {event.topics.join(', ')}
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-xs">Value:</span>
+                                  <div className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 break-all">
+                                    {event.value}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                  </motion.div>
+                </div>
+              </motion.div>
             </motion.div>
           )}
 
@@ -365,6 +464,7 @@ useEffect(() => {
             isOpen={isModalOpen}
             onClose={handleModalClose}
             isMobile={isMobile}
+            network={currentNetwork}
           />
         </main>
       </div>

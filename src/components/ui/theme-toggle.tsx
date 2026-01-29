@@ -4,17 +4,7 @@ import { useEffect, useState } from "react";
 import { safeLocalStorage } from "@/utils/storage";
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
 
-  // Only access localStorage after component mounts (client-side only)
-  useEffect(() => {
-    setMounted(true);
-    const stored = safeLocalStorage.getItem("theme");
-    if (stored) {
-      setIsDark(stored === "dark");
-    } else if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      setIsDark(true);
     }
   }, []);
 
@@ -22,12 +12,7 @@ export function ThemeToggle() {
   useEffect(() => {
     if (!mounted) return;
     const root = document.documentElement;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    safeLocalStorage.setItem("theme", isDark ? "dark" : "light");
+
   }, [isDark, mounted]);
 
   const toggle = () => setIsDark((v) => !v);
