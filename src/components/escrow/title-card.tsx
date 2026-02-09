@@ -30,8 +30,8 @@ export const TitleCard = ({
       whileHover={{ scale: 1.01 }}
       className="transform-gpu"
     >
-      <Card className="mb-6 border border-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative hover-lift edge-accent">
-        {/* Top gradient accent bar */}
+      <Card className="mb-6 border border-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative hover-lift edge-accent overflow-hidden">
+        {/* Top accent bar: mismo radio que el card (rounded-t-xl) */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-primary rounded-t-xl" />
 
         <CardHeader className="pt-4">

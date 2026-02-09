@@ -27,8 +27,8 @@ export const LoadingLogo = ({ loading, size = 300 }: LoadingLogoProps) => {
       </div>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-white/80 rounded-full p-3">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"/>
+          <div className="bg-background/80 rounded-full p-3">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"/>
           </div>
         </div>
       )}

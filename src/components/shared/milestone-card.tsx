@@ -40,7 +40,7 @@ export const MilestoneCard = ({
   return (
     <motion.div variants={cardVariants} whileHover={{ y: -6, scale: 1.01 }} transition={{ type: "spring", stiffness: 300 }}>
       <Card
-  className={`mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent
+  className={`mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent overflow-hidden
     ${approved ? "border-green-200 dark:border-green-700/50" : "border-amber-200 dark:border-amber-700/50"}`}
 >
   <div className={`absolute top-0 left-0 right-0 h-2 rounded-t-xl ${approved ? "bg-green-500" : "bg-amber-500"}`} />

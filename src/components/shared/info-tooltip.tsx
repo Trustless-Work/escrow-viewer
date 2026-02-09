@@ -15,7 +15,7 @@ export const InfoTooltip = ({ content, className = "" }: InfoTooltipProps) => (
     <TooltipTrigger asChild>
       <InfoIcon 
         size={17} 
-        className={`text-gray-500 hover:text-blue-600 cursor-help transition-colors ${className}`} 
+        className={`text-muted-foreground hover:text-primary cursor-help transition-colors ${className}`} 
       />
     </TooltipTrigger>
     <TooltipContent className="max-w-sm text-sm">

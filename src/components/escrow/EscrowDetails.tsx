@@ -49,7 +49,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
-const isMobile = useIsMobile();
+  const isMobile = useIsMobile();
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
   // Escrow data hook (raw + organized)
@@ -67,16 +67,16 @@ const isMobile = useIsMobile();
   );
 
   const organizedWithLive = useMemo(() => {
-  if (!organized) return null;
-  if (!ledgerBalance) return organized; // nothing to override
-  return {
-    ...organized,
-    properties: {
-      ...organized.properties,
-      balance: ledgerBalance, // <- replace storage balance with live one
-    },
-  };
-}, [organized, ledgerBalance]);
+    if (!organized) return null;
+    if (!ledgerBalance) return organized; // nothing to override
+    return {
+      ...organized,
+      properties: {
+        ...organized.properties,
+        balance: ledgerBalance, // <- replace storage balance with live one
+      },
+    };
+  }, [organized, ledgerBalance]);
 
 
   // Transaction-related state (kept here for now)
@@ -170,46 +170,45 @@ const isMobile = useIsMobile();
     if (showOnlyTransactions && txRef.current) {
       try {
         txRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch  {
+      } catch {
         // ignore scroll failures
       }
     }
   }, [showOnlyTransactions]);
 
-// === DEBUG LOGGING (EscrowDetails) ===
-const DEBUG = true;
+  // === DEBUG LOGGING (EscrowDetails) ===
+  const DEBUG = true;
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] network:", currentNetwork);
-  console.log("[DBG][EscrowDetails] contractId:", contractId);
-}, [currentNetwork, contractId]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] network:", currentNetwork);
+    console.log("[DBG][EscrowDetails] contractId:", contractId);
+  }, [currentNetwork, contractId]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] raw escrow map:", raw);
-}, [raw]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] raw escrow map:", raw);
+  }, [raw]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] organized data:", organized);
-}, [organized]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] organized data:", organized);
+  }, [organized]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] token live balance:", {
-    ledgerBalance,
-    decimals,
-    mismatch,
-  });
-}, [ledgerBalance, decimals, mismatch]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] token live balance:", {
+      ledgerBalance,
+      decimals,
+      mismatch,
+    });
+  }, [ledgerBalance, decimals, mismatch]);
 
 
   return (
     <TooltipProvider>
 
-      <div className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 ${inter.className}`}>
- main
+      <div className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}>
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -257,21 +256,21 @@ useEffect(() => {
                     onClick={() => {
                       // Get escrow_id from organized data as the most reliable source
                       const escrowIdFromData = organized?.properties?.escrow_id as string | undefined;
-                      
+
                       // CONTRACT ID IS REQUIRED - try multiple sources in order of reliability:
                       // 1. escrow_id from organized data (most reliable - what was actually loaded)
                       // 2. contractId state
                       // 3. initialEscrowId prop
-                      const idToUse = 
+                      const idToUse =
                         (escrowIdFromData && escrowIdFromData.trim()) ||
-                        (contractId && contractId.trim()) || 
+                        (contractId && contractId.trim()) ||
                         (initialEscrowId && initialEscrowId.trim());
-                      
+
                       if (!idToUse || idToUse.trim() === '') {
                         alert('Error: Contract ID is required to open in Stellar Lab. Please ensure an escrow contract is loaded.');
                         return;
                       }
-                      
+
                       try {
                         const labUrl = getStellarLabUrl(currentNetwork, idToUse);
                         window.open(labUrl, "_blank");
@@ -342,7 +341,7 @@ useEffect(() => {
                     animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
                     transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                   />
-                    <div className="relative bg-white/95 dark:bg-card backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-border overflow-hidden hover:shadow-3xl transition-all duration-700">
+                  <div className="relative bg-white/95 dark:bg-card backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-border overflow-hidden hover:shadow-3xl transition-all duration-700">
                     <TransactionTable
                       transactions={transactions}
                       loading={transactionLoading}

@@ -38,7 +38,7 @@ export const SearchCard = ({
       animate="visible"
       variants={cardVariants}
     >
-      <Card className={`max-w-2xl mx-auto mb-10 border ${isSearchFocused ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-primary/20 shadow-md'} rounded-xl transition-all duration-300 edge-accent`}>
+      <Card className={`max-w-2xl mx-auto mb-10 border overflow-hidden ${isSearchFocused ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-primary/20 shadow-md'} rounded-xl transition-all duration-300 edge-accent`}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <Search className="h-5 w-5 text-primary" />
@@ -48,7 +48,7 @@ export const SearchCard = ({
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-grow">
-                <Input
+              <Input
                 type="text"
                 placeholder="Enter escrow contract ID"
                 value={contractId}
@@ -79,13 +79,13 @@ export const SearchCard = ({
             </Button>
           </div>
         </CardContent>
-            <CardFooter className="text-xs text-muted-foreground pt-0">
+        <CardFooter className="text-xs text-muted-foreground pt-0">
           <div className="flex items-center">
             <span>Example ID:</span>
             <Button
               variant="link"
               size="sm"
-                  className="text-xs text-primary p-0 pl-1 h-auto"
+              className="text-xs text-primary p-0 pl-1 h-auto"
               onClick={handleUseExample}
             >
               Click to use example

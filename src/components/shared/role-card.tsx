@@ -39,7 +39,7 @@ export const RoleCard = ({
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 260 }}
     >
-      <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent border-primary/20">
+      <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent border-primary/20 overflow-hidden">
         {/* Top accent bar */}
         <div className="absolute top-0 left-0 right-0 h-2 rounded-t-xl bg-primary" />
 
