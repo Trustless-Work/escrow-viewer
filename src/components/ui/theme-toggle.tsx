@@ -14,7 +14,11 @@ export function ThemeToggle() {
     const stored = safeLocalStorage.getItem("theme");
     if (stored) {
       setIsDark(stored === "dark");
-    } else if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    } else if (
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
       setIsDark(true);
     }
   }, []);
@@ -41,7 +45,9 @@ export function ThemeToggle() {
         className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm bg-muted border border-border hover:shadow-sm transition-colors cursor-pointer"
       >
         <span className="w-4 h-4" />
-        <span className="hidden sm:inline text-sm font-medium text-foreground">Theme</span>
+        <span className="hidden sm:inline text-sm font-medium text-foreground">
+          Theme
+        </span>
       </button>
     );
   }
@@ -71,7 +77,9 @@ export function ThemeToggle() {
           strokeLinejoin="round"
           className={cn(
             "transition-all duration-500",
-            isDark ? "text-muted-foreground/40" : "text-amber-500 scale-0 opacity-0"
+            isDark
+              ? "text-muted-foreground/40"
+              : "text-amber-500 scale-0 opacity-0",
           )}
         >
           <circle cx="12" cy="12" r="5" />
@@ -97,7 +105,9 @@ export function ThemeToggle() {
           strokeLinejoin="round"
           className={cn(
             "transition-all duration-500",
-            isDark ? "text-sky-300 scale-0 opacity-0" : "text-muted-foreground/40"
+            isDark
+              ? "text-sky-300 scale-0 opacity-0"
+              : "text-muted-foreground/40",
           )}
         >
           <path d="M21 12.79A9 9 0 0111.21 3 7 7 0 0021 12.79z" />
@@ -110,7 +120,7 @@ export function ThemeToggle() {
           "pointer-events-none relative z-10 flex h-7 w-7 items-center justify-center rounded-full shadow-lg ring-0 transition-all duration-500 ease-in-out",
           isDark
             ? "translate-x-[38px] bg-foreground/90"
-            : "translate-x-[4px] bg-foreground"
+            : "translate-x-[4px] bg-foreground",
         )}
       >
         {/* Sun in thumb (light mode) */}
@@ -128,7 +138,7 @@ export function ThemeToggle() {
             "absolute transition-all duration-500",
             isDark
               ? "rotate-90 scale-0 opacity-0 text-background"
-              : "rotate-0 scale-100 opacity-100 text-background"
+              : "rotate-0 scale-100 opacity-100 text-background",
           )}
         >
           <circle cx="12" cy="12" r="5" />
@@ -156,7 +166,7 @@ export function ThemeToggle() {
             "absolute transition-all duration-500",
             isDark
               ? "rotate-0 scale-100 opacity-100 text-background"
-              : "-rotate-90 scale-0 opacity-0 text-background"
+              : "-rotate-90 scale-0 opacity-0 text-background",
           )}
         >
           <path d="M21 12.79A9 9 0 0111.21 3 7 7 0 0021 12.79z" />

@@ -18,7 +18,11 @@ export const SectionCard = ({
   className = "",
 }: SectionCardProps) => {
   return (
-    <motion.div variants={cardVariants} whileHover={{ y: -4 }} className="hover-lift">
+    <motion.div
+      variants={cardVariants}
+      whileHover={{ y: -4 }}
+      className="hover-lift"
+    >
       <Card
         className={`transition-shadow duration-300 relative rounded-xl hover:shadow-lg edge-accent border-primary/20 overflow-hidden ${className}`}
       >
@@ -34,8 +38,7 @@ export const SectionCard = ({
           </div>
         </CardHeader>
 
-        <CardContent className="text-card-foreground">
-          {children}</CardContent>
+        <CardContent className="text-card-foreground">{children}</CardContent>
       </Card>
     </motion.div>
   );

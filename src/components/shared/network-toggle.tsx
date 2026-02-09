@@ -22,7 +22,7 @@ const networks: { value: NetworkType; label: string }[] = [
 
 export function NetworkToggle({ className }: NetworkToggleProps) {
   const { currentNetwork, setNetwork } = useNetwork();
-  
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -51,4 +51,4 @@ export function NetworkToggle({ className }: NetworkToggleProps) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}

@@ -1,5 +1,5 @@
-import { ROLE_ICONS } from '@/lib/escrow-constants';
-import type { ComponentType, SVGProps } from 'react';
+import { ROLE_ICONS } from "@/lib/escrow-constants";
+import type { ComponentType, SVGProps } from "react";
 
 interface RoleIconProps {
   title: string;
@@ -8,8 +8,13 @@ interface RoleIconProps {
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
-export const RoleIcon: React.FC<RoleIconProps> = ({ title, className = "w-5 h-5" }) => {
-  const roleData = (ROLE_ICONS as Record<string, { icon: IconType; color: string }>)[title];
+export const RoleIcon: React.FC<RoleIconProps> = ({
+  title,
+  className = "w-5 h-5",
+}) => {
+  const roleData = (
+    ROLE_ICONS as Record<string, { icon: IconType; color: string }>
+  )[title];
 
   if (!roleData) {
     const FallbackIcon = ROLE_ICONS["Service Provider"].icon;

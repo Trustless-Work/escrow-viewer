@@ -25,12 +25,10 @@ import {
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
-
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 // (useMemo is consolidated in the import above)
-
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -53,14 +51,14 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   const { raw, organized, loading, error, refresh } = useEscrowData(
     contractId,
     currentNetwork,
-    isMobile
+    isMobile,
   );
 
   // Live token balance hook
   const { ledgerBalance, decimals, mismatch } = useTokenBalance(
     contractId,
     raw,
-    currentNetwork
+    currentNetwork,
   );
 
   const organizedWithLive = useMemo(() => {
@@ -75,17 +73,17 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     };
   }, [organized, ledgerBalance]);
 
-
   // Transaction-related state (kept here for now)
   const [transactions, setTransactions] = useState<TransactionMetadata[]>([]);
   const [transactionLoading, setTransactionLoading] = useState<boolean>(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
-  const [transactionResponse, setTransactionResponse] = useState<TransactionResponse | null>(null);
+  const [transactionResponse, setTransactionResponse] =
+    useState<TransactionResponse | null>(null);
   const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [showOnlyTransactions, setShowOnlyTransactions] = useState<boolean>(false);
+  const [showOnlyTransactions, setShowOnlyTransactions] =
+    useState<boolean>(false);
   const txRef = useRef<HTMLDivElement | null>(null);
-
 
   // Fetch transaction data
   const fetchTransactionData = useCallback(
@@ -107,7 +105,7 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
         setTransactionLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Initial + network-change fetch (escrow + txs)
@@ -201,11 +199,11 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
     });
   }, [ledgerBalance, decimals, mismatch]);
 
-
   return (
     <TooltipProvider>
-
-      <div className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}>
+      <div
+        className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}
+      >
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -250,12 +248,20 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
           {/* Content Section (hidden when showing transactions as a page) */}
           {!showOnlyTransactions && (
-            <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
+            <EscrowContent
+              loading={loading}
+              organized={organizedWithLive}
+              isMobile={isMobile}
+            />
           )}
 
           {/* Live ledger balance (from token contract) */}
           {!showOnlyTransactions && raw && ledgerBalance && (
-            <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
+            <LedgerBalancePanel
+              balance={ledgerBalance}
+              decimals={decimals}
+              mismatch={mismatch}
+            />
           )}
 
           {/* Transaction History Section (renders only when requested) */}
@@ -268,7 +274,9 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
               transition={{ delay: 0.1, duration: 0.4 }}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold">Transaction History</h2>
+                <h2 className="text-2xl md:text-3xl font-bold">
+                  Transaction History
+                </h2>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowOnlyTransactions(false)}
@@ -281,7 +289,9 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
               </div>
 
               <div className="mb-4">
-                <p className="text-sm text-muted-foreground">Complete blockchain activity record for this escrow contract</p>
+                <p className="text-sm text-muted-foreground">
+                  Complete blockchain activity record for this escrow contract
+                </p>
               </div>
 
               <div>
@@ -293,8 +303,14 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
                 >
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 dark:from-primary/5 dark:to-accent/5 rounded-3xl -z-10"
-                    animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    animate={{
+                      backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
+                    }}
+                    transition={{
+                      duration: 25,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                   />
                   <div className="relative bg-white/95 dark:bg-card backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-border overflow-hidden hover:shadow-3xl transition-all duration-700">
                     <TransactionTable

@@ -81,16 +81,16 @@
 
 .dark {
   /* Base: Professional dark slate - softer than pure black for eye comfort */
-  --background: #0F172A; /* slate-900 - professional, not harsh */
-  --foreground: #F8FAFC; /* slate-50 - bright, readable text */
-  
+  --background: #0f172a; /* slate-900 - professional, not harsh */
+  --foreground: #f8fafc; /* slate-50 - bright, readable text */
+
   /* Cards: Elevated surfaces - clearly visible above background */
-  --card: #1E293B; /* slate-800 - clear elevation above bg */
-  --card-foreground: #F8FAFC; /* slate-50 - bright text on cards */
+  --card: #1e293b; /* slate-800 - clear elevation above bg */
+  --card-foreground: #f8fafc; /* slate-50 - bright text on cards */
 
   /* Popovers: Same elevation as cards */
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
 
   /* Primary: #006be4 en ambos temas */
   --primary: #006be4;
@@ -98,31 +98,31 @@
 
   /* Secondary: Elevated surface for secondary actions */
   --secondary: #334155; /* slate-700 - visible secondary surfaces */
-  --secondary-foreground: #F1F5F9;
+  --secondary-foreground: #f1f5f9;
 
   /* Muted: Subtle backgrounds and secondary text */
   --muted: #334155; /* slate-700 - visible muted backgrounds */
-  --muted-foreground: #CBD5E1; /* slate-300 - readable secondary text */
+  --muted-foreground: #cbd5e1; /* slate-300 - readable secondary text */
 
   /* Accent: Subtle surface for hover states */
-  --accent: #1E293B; /* slate-800 - subtle hover surface */
-  --accent-foreground: #F8FAFC;
+  --accent: #1e293b; /* slate-800 - subtle hover surface */
+  --accent-foreground: #f8fafc;
 
   /* Destructive: Bright red for errors */
-  --destructive: #EF4444;
-  
+  --destructive: #ef4444;
+
   /* Borders & input: mismo azul #006be4 */
   --border: rgba(0, 107, 228, 0.45);
   --input: rgba(0, 107, 228, 0.45);
   --ring: rgba(0, 107, 228, 0.5);
 
   /* Sidebar: mismo primary */
-  --sidebar: #1E293B;
-  --sidebar-foreground: #F8FAFC;
+  --sidebar: #1e293b;
+  --sidebar-foreground: #f8fafc;
   --sidebar-primary: #006be4;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: rgba(0, 107, 228, 0.45);
   --sidebar-ring: rgba(0, 107, 228, 0.5);
 }
@@ -203,7 +203,9 @@
 }
 
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .hover-lift:hover {
@@ -213,7 +215,9 @@
 
 /* Dark mode hover shadow - more visible */
 .dark .hover-lift:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 107, 228, 0.2);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(0, 107, 228, 0.2);
 }
 
 /* Edge accent for cards: subtle inset highlight and depth that adapts to dark mode */
@@ -235,7 +239,11 @@
   border-top-right-radius: var(--radius);
   border-bottom-right-radius: var(--radius);
   /* light-mode accent: #006be4 */
-  background: linear-gradient(180deg, rgba(0,107,228,0.35), rgba(0,107,228,0.12));
+  background: linear-gradient(
+    180deg,
+    rgba(0, 107, 228, 0.35),
+    rgba(0, 107, 228, 0.12)
+  );
   background-size: 100% 200%;
   animation: edgeMove 6s linear infinite;
   mix-blend-mode: normal; /* use normal blend on light backgrounds so the accent is visible */
@@ -243,7 +251,11 @@
 }
 
 .dark .edge-accent::after {
-  background: linear-gradient(180deg, rgba(0, 107, 228, 0.6), rgba(0, 107, 228, 0.2));
+  background: linear-gradient(
+    180deg,
+    rgba(0, 107, 228, 0.6),
+    rgba(0, 107, 228, 0.2)
+  );
   background-size: 100% 200%;
   animation: edgeMove 6s linear infinite;
   mix-blend-mode: screen; /* keep screen for a brighter sheen on dark backgrounds */
@@ -251,9 +263,15 @@
 }
 
 @keyframes edgeMove {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 0% 100%; }
-  100% { background-position: 0% 0%; }
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

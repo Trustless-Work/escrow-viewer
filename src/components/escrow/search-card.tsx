@@ -1,7 +1,7 @@
-import { motion } from "framer-motion"
-import { Search, ChevronRight, ExternalLink } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { motion } from "framer-motion";
+import { Search, ChevronRight, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -9,11 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { cardVariants } from "@/utils/animations/animation-variants"
-import { getStellarLabUrl } from "@/lib/network-config"
-import type { NetworkType } from "@/lib/network-config"
-import type { OrganizedEscrowData } from "@/mappers/escrow-mapper"
-import type { EscrowMap } from "@/utils/ledgerkeycontract"
+import { cardVariants } from "@/utils/animations/animation-variants";
+import { getStellarLabUrl } from "@/lib/network-config";
+import type { NetworkType } from "@/lib/network-config";
+import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
+import type { EscrowMap } from "@/utils/ledgerkeycontract";
 
 interface SearchCardProps {
   contractId: string;
@@ -47,12 +47,10 @@ export const SearchCard = ({
   setShowOnlyTransactions,
 }: SearchCardProps) => {
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={cardVariants}
-    >
-      <Card className={`mx-auto mb-10 border overflow-hidden ${isSearchFocused ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-primary/20 shadow-md'} rounded-xl transition-all duration-300 edge-accent`}>
+    <motion.div initial="hidden" animate="visible" variants={cardVariants}>
+      <Card
+        className={`mx-auto mb-10 border overflow-hidden ${isSearchFocused ? "border-primary/50 shadow-lg shadow-primary/10" : "border-primary/20 shadow-md"} rounded-xl transition-all duration-300 edge-accent`}
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <Search className="h-5 w-5 text-primary" />
@@ -73,20 +71,29 @@ export const SearchCard = ({
               <Button
                 variant="outline"
                 onClick={() => {
-                  const escrowIdFromData = organized?.properties?.escrow_id as string | undefined;
+                  const escrowIdFromData = organized?.properties?.escrow_id as
+                    | string
+                    | undefined;
                   const idToUse =
-                    (escrowIdFromData?.trim()) ||
-                    (contractId?.trim()) ||
-                    (initialEscrowId?.trim());
+                    escrowIdFromData?.trim() ||
+                    contractId?.trim() ||
+                    initialEscrowId?.trim();
 
                   if (!idToUse) {
-                    alert('Error: Contract ID is required to open in Stellar Lab. Please ensure an escrow contract is loaded.');
+                    alert(
+                      "Error: Contract ID is required to open in Stellar Lab. Please ensure an escrow contract is loaded.",
+                    );
                     return;
                   }
                   try {
-                    window.open(getStellarLabUrl(currentNetwork, idToUse), "_blank");
+                    window.open(
+                      getStellarLabUrl(currentNetwork, idToUse),
+                      "_blank",
+                    );
                   } catch (error) {
-                    alert(`Error opening Stellar Lab: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    alert(
+                      `Error opening Stellar Lab: ${error instanceof Error ? error.message : "Unknown error"}`,
+                    );
                   }
                 }}
                 className="flex-1 min-w-0 inline-flex justify-center items-center gap-2 rounded-lg border-primary/30 hover:bg-primary/5 hover:border-primary/50"
@@ -145,5 +152,5 @@ export const SearchCard = ({
         </CardFooter>
       </Card>
     </motion.div>
-  )
-}
+  );
+};

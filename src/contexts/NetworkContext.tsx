@@ -1,8 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { NetworkType, getDefaultNetwork } from '@/lib/network-config';
-import { safeLocalStorage } from '@/utils/storage';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { NetworkType, getDefaultNetwork } from "@/lib/network-config";
+import { safeLocalStorage } from "@/utils/storage";
 
 interface NetworkContextType {
   currentNetwork: NetworkType;
@@ -17,31 +23,39 @@ interface NetworkProviderProps {
 }
 
 export function NetworkProvider({ children }: NetworkProviderProps) {
-  const [currentNetwork, setCurrentNetwork] = useState<NetworkType>(getDefaultNetwork());
+  const [currentNetwork, setCurrentNetwork] =
+    useState<NetworkType>(getDefaultNetwork());
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const savedNetwork = safeLocalStorage.getItem('escrow-viewer-network') as NetworkType;
-    if (savedNetwork && (savedNetwork === 'testnet' || savedNetwork === 'mainnet')) {
+    const savedNetwork = safeLocalStorage.getItem(
+      "escrow-viewer-network",
+    ) as NetworkType;
+    if (
+      savedNetwork &&
+      (savedNetwork === "testnet" || savedNetwork === "mainnet")
+    ) {
       setCurrentNetwork(savedNetwork);
     }
   }, []);
 
-    if (!mounted) return null; 
+  if (!mounted) return null;
 
   const setNetwork = (network: NetworkType) => {
     setCurrentNetwork(network);
-    safeLocalStorage.setItem('escrow-viewer-network', network);
+    safeLocalStorage.setItem("escrow-viewer-network", network);
   };
 
   const toggleNetwork = () => {
-    const newNetwork = currentNetwork === 'testnet' ? 'mainnet' : 'testnet';
+    const newNetwork = currentNetwork === "testnet" ? "mainnet" : "testnet";
     setNetwork(newNetwork);
   };
 
   return (
-    <NetworkContext.Provider value={{ currentNetwork, setNetwork, toggleNetwork }}>
+    <NetworkContext.Provider
+      value={{ currentNetwork, setNetwork, toggleNetwork }}
+    >
       {children}
     </NetworkContext.Provider>
   );
@@ -50,7 +64,7 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
 export function useNetwork() {
   const context = useContext(NetworkContext);
   if (context === undefined) {
-    throw new Error('useNetwork must be used within a NetworkProvider');
+    throw new Error("useNetwork must be used within a NetworkProvider");
   }
   return context;
 }

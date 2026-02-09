@@ -1,4 +1,4 @@
-import { CheckCircle, Circle } from "lucide-react"
+import { CheckCircle, Circle } from "lucide-react";
 
 interface ProgressBarProps {
   value: number;
@@ -63,5 +63,5 @@ export const ProgressBar = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};

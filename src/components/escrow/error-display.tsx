@@ -1,8 +1,8 @@
-import { motion, AnimatePresence } from "framer-motion"
-import { AlertCircle } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion";
+import { AlertCircle } from "lucide-react";
 
 interface ErrorDisplayProps {
-  error: string | null
+  error: string | null;
 }
 
 export const ErrorDisplay = ({ error }: ErrorDisplayProps) => {
@@ -20,5 +20,5 @@ export const ErrorDisplay = ({ error }: ErrorDisplayProps) => {
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

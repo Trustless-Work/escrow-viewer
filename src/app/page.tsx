@@ -13,7 +13,6 @@ import type { NextPage } from "next";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
 
-
 const inter = Inter({ subsets: ["latin"] });
 
 const Home: NextPage = () => {
@@ -44,7 +43,9 @@ const Home: NextPage = () => {
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}>
+      <div
+        className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}
+      >
         <NavbarSimple />
 
         <main className="w-full sm:w-7xl container mx-auto px-4 py-12">
@@ -52,7 +53,6 @@ const Home: NextPage = () => {
           <div className="relative">
             <div className="relative bg-white/95 dark:bg-card rounded-3xl p-8 md:p-12 shadow-2xl border border-gray-200/60 dark:border-border">
               <section className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-16">
-
                 {/* Left: text */}
                 <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
                   <motion.h1
@@ -70,7 +70,8 @@ const Home: NextPage = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.15, duration: 0.5 }}
                   >
-                    View detailed information about any escrow contract on the Stellar blockchain.
+                    View detailed information about any escrow contract on the
+                    Stellar blockchain.
                   </motion.p>
 
                   <div className="mt-6 w-full max-w-lg">

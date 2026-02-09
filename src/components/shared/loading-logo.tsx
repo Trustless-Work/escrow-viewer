@@ -1,18 +1,18 @@
-import type { CSSProperties } from "react"
-import Image from "next/image"
+import type { CSSProperties } from "react";
+import Image from "next/image";
 
 interface LoadingLogoProps {
-  loading: boolean
-  size?: number
+  loading: boolean;
+  size?: number;
 }
 
 export const LoadingLogo = ({ loading, size = 300 }: LoadingLogoProps) => {
   const style: CSSProperties = {
-    animation: loading ? 'spin 3s linear infinite' : 'none',
+    animation: loading ? "spin 3s linear infinite" : "none",
   };
-  
+
   return (
-    <div 
+    <div
       className="relative flex items-center justify-center"
       style={{ width: size, height: size }}
     >
@@ -28,10 +28,10 @@ export const LoadingLogo = ({ loading, size = 300 }: LoadingLogoProps) => {
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="bg-background/80 rounded-full p-3">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"/>
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};

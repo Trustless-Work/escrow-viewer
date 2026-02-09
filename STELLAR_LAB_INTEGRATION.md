@@ -19,6 +19,7 @@ https://lab.stellar.org/smart-contracts/contract-explorer?
 ```
 
 **Key Format Requirements:**
+
 1. Network parameter: `$=network$id={network}` - **No `&` separator** between `$=network` and `id`
 2. URLs use **double slashes**: `https:////horizon.stellar.org` (not `https://`)
 3. Passphrase format: Includes `/;` before the date and trailing semicolon: `"Public Global Stellar Network /; September 2015;"`
@@ -75,7 +76,7 @@ The URL generation is handled by `getStellarLabUrl()` in `src/lib/network-config
    - Testnet: `https://soroban-testnet.stellar.org` ✅
    - Mainnet: `https://soroban-mainnet.stellar.org` ✅
 
-2. **URL Encoding**: 
+2. **URL Encoding**:
    - The network passphrase contains special characters (semicolons, spaces) that must be properly URL-encoded using `encodeURIComponent()`.
    - **Important**: We manually construct the URL string instead of using `URLSearchParams` because:
      - Dollar signs (`$`) in parameter names (like `smartContracts$explorer$contractId`) must remain unencoded
@@ -104,6 +105,7 @@ https://lab.stellar.org/smart-contracts/contract-explorer?$=network$id=mainnet&l
 ```
 
 **Note**: Notice the key differences:
+
 - `$=network$id=mainnet` (no `&` between `$=network` and `id`)
 - Double slashes in URLs: `https:////`
 - Passphrase includes `/;` and trailing `;`: `/%3B%20September%202015%3B`
@@ -144,6 +146,7 @@ The "Open in Stellar Lab" button:
 ### URL Parameter Discovery
 
 The reference URL provided in the task description showed:
+
 - Double slashes in URLs (`https:////horizon-testnet.stellar.org`) - This appears to be a typo or artifact. The implementation uses single slashes.
 - Complex parameter naming with dollar signs (`smartContracts$explorer$contractId`)
 - All parameters appear to be required for proper functionality
@@ -151,10 +154,12 @@ The reference URL provided in the task description showed:
 ### RPC URL Differences
 
 The Escrow Viewer's `NETWORK_CONFIGS` uses:
+
 - Testnet: `https://soroban-testnet.stellar.org` (matches Stellar Lab)
 - Mainnet: `https://stellar.api.onfinality.io/public` (different from Stellar Lab)
 
 Stellar Lab requires official Stellar RPC endpoints, so the implementation uses:
+
 - Testnet: `https://soroban-testnet.stellar.org` ✅ (Confirmed working from task example)
 - Mainnet: `https://soroban-mainnet.stellar.org` ⚠️ (Needs verification - follows pattern but not explicitly confirmed)
 
@@ -174,6 +179,7 @@ This ensures compatibility with Stellar Lab's requirements while allowing the Es
 ## Future Enhancements
 
 Potential improvements:
+
 - Add a tooltip component (beyond the title attribute) for better UX
 - Consider adding the button to other locations (e.g., transaction detail modal)
 - Add analytics tracking for button clicks

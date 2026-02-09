@@ -4,12 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { InfoTooltip } from "@/components/shared/info-tooltip";
-import { 
-  Clock, 
-  ChevronRight, 
-  ExternalLink,
-  AlertCircle 
-} from "lucide-react";
+import { Clock, ChevronRight, ExternalLink, AlertCircle } from "lucide-react";
 import {
   type TransactionMetadata,
   formatTransactionTime,
@@ -53,14 +48,18 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       <div className="w-full">
         <div className="p-6">
           <div className="flex items-center gap-2 mb-4">
-          <Clock className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
+            <Clock className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">
+              Recent Transactions
+            </h3>
             <InfoTooltip content="Recent transaction history fetched from Soroban RPC. Note: RPC typically retains 24h-7 days of history. For older data, consider using full indexers like Hubble or BigQuery." />
           </div>
           <div className="flex justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-sm text-muted-foreground">Loading transaction history...</p>
+              <p className="text-sm text-muted-foreground">
+                Loading transaction history...
+              </p>
             </div>
           </div>
         </div>
@@ -74,7 +73,9 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         <div className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              Recent Transactions
+            </h3>
           </div>
           <div className="flex items-center gap-2 text-destructive py-6 bg-red-50 dark:bg-red-500/10 rounded-lg px-4">
             <AlertCircle className="h-5 w-5" />
@@ -90,7 +91,9 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       <div className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
+          <h3 className="text-lg font-semibold text-foreground">
+            Recent Transactions
+          </h3>
           <InfoTooltip content="Recent transaction history fetched from Soroban RPC. Click on any transaction to view detailed information including signers, function calls, and results." />
         </div>
         {retentionNotice && (
@@ -104,21 +107,25 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">Data Retention Notice</p>
-                <p className="text-sm text-amber-700 dark:text-amber-400/80 mb-2">{retentionNotice}</p>
+                <p className="font-semibold text-amber-800 dark:text-amber-300 mb-1">
+                  Data Retention Notice
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-400/80 mb-2">
+                  {retentionNotice}
+                </p>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <a 
-                    href="https://hubble.stellar.org" 
-                    target="_blank" 
+                  <a
+                    href="https://hubble.stellar.org"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 px-2 py-1 rounded-full hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Stellar Hubble
                   </a>
-                  <a 
-                    href="https://console.cloud.google.com/bigquery" 
-                    target="_blank" 
+                  <a
+                    href="https://console.cloud.google.com/bigquery"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 px-2 py-1 rounded-full hover:bg-amber-200 dark:hover:bg-amber-500/30 transition-colors"
                   >
@@ -136,12 +143,18 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-primary/20 dark:to-accent/20 rounded-full flex items-center justify-center mb-4">
               <Clock className="h-8 w-8 text-primary" />
             </div>
-            <h4 className="text-lg font-semibold text-foreground mb-2">No Transactions Found</h4>
+            <h4 className="text-lg font-semibold text-foreground mb-2">
+              No Transactions Found
+            </h4>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              This could be due to RPC retention limits, no recent activity, or the contract has not been used yet.
+              This could be due to RPC retention limits, no recent activity, or
+              the contract has not been used yet.
             </p>
             <div className="mt-4 text-xs text-muted-foreground">
-              <p>Tip: Transaction history is typically available for the last 24 hours to 7 days</p>
+              <p>
+                Tip: Transaction history is typically available for the last 24
+                hours to 7 days
+              </p>
             </div>
           </div>
         ) : (
@@ -175,7 +188,9 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                           <span className="font-medium">Ledger:</span>
                           <span>{tx.ledger.toLocaleString()}</span>
                         </div>
-                        <span className="text-muted-foreground">{formatTransactionTime(tx.createdAt)}</span>
+                        <span className="text-muted-foreground">
+                          {formatTransactionTime(tx.createdAt)}
+                        </span>
                       </div>
                     </div>
                   </motion.div>
@@ -207,7 +222,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-border">
                       {transactions.map((tx, index) => (
-                          <motion.tr
+                        <motion.tr
                           key={tx.txHash}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -243,7 +258,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                                 e.stopPropagation();
                                 window.open(
                                   `https://stellar.expert/explorer/testnet/tx/${tx.txHash}`,
-                                  "_blank"
+                                  "_blank",
                                 );
                               }}
                             >
