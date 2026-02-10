@@ -38,7 +38,9 @@ export interface TransactionResponse {
   retentionNotice?: string;
 }
 
-const SOROBAN_RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
+const SOROBAN_RPC_URL =
+  process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ||
+  "https://soroban-testnet.stellar.org";
 
 /**
  * Fetches recent transactions for a contract using Soroban JSON-RPC
@@ -46,7 +48,7 @@ const SOROBAN_RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soro
  */
 export async function fetchTransactions(
   contractId: string,
-  options: FetchTransactionsOptions = {}
+  options: FetchTransactionsOptions = {},
 ): Promise<TransactionResponse> {
   try {
     const { startLedger, cursor, limit = 50 } = options;
@@ -66,10 +68,10 @@ export async function fetchTransactions(
         filters: [
           {
             type: "contract",
-            contractIds: [contractAddress]
-          }
-        ]
-      }
+            contractIds: [contractAddress],
+          },
+        ],
+      },
     };
 
     const response = await fetch(SOROBAN_RPC_URL, {
@@ -88,26 +90,32 @@ export async function fetchTransactions(
 
     if (data.error) {
       // Handle retention-related errors gracefully
-      if (data.error.code === -32600 || data.error.message?.includes("retention")) {
+      if (
+        data.error.code === -32600 ||
+        data.error.message?.includes("retention")
+      ) {
         return {
           transactions: [],
           latestLedger: 0,
           oldestLedger: 0,
           hasMore: false,
-          retentionNotice: "Transaction data beyond retention period. RPC typically retains 24h-7 days of history."
+          retentionNotice:
+            "Transaction data beyond retention period. RPC typically retains 24h-7 days of history.",
         };
       }
       throw new Error(data.error.message || "Failed to fetch transactions");
     }
 
     const result = data.result;
-    const transactions: TransactionMetadata[] = (result.transactions || []).map((tx: any) => ({
-      txHash: tx.id,
-      ledger: tx.ledger,
-      createdAt: tx.createdAt,
-      status: tx.status,
-      applicationOrder: tx.applicationOrder
-    }));
+    const transactions: TransactionMetadata[] = (result.transactions || []).map(
+      (tx: any) => ({
+        txHash: tx.id,
+        ledger: tx.ledger,
+        createdAt: tx.createdAt,
+        status: tx.status,
+        applicationOrder: tx.applicationOrder,
+      }),
+    );
 
     return {
       transactions,
@@ -115,21 +123,22 @@ export async function fetchTransactions(
       oldestLedger: result.oldestLedger || 0,
       cursor: result.cursor,
       hasMore: !!result.cursor,
-      retentionNotice: transactions.length === 0 ? 
-        "No recent transactions found. Note: RPC typically retains 24h-7 days of history." : 
-        undefined
+      retentionNotice:
+        transactions.length === 0
+          ? "No recent transactions found. Note: RPC typically retains 24h-7 days of history."
+          : undefined,
     };
-
   } catch (error) {
     console.error("Error fetching transactions:", error);
-    
+
     // Return graceful error response
     return {
       transactions: [],
       latestLedger: 0,
       oldestLedger: 0,
       hasMore: false,
-      retentionNotice: "Unable to fetch transaction history. This may be due to retention limits or network issues."
+      retentionNotice:
+        "Unable to fetch transaction history. This may be due to retention limits or network issues.",
     };
   }
 }
@@ -138,15 +147,17 @@ export async function fetchTransactions(
  * Fetches detailed information for a specific transaction
  * Returns full details with XDR decoded as JSON
  */
-export async function fetchTransactionDetails(txHash: string): Promise<TransactionDetails | null> {
+export async function fetchTransactionDetails(
+  txHash: string,
+): Promise<TransactionDetails | null> {
   try {
     const requestBody = {
       jsonrpc: "2.0",
       id: 2,
       method: "getTransaction",
       params: {
-        hash: txHash
-      }
+        hash: txHash,
+      },
     };
 
     const response = await fetch(SOROBAN_RPC_URL, {
@@ -187,12 +198,15 @@ export async function fetchTransactionDetails(txHash: string): Promise<Transacti
       try {
         // Look for invoke host function operations
         const operations = tx.envelope?.v1?.tx?.operations || [];
-        const invokeOp = operations.find((op: any) => op.body?.invokeHostFunction);
-        
+        const invokeOp = operations.find(
+          (op: any) => op.body?.invokeHostFunction,
+        );
+
         if (invokeOp) {
           const hostFunction = invokeOp.body.invokeHostFunction.hostFunction;
           if (hostFunction?.invokeContract) {
-            calledFunction = hostFunction.invokeContract.functionName || "invoke_contract";
+            calledFunction =
+              hostFunction.invokeContract.functionName || "invoke_contract";
             args = hostFunction.invokeContract.args || [];
           }
         }
@@ -216,9 +230,8 @@ export async function fetchTransactionDetails(txHash: string): Promise<Transacti
       args,
       result,
       envelope: tx.envelope,
-      meta: tx.meta
+      meta: tx.meta,
     };
-
   } catch (error) {
     console.error("Error fetching transaction details:", error);
     return null;
@@ -231,12 +244,12 @@ export async function fetchTransactionDetails(txHash: string): Promise<Transacti
 export function formatTransactionTime(createdAt: string): string {
   try {
     const date = new Date(createdAt);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     }).format(date);
   } catch (error) {
     console.warn("Failed to format transaction time:", error);

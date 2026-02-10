@@ -1,10 +1,10 @@
-import { motion } from "framer-motion"
-import { fadeIn } from "@/utils/animations/animation-variants"
+import { motion } from "framer-motion";
+import { fadeIn } from "@/utils/animations/animation-variants";
 // Network toggle moved to the Navbar
 
 export const Header = () => {
   return (
-    <motion.div 
+    <motion.div
       className="mb-10 flex flex-col items-center gap-6 text-center"
       initial="hidden"
       animate="visible"
@@ -20,5 +20,5 @@ export const Header = () => {
         </p>
       </div>
     </motion.div>
-  )
-}
+  );
+};

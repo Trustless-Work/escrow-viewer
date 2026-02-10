@@ -12,16 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Copy, 
-  ExternalLink, 
-  User, 
-  Settings, 
+import {
+  Copy,
+  ExternalLink,
+  User,
+  Settings,
   CheckCircle,
   AlertCircle,
   Clock,
   Hash,
-  Code
+  Code,
 } from "lucide-react";
 import {
   type TransactionDetails,
@@ -49,10 +49,10 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
   const fetchDetails = useCallback(async () => {
     if (!txHash) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const transactionDetails = await fetchTransactionDetails(txHash);
       setDetails(transactionDetails);
@@ -65,21 +65,25 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   }, [txHash]);
 
   const copyToClipboard = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    // Optional: Show success toast using sonner
-  } catch (err) {
-    console.error('Failed to copy to clipboard:', err);
-    // Optional: Show error toast
-  }
-};
+    try {
+      await navigator.clipboard.writeText(text);
+      // Optional: Show success toast using sonner
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      // Optional: Show error toast
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "SUCCESS":
-        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
+        return (
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+        );
       case "FAILED":
-        return <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
+        return (
+          <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+        );
       default:
         return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
@@ -95,22 +99,25 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         return "bg-secondary text-secondary-foreground border-border";
     }
   };
-  
+
   const formatJsonValue = (value: unknown): string => {
-      if (value === null || value === undefined) return "null";
-      if (typeof value === "string") return value;
-      if (typeof value === "number" || typeof value === "boolean") return String(value);
-      return JSON.stringify(value, null, 2);
-    };
-    
-    useEffect(() => {
-      if (isOpen && txHash) {
-        fetchDetails();
-      }
-    }, [isOpen, txHash, fetchDetails]);
+    if (value === null || value === undefined) return "null";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean")
+      return String(value);
+    return JSON.stringify(value, null, 2);
+  };
+
+  useEffect(() => {
+    if (isOpen && txHash) {
+      fetchDetails();
+    }
+  }, [isOpen, txHash, fetchDetails]);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${isMobile ? "max-w-[95vw]" : "max-w-4xl"} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent
+        className={`${isMobile ? "max-w-[95vw]" : "max-w-4xl"} max-h-[90vh] overflow-y-auto`}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Hash className="h-5 w-5" />
@@ -148,16 +155,25 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-foreground">Hash</label>
+                    <label className="text-sm font-medium text-foreground">
+                      Hash
+                    </label>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
-                        {isMobile ? truncateHash(details.txHash, true) : details.txHash}
+                        {isMobile
+                          ? truncateHash(details.txHash, true)
+                          : details.txHash}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => window.open(`https://stellar.expert/explorer/${process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'testnet'}/tx/${details.txHash}`, "_blank")}
+                        onClick={() =>
+                          window.open(
+                            `https://stellar.expert/explorer/${process.env.NEXT_PUBLIC_STELLAR_NETWORK || "testnet"}/tx/${details.txHash}`,
+                            "_blank",
+                          )
+                        }
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -165,14 +181,21 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => window.open(`https://stellar.expert/explorer/testnet/tx/${details.txHash}`, "_blank")}
+                        onClick={() =>
+                          window.open(
+                            `https://stellar.expert/explorer/testnet/tx/${details.txHash}`,
+                            "_blank",
+                          )
+                        }
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-foreground">Status</label>
+                    <label className="text-sm font-medium text-foreground">
+                      Status
+                    </label>
                     <div className="flex items-center gap-2 mt-1">
                       {getStatusIcon(details.status)}
                       <Badge className={getStatusBadgeColor(details.status)}>
@@ -181,12 +204,20 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-foreground">Ledger</label>
-                    <p className="text-sm mt-1">{details.ledger.toLocaleString()}</p>
+                    <label className="text-sm font-medium text-foreground">
+                      Ledger
+                    </label>
+                    <p className="text-sm mt-1">
+                      {details.ledger.toLocaleString()}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-foreground">Time</label>
-                    <p className="text-sm mt-1">{formatTransactionTime(details.createdAt)}</p>
+                    <label className="text-sm font-medium text-foreground">
+                      Time
+                    </label>
+                    <p className="text-sm mt-1">
+                      {formatTransactionTime(details.createdAt)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -222,7 +253,9 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No signer information available</p>
+                  <p className="text-sm text-muted-foreground">
+                    No signer information available
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -238,15 +271,19 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-foreground">Function</label>
+                    <label className="text-sm font-medium text-foreground">
+                      Function
+                    </label>
                     <p className="font-mono text-sm bg-muted px-2 py-1 rounded mt-1">
                       {details.calledFunction}
                     </p>
                   </div>
-                  
+
                   {details.args && details.args.length > 0 && (
                     <div>
-                      <label className="text-sm font-medium text-foreground">Arguments</label>
+                      <label className="text-sm font-medium text-foreground">
+                        Arguments
+                      </label>
                       <div className="mt-1 bg-muted p-3 rounded-lg">
                         <pre className="text-xs overflow-x-auto">
                           {JSON.stringify(details.args, null, 2)}
@@ -289,10 +326,14 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   </summary>
                   <div className="mt-3 bg-muted p-3 rounded-lg">
                     <pre className="text-xs overflow-x-auto">
-                      {JSON.stringify({
-                        envelope: details.envelope,
-                        meta: details.meta
-                      }, null, 2)}
+                      {JSON.stringify(
+                        {
+                          envelope: details.envelope,
+                          meta: details.meta,
+                        },
+                        null,
+                        2,
+                      )}
                     </pre>
                   </div>
                 </details>

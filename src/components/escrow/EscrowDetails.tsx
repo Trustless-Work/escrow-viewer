@@ -10,9 +10,6 @@ import { LoadingLogo } from "@/components/shared/loading-logo";
 import { EXAMPLE_CONTRACT_IDS } from "@/lib/escrow-constants";
 import { useRouter } from "next/navigation";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { getStellarLabUrl } from "@/lib/network-config";
-import { ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 import { Header } from "@/components/escrow/header";
 import { SearchCard } from "@/components/escrow/search-card";
@@ -28,12 +25,10 @@ import {
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
-
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 // (useMemo is consolidated in the import above)
-
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,46 +44,46 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
-const isMobile = useIsMobile();
+  const isMobile = useIsMobile();
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
   // Escrow data hook (raw + organized)
   const { raw, organized, loading, error, refresh } = useEscrowData(
     contractId,
     currentNetwork,
-    isMobile
+    isMobile,
   );
 
   // Live token balance hook
   const { ledgerBalance, decimals, mismatch } = useTokenBalance(
     contractId,
     raw,
-    currentNetwork
+    currentNetwork,
   );
 
   const organizedWithLive = useMemo(() => {
-  if (!organized) return null;
-  if (!ledgerBalance) return organized; // nothing to override
-  return {
-    ...organized,
-    properties: {
-      ...organized.properties,
-      balance: ledgerBalance, // <- replace storage balance with live one
-    },
-  };
-}, [organized, ledgerBalance]);
-
+    if (!organized) return null;
+    if (!ledgerBalance) return organized; // nothing to override
+    return {
+      ...organized,
+      properties: {
+        ...organized.properties,
+        balance: ledgerBalance, // <- replace storage balance with live one
+      },
+    };
+  }, [organized, ledgerBalance]);
 
   // Transaction-related state (kept here for now)
   const [transactions, setTransactions] = useState<TransactionMetadata[]>([]);
   const [transactionLoading, setTransactionLoading] = useState<boolean>(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
-  const [transactionResponse, setTransactionResponse] = useState<TransactionResponse | null>(null);
+  const [transactionResponse, setTransactionResponse] =
+    useState<TransactionResponse | null>(null);
   const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [showOnlyTransactions, setShowOnlyTransactions] = useState<boolean>(false);
+  const [showOnlyTransactions, setShowOnlyTransactions] =
+    useState<boolean>(false);
   const txRef = useRef<HTMLDivElement | null>(null);
-
 
   // Fetch transaction data
   const fetchTransactionData = useCallback(
@@ -110,7 +105,7 @@ const isMobile = useIsMobile();
         setTransactionLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Initial + network-change fetch (escrow + txs)
@@ -170,46 +165,45 @@ const isMobile = useIsMobile();
     if (showOnlyTransactions && txRef.current) {
       try {
         txRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch  {
+      } catch {
         // ignore scroll failures
       }
     }
   }, [showOnlyTransactions]);
 
-// === DEBUG LOGGING (EscrowDetails) ===
-const DEBUG = true;
+  // === DEBUG LOGGING (EscrowDetails) ===
+  const DEBUG = true;
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] network:", currentNetwork);
-  console.log("[DBG][EscrowDetails] contractId:", contractId);
-}, [currentNetwork, contractId]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] network:", currentNetwork);
+    console.log("[DBG][EscrowDetails] contractId:", contractId);
+  }, [currentNetwork, contractId]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] raw escrow map:", raw);
-}, [raw]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] raw escrow map:", raw);
+  }, [raw]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] organized data:", organized);
-}, [organized]);
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] organized data:", organized);
+  }, [organized]);
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] token live balance:", {
-    ledgerBalance,
-    decimals,
-    mismatch,
-  });
-}, [ledgerBalance, decimals, mismatch]);
-
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] token live balance:", {
+      ledgerBalance,
+      decimals,
+      mismatch,
+    });
+  }, [ledgerBalance, decimals, mismatch]);
 
   return (
     <TooltipProvider>
-
-      <div className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 ${inter.className}`}>
- main
+      <div
+        className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}
+      >
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -230,64 +224,22 @@ useEffect(() => {
 
           {/* Search Card + View Transactions button (flexed together) */}
           {!showOnlyTransactions && (
-            <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
-              <div className="flex-1 max-w-lg">
-                <SearchCard
-                  contractId={contractId}
-                  setContractId={setContractId}
-                  loading={loading}
-                  isSearchFocused={isSearchFocused}
-                  setIsSearchFocused={setIsSearchFocused}
-                  handleKeyDown={handleKeyDown}
-                  fetchEscrowData={handleFetch}
-                  handleUseExample={handleUseExample}
-                />
-              </div>
-
-              {raw && (
-                <div className="w-full max-w-lg flex flex-col gap-2">
-                  <button
-                    onClick={() => setShowOnlyTransactions(true)}
-                    aria-label="View Transaction History"
-                    className="w-full inline-flex justify-center items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground shadow-sm hover:shadow-md transition cursor-pointer"
-                  >
-                    View Transaction History
-                  </button>
-                  <Button
-                    onClick={() => {
-                      // Get escrow_id from organized data as the most reliable source
-                      const escrowIdFromData = organized?.properties?.escrow_id as string | undefined;
-                      
-                      // CONTRACT ID IS REQUIRED - try multiple sources in order of reliability:
-                      // 1. escrow_id from organized data (most reliable - what was actually loaded)
-                      // 2. contractId state
-                      // 3. initialEscrowId prop
-                      const idToUse = 
-                        (escrowIdFromData && escrowIdFromData.trim()) ||
-                        (contractId && contractId.trim()) || 
-                        (initialEscrowId && initialEscrowId.trim());
-                      
-                      if (!idToUse || idToUse.trim() === '') {
-                        alert('Error: Contract ID is required to open in Stellar Lab. Please ensure an escrow contract is loaded.');
-                        return;
-                      }
-                      
-                      try {
-                        const labUrl = getStellarLabUrl(currentNetwork, idToUse);
-                        window.open(labUrl, "_blank");
-                      } catch (error) {
-                        alert(`Error opening Stellar Lab: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                      }
-                    }}
-                    variant="outline"
-                    className="w-full inline-flex justify-center items-center gap-2"
-                    title="Open contract in Stellar Lab"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Open in Stellar Lab
-                  </Button>
-                </div>
-              )}
+            <div className="max-w-5xl mx-auto  flex-col md:flex-row items-start md:items-center gap-4 mb-6">
+              <SearchCard
+                contractId={contractId}
+                setContractId={setContractId}
+                loading={loading}
+                isSearchFocused={isSearchFocused}
+                setIsSearchFocused={setIsSearchFocused}
+                handleKeyDown={handleKeyDown}
+                fetchEscrowData={handleFetch}
+                handleUseExample={handleUseExample}
+                raw={raw}
+                organized={organized}
+                initialEscrowId={initialEscrowId}
+                currentNetwork={currentNetwork}
+                setShowOnlyTransactions={setShowOnlyTransactions}
+              />
             </div>
           )}
 
@@ -296,12 +248,20 @@ useEffect(() => {
 
           {/* Content Section (hidden when showing transactions as a page) */}
           {!showOnlyTransactions && (
-            <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
+            <EscrowContent
+              loading={loading}
+              organized={organizedWithLive}
+              isMobile={isMobile}
+            />
           )}
 
           {/* Live ledger balance (from token contract) */}
           {!showOnlyTransactions && raw && ledgerBalance && (
-            <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
+            <LedgerBalancePanel
+              balance={ledgerBalance}
+              decimals={decimals}
+              mismatch={mismatch}
+            />
           )}
 
           {/* Transaction History Section (renders only when requested) */}
@@ -314,7 +274,9 @@ useEffect(() => {
               transition={{ delay: 0.1, duration: 0.4 }}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold">Transaction History</h2>
+                <h2 className="text-2xl md:text-3xl font-bold">
+                  Transaction History
+                </h2>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowOnlyTransactions(false)}
@@ -327,7 +289,9 @@ useEffect(() => {
               </div>
 
               <div className="mb-4">
-                <p className="text-sm text-muted-foreground">Complete blockchain activity record for this escrow contract</p>
+                <p className="text-sm text-muted-foreground">
+                  Complete blockchain activity record for this escrow contract
+                </p>
               </div>
 
               <div>
@@ -339,10 +303,16 @@ useEffect(() => {
                 >
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-purple-50/30 dark:from-primary/5 dark:to-accent/5 rounded-3xl -z-10"
-                    animate={{ backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"] }}
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                    animate={{
+                      backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
+                    }}
+                    transition={{
+                      duration: 25,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                   />
-                    <div className="relative bg-white/95 dark:bg-card backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-border overflow-hidden hover:shadow-3xl transition-all duration-700">
+                  <div className="relative bg-white/95 dark:bg-card backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200/60 dark:border-border overflow-hidden hover:shadow-3xl transition-all duration-700">
                     <TransactionTable
                       transactions={transactions}
                       loading={transactionLoading}

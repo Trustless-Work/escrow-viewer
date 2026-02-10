@@ -18,7 +18,7 @@ type RpcRequest = {
 export async function jsonRpcCall<T>(
   rpcUrl: string,
   method: string,
-  params?: unknown
+  params?: unknown,
 ): Promise<T> {
   const body: RpcRequest = { jsonrpc: "2.0", id: 1, method };
   if (params !== undefined) body.params = params;
@@ -44,7 +44,11 @@ export async function getLatestLedger(rpcUrl: string) {
 
 /** Soroban RPC: simulateTransaction (with params) */
 export async function simulateTransaction(rpcUrl: string, txB64: string) {
-  return jsonRpcCall<{ result: { retval: string } }>(rpcUrl, "simulateTransaction", {
-    transaction: txB64,
-  });
+  return jsonRpcCall<{ result: { retval: string } }>(
+    rpcUrl,
+    "simulateTransaction",
+    {
+      transaction: txB64,
+    },
+  );
 }

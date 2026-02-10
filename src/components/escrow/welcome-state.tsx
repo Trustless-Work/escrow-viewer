@@ -1,15 +1,15 @@
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants"
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { EXAMPLE_CONTRACT_ID } from "@/lib/escrow-constants";
 
 interface WelcomeStateProps {
   showWelcome: boolean;
   handleUseExample?: () => void;
 }
 
-export const WelcomeState = ({ 
+export const WelcomeState = ({
   showWelcome,
-  handleUseExample 
+  handleUseExample,
 }: WelcomeStateProps) => {
   const useExample = handleUseExample || (() => {});
 
@@ -24,7 +24,7 @@ export const WelcomeState = ({
           className="flex flex-col items-center justify-center py-12"
         >
           <div className="text-center max-w-md">
-            <motion.h2 
+            <motion.h2
               className="text-xl font-semibold mb-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -32,16 +32,16 @@ export const WelcomeState = ({
             >
               Welcome to Escrow Data Viewer
             </motion.h2>
-            <motion.p 
+            <motion.p
               className="text-muted-foreground mb-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              Enter an escrow contract ID above to view its details,
-              milestones, and assigned roles.
+              Enter an escrow contract ID above to view its details, milestones,
+              and assigned roles.
             </motion.p>
-            <motion.div 
+            <motion.div
               className="bg-primary/5 dark:bg-primary/10 p-4 rounded-md border border-primary/20 hover:bg-primary/10 dark:hover:bg-primary/20 hover:shadow-md transition-all duration-300"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -63,5 +63,5 @@ export const WelcomeState = ({
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

@@ -12,7 +12,9 @@ type I128Parts = { hi?: number | string; lo?: number | string };
 type I128Like = { i128?: string | I128Parts };
 
 function isI128Like(v: unknown): v is I128Like {
-  return !!v && typeof v === "object" && "i128" in (v as Record<string, unknown>);
+  return (
+    !!v && typeof v === "object" && "i128" in (v as Record<string, unknown>)
+  );
 }
 
 function i128ToBigIntSafe(v: I128Like): bigint | null {
@@ -83,7 +85,7 @@ function clampDecimals(d?: number): number {
 export function useTokenBalance(
   contractId: string,
   escrow: EscrowMap | null,
-  network: NetworkType
+  network: NetworkType,
 ) {
   const [ledgerBalance, setLedgerBalance] = useState<string | null>(null);
   const [decimals, setDecimals] = useState<number | null>(null);
@@ -160,10 +162,15 @@ export function useTokenBalance(
           } catch {
             big = null;
           }
-} else if (be && isI128Like(be) && be.i128 && typeof be.i128 === "object") {
-  const bigFromParts = i128ToBigIntSafe(be);
-  big = bigFromParts;
-}
+        } else if (
+          be &&
+          isI128Like(be) &&
+          be.i128 &&
+          typeof be.i128 === "object"
+        ) {
+          const bigFromParts = i128ToBigIntSafe(be);
+          big = bigFromParts;
+        }
         if (big !== null) stored = Number(big) / Math.pow(10, d);
       }
 

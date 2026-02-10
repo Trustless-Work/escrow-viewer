@@ -21,11 +21,15 @@ export function LedgerBalancePanel({
         <div className="flex items-center gap-3">
           <div className="w-2 h-8 bg-gradient-to-b from-primary to-accent rounded-full" />
           <div>
-            <div className="text-sm text-muted-foreground">Ledger balance (from token contract)</div>
+            <div className="text-sm text-muted-foreground">
+              Ledger balance (from token contract)
+            </div>
             <div className="text-xl font-semibold text-foreground">
               {balance}
               {typeof decimals === "number" ? (
-                <span className="ml-1 text-muted-foreground text-sm">(d={decimals})</span>
+                <span className="ml-1 text-muted-foreground text-sm">
+                  (d={decimals})
+                </span>
               ) : null}
             </div>
           </div>

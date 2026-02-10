@@ -41,31 +41,42 @@ function getStr(m: Record<string, EscrowValue>, k: string): string | undefined {
   const v = m[k] as unknown;
   return isStrLike(v) ? v.string : undefined;
 }
-function getAddr(m: Record<string, EscrowValue>, k: string): string | undefined {
+function getAddr(
+  m: Record<string, EscrowValue>,
+  k: string,
+): string | undefined {
   const v = m[k] as unknown;
   return isAddrLike(v) ? v.address : undefined;
 }
-function getBool(m: Record<string, EscrowValue>, k: string): boolean | undefined {
+function getBool(
+  m: Record<string, EscrowValue>,
+  k: string,
+): boolean | undefined {
   const v = m[k] as unknown;
   return isBoolLike(v) ? v.bool : undefined;
 }
-function getMap(m: Record<string, EscrowValue>, k: string): MapEntry[] | undefined {
+function getMap(
+  m: Record<string, EscrowValue>,
+  k: string,
+): MapEntry[] | undefined {
   const v = m[k] as unknown;
   return isMapLike(v) ? v.map : undefined;
 }
-function getI128(m: Record<string, EscrowValue>, k: string): I128Like | undefined {
+function getI128(
+  m: Record<string, EscrowValue>,
+  k: string,
+): I128Like | undefined {
   const v = m[k] as unknown;
   return isI128Like(v) ? (v as I128Like) : undefined;
 }
 
-
-type BoolLike        = { bool: boolean };
-type StrLikePresent  = { string: string };
+type BoolLike = { bool: boolean };
+type StrLikePresent = { string: string };
 type AddrLikePresent = { address: string };
-type MapEntry        = { key: { symbol: string }; val: EscrowValue };
-type MapLikePresent  = { map: MapEntry[] };
-type I128Parts       = { hi?: number | string; lo?: number | string };
-type I128Like        = { i128: string | I128Parts };
+type MapEntry = { key: { symbol: string }; val: EscrowValue };
+type MapLikePresent = { map: MapEntry[] };
+type I128Parts = { hi?: number | string; lo?: number | string };
+type I128Like = { i128: string | I128Parts };
 
 function isBoolLike(v: unknown): v is BoolLike {
   return !!v && typeof (v as Record<"bool", unknown>).bool === "boolean";
@@ -85,7 +96,7 @@ function isMapLike(v: unknown): v is MapLikePresent {
 function isI128Parts(v: unknown): v is I128Parts {
   if (!v || typeof v !== "object") return false;
   const r = v as Record<string, unknown>;
-  return ("hi" in r || "lo" in r); // presence indicates the {hi,lo} form
+  return "hi" in r || "lo" in r; // presence indicates the {hi,lo} form
 }
 
 function isI128Like(v: unknown): v is I128Like {
@@ -99,7 +110,11 @@ function isI128Like(v: unknown): v is I128Like {
 function i128ToBigIntFlexibleSafe(v: I128Like): bigint | null {
   const raw = v.i128;
   if (typeof raw === "string") {
-    try { return BigInt(raw); } catch { return null; }
+    try {
+      return BigInt(raw);
+    } catch {
+      return null;
+    }
   }
   if (isI128Parts(raw)) {
     const hi = BigInt(String(raw.hi ?? 0));
@@ -108,8 +123,6 @@ function i128ToBigIntFlexibleSafe(v: I128Like): bigint | null {
   }
   return null;
 }
-
-
 
 function getDecimalsFromEscrowMap(data: EscrowMap | null): number | undefined {
   if (!data) return undefined;
@@ -133,10 +146,6 @@ function formatFixed(n: number, digits: number): string {
   return n.toFixed(digits);
 }
 
-
-
-
-
 /* ---------------- main ---------------- */
 
 export function detectEscrowType(data: EscrowMap | null): EscrowType {
@@ -147,8 +156,8 @@ export function detectEscrowType(data: EscrowMap | null): EscrowType {
     m.map?.some(
       (e) =>
         e.key.symbol === "amount" ||
-        (typeof e.key.symbol === "string" && e.key.symbol.endsWith("flag"))
-    )
+        (typeof e.key.symbol === "string" && e.key.symbol.endsWith("flag")),
+    ),
   );
   return isMulti ? "multi-release" : "single-release";
 }
@@ -157,192 +166,205 @@ export const extractValue = (
   data: EscrowMap | null,
   key: string,
   isMobile: boolean,
-  isAddress = false
+  isAddress = false,
 ): EscrowExtractedValue => {
   if (!data) return "N/A";
   const item = data.find((entry) => entry.key.symbol === key);
   if (!item) {
     return "N/A";
   }
- const val: unknown = item.val;   // ⬅️ was EscrowValue
-if (val == null) return "N/A";
+  const val: unknown = item.val; // ⬅️ was EscrowValue
+  if (val == null) return "N/A";
 
-// Handle platform_fee with multiple possible formats
-if (key === "platform_fee") {
-  // Check if it's a string (might already be formatted)
-  if (isStrLike(val)) {
-    const str = val.string.trim();
-    // Remove % if present and parse the number
-    const cleanStr = str.replace('%', '').trim();
-    const num = parseFloat(cleanStr);
-    if (!isNaN(num)) {
-      // If > 100, treat as basis points; otherwise as percentage
-      return (num > 100 ? num / 100 : num).toFixed(2) + "%";
-    }
-    return str;
-  }
-  
-  // Check for u32 format
-  const u32Val = val as { u32?: number };
-  if (u32Val && typeof u32Val.u32 === "number") {
-    const num = u32Val.u32;
-    return (num > 100 ? num / 100 : num).toFixed(2) + "%";
-  }
-  
-  // Check for u64 format
-  const u64Val = val as { u64?: string | number };
-  if (u64Val && u64Val.u64 !== undefined) {
-    const num = typeof u64Val.u64 === "string" ? parseInt(u64Val.u64, 10) : u64Val.u64;
-    if (!isNaN(num)) {
-      return (num > 100 ? num / 100 : num).toFixed(2) + "%";
-    }
-  }
-}
-
-if (isBoolLike(val)) return val.bool ? "True" : "False";
-if (isStrLike(val)) return val.string;  // ✅ no more "never"
-if (isAddrLike(val)) return isAddress ? truncateAddress(val.address, isMobile) : val.address;
-
-if (isMapLike(val) && key === "trustline") {
-  const tm: MapEntry[] = (val.map ?? []);
-  const addrVal = tm.find(e => e.key.symbol === "address")?.val;
-  const cidVal  = tm.find(e => e.key.symbol === "contract_id")?.val;
-  const addr = isAddrLike(addrVal) ? addrVal.address : undefined;
-  const cid  = isStrLike(cidVal)  ? cidVal.string      : undefined;
-  return addr ?? cid ?? "N/A";
-}
-
-if (isI128Like(val)) {
+  // Handle platform_fee with multiple possible formats
   if (key === "platform_fee") {
+    // Check if it's a string (might already be formatted)
+    if (isStrLike(val)) {
+      const str = val.string.trim();
+      // Remove % if present and parse the number
+      const cleanStr = str.replace("%", "").trim();
+      const num = parseFloat(cleanStr);
+      if (!isNaN(num)) {
+        // If > 100, treat as basis points; otherwise as percentage
+        return (num > 100 ? num / 100 : num).toFixed(2) + "%";
+      }
+      return str;
+    }
+
+    // Check for u32 format
+    const u32Val = val as { u32?: number };
+    if (u32Val && typeof u32Val.u32 === "number") {
+      const num = u32Val.u32;
+      return (num > 100 ? num / 100 : num).toFixed(2) + "%";
+    }
+
+    // Check for u64 format
+    const u64Val = val as { u64?: string | number };
+    if (u64Val && u64Val.u64 !== undefined) {
+      const num =
+        typeof u64Val.u64 === "string" ? parseInt(u64Val.u64, 10) : u64Val.u64;
+      if (!isNaN(num)) {
+        return (num > 100 ? num / 100 : num).toFixed(2) + "%";
+      }
+    }
+  }
+
+  if (isBoolLike(val)) return val.bool ? "True" : "False";
+  if (isStrLike(val)) return val.string; // ✅ no more "never"
+  if (isAddrLike(val))
+    return isAddress ? truncateAddress(val.address, isMobile) : val.address;
+
+  if (isMapLike(val) && key === "trustline") {
+    const tm: MapEntry[] = val.map ?? [];
+    const addrVal = tm.find((e) => e.key.symbol === "address")?.val;
+    const cidVal = tm.find((e) => e.key.symbol === "contract_id")?.val;
+    const addr = isAddrLike(addrVal) ? addrVal.address : undefined;
+    const cid = isStrLike(cidVal) ? cidVal.string : undefined;
+    return addr ?? cid ?? "N/A";
+  }
+
+  if (isI128Like(val)) {
+    if (key === "platform_fee") {
+      const big = i128ToBigIntFlexibleSafe(val);
+      if (big === null) return "N/A";
+
+      // Platform fee might come as:
+      // - Basis points (500 = 5%) - divide by 100
+      // - Direct percentage (5 = 5%) - use as-is
+      // - Percentage with decimals (500 = 5.00%) - divide by 100
+      // Let's check the actual value to determine the format
+      const numValue = Number(big);
+
+      // If value is > 100, it's likely basis points (divide by 100)
+      // If value is <= 100, it might be direct percentage
+      if (numValue > 100) {
+        return (numValue / 100).toFixed(2) + "%";
+      } else {
+        // Value is <= 100, treat as direct percentage
+        return numValue.toFixed(2) + "%";
+      }
+    }
+    const d = safeDecimals(getDecimalsFromEscrowMap(data));
     const big = i128ToBigIntFlexibleSafe(val);
     if (big === null) return "N/A";
-    
-    // Platform fee might come as:
-    // - Basis points (500 = 5%) - divide by 100
-    // - Direct percentage (5 = 5%) - use as-is
-    // - Percentage with decimals (500 = 5.00%) - divide by 100
-    // Let's check the actual value to determine the format
-    const numValue = Number(big);
-    
-    // If value is > 100, it's likely basis points (divide by 100)
-    // If value is <= 100, it might be direct percentage
-    if (numValue > 100) {
-      return (numValue / 100).toFixed(2) + "%";
-    } else {
-      // Value is <= 100, treat as direct percentage
-      return numValue.toFixed(2) + "%";
-    }
+    return (Number(big) / Math.pow(10, d)).toFixed(d);
   }
-  const d = safeDecimals(getDecimalsFromEscrowMap(data));
-  const big = i128ToBigIntFlexibleSafe(val);
-  if (big === null) return "N/A";
-  return (Number(big) / Math.pow(10, d)).toFixed(d);
-}
 
   return "N/A";
 };
 
 export const extractMilestones = (
   data: EscrowMap | null,
-  escrowType: EscrowType
+  escrowType: EscrowType,
 ): ParsedMilestone[] => {
   if (!data) return [];
 
   const decimals = getDecimalsFromEscrowMap(data);
-  const milestonesEntry = data.find((entry) => entry.key.symbol === "milestones");
+  const milestonesEntry = data.find(
+    (entry) => entry.key.symbol === "milestones",
+  );
   if (!milestonesEntry?.val?.vec) return [];
 
-  return milestonesEntry.val.vec.reduce<ParsedMilestone[]>((acc, item, index) => {
-    if (!item.map) return acc;
+  return milestonesEntry.val.vec.reduce<ParsedMilestone[]>(
+    (acc, item, index) => {
+      if (!item.map) return acc;
 
-    // Collapse the milestone's map into a key->EscrowValue object
-    const milestoneMap = item.map.reduce<Record<string, EscrowValue>>((macc, entry) => {
-      if (entry.key?.symbol) macc[entry.key.symbol] = entry.val;
-      return macc;
-    }, {});
+      // Collapse the milestone's map into a key->EscrowValue object
+      const milestoneMap = item.map.reduce<Record<string, EscrowValue>>(
+        (macc, entry) => {
+          if (entry.key?.symbol) macc[entry.key.symbol] = entry.val;
+          return macc;
+        },
+        {},
+      );
 
-    // --- NEW: handle nested flags map ---
-    // either flags live under milestoneMap.flags.map[...] or as flat *_flag keys
- // nested flags map (if present)
-// --- flags: nested or flat ---
-const nestedFlags: MapEntry[] | undefined = getMap(milestoneMap, "flags");
+      // --- NEW: handle nested flags map ---
+      // either flags live under milestoneMap.flags.map[...] or as flat *_flag keys
+      // nested flags map (if present)
+      // --- flags: nested or flat ---
+      const nestedFlags: MapEntry[] | undefined = getMap(milestoneMap, "flags");
 
-const getNestedFlag = (name: "approved" | "released" | "disputed" | "resolved"): boolean =>
-  !!nestedFlags?.find((f: MapEntry) => f.key.symbol === name)?.val?.bool;
+      const getNestedFlag = (
+        name: "approved" | "released" | "disputed" | "resolved",
+      ): boolean =>
+        !!nestedFlags?.find((f: MapEntry) => f.key.symbol === name)?.val?.bool;
 
-const approved =
-  getNestedFlag("approved") ||
-  !!getBool(milestoneMap, "approved") ||
-  !!getBool(milestoneMap, "approved_flag");
+      const approved =
+        getNestedFlag("approved") ||
+        !!getBool(milestoneMap, "approved") ||
+        !!getBool(milestoneMap, "approved_flag");
 
-const release_flag =
-  getNestedFlag("released") || !!getBool(milestoneMap, "release_flag");
+      const release_flag =
+        getNestedFlag("released") || !!getBool(milestoneMap, "release_flag");
 
-const dispute_flag =
-  getNestedFlag("disputed") || !!getBool(milestoneMap, "dispute_flag");
+      const dispute_flag =
+        getNestedFlag("disputed") || !!getBool(milestoneMap, "dispute_flag");
 
-const resolved_flag =
-  getNestedFlag("resolved") || !!getBool(milestoneMap, "resolved_flag");
+      const resolved_flag =
+        getNestedFlag("resolved") || !!getBool(milestoneMap, "resolved_flag");
 
-// --- required strings (ensure plain string, not string|undefined) ---
-const title = getStr(milestoneMap, "title") ?? `Milestone ${index + 1}`;
-const description = getStr(milestoneMap, "description") ?? `Milestone ${index + 1}`;
-const status = getStr(milestoneMap, "status") ?? "pending";
+      // --- required strings (ensure plain string, not string|undefined) ---
+      const title = getStr(milestoneMap, "title") ?? `Milestone ${index + 1}`;
+      const description =
+        getStr(milestoneMap, "description") ?? `Milestone ${index + 1}`;
+      const status = getStr(milestoneMap, "status") ?? "pending";
 
-const base: ParsedMilestone = {
-  id: index,
-  title,
-  description,
-  status,
-  approved,
-};
+      const base: ParsedMilestone = {
+        id: index,
+        title,
+        description,
+        status,
+        approved,
+      };
 
-if (escrowType === "multi-release") {
-  let amountStr: string | undefined;
-  const i128 = getI128(milestoneMap, "amount");
-  if (i128) {
-    const big = i128ToBigIntFlexibleSafe(i128);
-    if (big !== null) {
-      const d = safeDecimals(decimals);
-      amountStr = (Number(big) / Math.pow(10, d)).toFixed(2);
-    }
-  }
+      if (escrowType === "multi-release") {
+        let amountStr: string | undefined;
+        const i128 = getI128(milestoneMap, "amount");
+        if (i128) {
+          const big = i128ToBigIntFlexibleSafe(i128);
+          if (big !== null) {
+            const d = safeDecimals(decimals);
+            amountStr = (Number(big) / Math.pow(10, d)).toFixed(2);
+          }
+        }
 
-  return [
-    ...acc,
-    {
-      ...base,
-      amount: amountStr,
-      release_flag,
-      dispute_flag,
-      resolved_flag,
-      signer: getAddr(milestoneMap, "signer"),
-      approver: getAddr(milestoneMap, "approver"),
+        return [
+          ...acc,
+          {
+            ...base,
+            amount: amountStr,
+            release_flag,
+            dispute_flag,
+            resolved_flag,
+            signer: getAddr(milestoneMap, "signer"),
+            approver: getAddr(milestoneMap, "approver"),
+          },
+        ];
+      }
+
+      return [...acc, base];
     },
-  ];
-}
-
-
-
-    return [...acc, base];
-  }, []);
+    [],
+  );
 };
-
 
 export const extractRoles = (
   data: EscrowMap | null,
-  isMobile: boolean
+  isMobile: boolean,
 ): Record<string, string> => {
   if (!data) return {};
   const rolesEntry = data.find((entry) => entry.key.symbol === "roles");
   if (!rolesEntry?.val?.map) return {};
-  return rolesEntry.val.map.reduce((acc, entry) => {
-    const addr = entry.val?.address;
-    if (entry.key?.symbol && typeof addr === "string") {
-      acc[entry.key.symbol] = truncateAddress(addr, isMobile);
-    }
-    return acc;
-  }, {} as Record<string, string>);
+  return rolesEntry.val.map.reduce(
+    (acc, entry) => {
+      const addr = entry.val?.address;
+      if (entry.key?.symbol && typeof addr === "string") {
+        acc[entry.key.symbol] = truncateAddress(addr, isMobile);
+      }
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 };
 
 export const extractFlags = (data: EscrowMap | null): EscrowFlags => {
@@ -372,7 +394,7 @@ export const extractFlags = (data: EscrowMap | null): EscrowFlags => {
 export const organizeEscrowData = (
   escrowData: EscrowMap | null,
   contractId: string,
-  isMobile: boolean
+  isMobile: boolean,
 ): OrganizedEscrowData | null => {
   if (!escrowData) return null;
 
@@ -384,7 +406,9 @@ export const organizeEscrowData = (
   const flags = extractFlags(escrowData);
 
   // amount
-  let totalAmount: string = String(extractValue(escrowData, "amount", isMobile));
+  let totalAmount: string = String(
+    extractValue(escrowData, "amount", isMobile),
+  );
   if (escrowType === "multi-release") {
     const sum = milestones.reduce((acc, m) => {
       if (m.amount && !isNaN(parseFloat(m.amount))) acc += parseFloat(m.amount);
@@ -394,20 +418,22 @@ export const organizeEscrowData = (
   }
 
   // balance
-let balance = String(extractValue(escrowData, "balance", isMobile));
-const balanceRaw = escrowData.find((e) => e.key.symbol === "balance")?.val;
-if (isI128Like(balanceRaw)) {
-  const big = i128ToBigIntFlexibleSafe(balanceRaw);
-  const d = safeDecimals(getDecimalsFromEscrowMap(escrowData));
-  balance = big === null ? balance : (Number(big) / Math.pow(10, d)).toFixed(d);
-}
+  let balance = String(extractValue(escrowData, "balance", isMobile));
+  const balanceRaw = escrowData.find((e) => e.key.symbol === "balance")?.val;
+  if (isI128Like(balanceRaw)) {
+    const big = i128ToBigIntFlexibleSafe(balanceRaw);
+    const d = safeDecimals(getDecimalsFromEscrowMap(escrowData));
+    balance =
+      big === null ? balance : (Number(big) / Math.pow(10, d)).toFixed(d);
+  }
 
+  // total amount (UI-friendly → 2 decimals)
+  const displayAmount = Number(totalAmount)
+    ? Number(totalAmount).toFixed(2)
+    : "0.00";
 
-// total amount (UI-friendly → 2 decimals)
-const displayAmount = Number(totalAmount) ? Number(totalAmount).toFixed(2) : "0.00";
-
-// balance (UI-friendly → 2 decimals)
-const displayBalance = Number(balance) ? Number(balance).toFixed(2) : "0.00";
+  // balance (UI-friendly → 2 decimals)
+  const displayBalance = Number(balance) ? Number(balance).toFixed(2) : "0.00";
   return {
     title: String(extractValue(escrowData, "title", isMobile)),
     description: String(extractValue(escrowData, "description", isMobile)),
@@ -416,7 +442,9 @@ const displayBalance = Number(balance) ? Number(balance).toFixed(2) : "0.00";
       amount: displayAmount,
       balance: displayBalance,
       platform_fee: String(extractValue(escrowData, "platform_fee", isMobile)),
-      engagement_id: String(extractValue(escrowData, "engagement_id", isMobile)),
+      engagement_id: String(
+        extractValue(escrowData, "engagement_id", isMobile),
+      ),
       trustline: String(extractValue(escrowData, "trustline", isMobile)),
     },
     roles,

@@ -14,7 +14,7 @@ Built with **Next.js 14**, **TailwindCSS**, and **ShadCN UI**. Fully responsive,
 - 🧩 **Milestones** – Detailed milestone cards with approval states, amounts, descriptions, flags, and progress.
 - 💰 **Live Token Balance** – Gets real-time balance from the token contract (if applicable).
 - 📦 **Properties** – All escrow metadata (properties & flags) displayed clearly for auditing.
-- 🧭 **Network Switching** – Switch between *testnet* and *mainnet*.
+- 🧭 **Network Switching** – Switch between _testnet_ and _mainnet_.
 - 🌗 **Full Dark Mode Support** – Theme uses semantic tokens for perfect readability.
 - ⚛️ **Responsive Layout** – Mobile and desktop views with adaptive UI.
 - ❌ **Read-Only Viewer** – No wallet, no signing, no transactions.
@@ -34,6 +34,7 @@ Built with **Next.js 14**, **TailwindCSS**, and **ShadCN UI**. Fully responsive,
 git clone <repository-url>
 cd escrow-viewer
 bun install   # or npm/yarn/pnpm install
+```
 ````
 
 ### Run Development Server
@@ -55,13 +56,12 @@ http://localhost:3000
 1. Enter a **Soroban contract ID** into the search bar.
 2. Press **Fetch**.
 3. View:
-
-   * Roles
-   * Milestones
-   * Flags
-   * Contract properties
-   * Token balance
-   * Transaction history (optional tab)
+   - Roles
+   - Milestones
+   - Flags
+   - Contract properties
+   - Token balance
+   - Transaction history (optional tab)
 
 Tooltips provide definitions for roles, fields, and flags.
 
@@ -151,13 +151,13 @@ src/
 
 All components use semantic Tailwind tokens like:
 
-* `text-foreground`
-* `text-muted-foreground`
-* `bg-card`
-* `text-card-foreground`
-* `border-border`
-* `bg-muted`
-* `text-primary`
+- `text-foreground`
+- `text-muted-foreground`
+- `bg-card`
+- `text-card-foreground`
+- `border-border`
+- `bg-muted`
+- `text-primary`
 
 ### Theme Definitions
 
@@ -172,19 +172,19 @@ Located in `globals.css`:
 
 .dark {
   --background: #000;
-  --foreground: #7EE3FF;
-  --primary: #0EA5FF;
+  --foreground: #7ee3ff;
+  --primary: #0ea5ff;
 }
 ```
 
 These tokens provide consistent color across:
 
-* Cards
-* Detail rows
-* Milestones
-* Status panels
-* Buttons
-* Tooltips
+- Cards
+- Detail rows
+- Milestones
+- Status panels
+- Buttons
+- Tooltips
 
 ---
 
@@ -227,9 +227,9 @@ npm run export
 
 Upload the `out/` directory to a provider like:
 
-* Fleek
-* Pinata
-* Web3.Storage
+- Fleek
+- Pinata
+- Web3.Storage
 
 ---
 
@@ -245,19 +245,19 @@ Then open a Pull Request against `main`.
 
 ### Guidelines
 
-* Use semantic colors, not fixed hex values.
-* Use existing component patterns (SectionCard, DetailRow, RoleCard, MilestoneCard).
-* Framer Motion variants should live in `animation-variants.ts`.
-* Keep network logic inside `NetworkContext`.
+- Use semantic colors, not fixed hex values.
+- Use existing component patterns (SectionCard, DetailRow, RoleCard, MilestoneCard).
+- Framer Motion variants should live in `animation-variants.ts`.
+- Keep network logic inside `NetworkContext`.
 
 ---
 
 ## 📚 Resources
 
-* **Next.js Docs** — [https://nextjs.org/docs](https://nextjs.org/docs)
-* **Soroban Docs** — [https://soroban.stellar.org/docs](https://soroban.stellar.org/docs)
-* **ShadCN UI** — [https://ui.shadcn.com](https://ui.shadcn.com)
-* **Stellar Explorer** — [https://stellar.expert](https://stellar.expert)
+- **Next.js Docs** — [https://nextjs.org/docs](https://nextjs.org/docs)
+- **Soroban Docs** — [https://soroban.stellar.org/docs](https://soroban.stellar.org/docs)
+- **ShadCN UI** — [https://ui.shadcn.com](https://ui.shadcn.com)
+- **Stellar Explorer** — [https://stellar.expert](https://stellar.expert)
 
 ---
 
@@ -266,4 +266,5 @@ Then open a Pull Request against `main`.
 MIT — free to fork, build on, and contribute.
 
 ```
+
 ```

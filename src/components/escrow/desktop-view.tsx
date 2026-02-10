@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
 import { FileText, Users, ListChecks } from "lucide-react";
 import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
-import { FIELD_TOOLTIPS, ROLE_MAPPING, ROLE_PERMISSIONS } from "@/lib/escrow-constants";
+import {
+  FIELD_TOOLTIPS,
+  ROLE_MAPPING,
+  ROLE_PERMISSIONS,
+} from "@/lib/escrow-constants";
 import { cardVariants } from "@/utils/animations/animation-variants";
 import { SectionCard } from "@/components/shared/section-card";
 import { DetailRow } from "@/components/shared/detail-row";
@@ -10,12 +14,10 @@ import { MilestoneCard } from "@/components/shared/milestone-card";
 import { RoleCard } from "@/components/shared/role-card";
 import { truncateAddress } from "@/lib/escrow-constants";
 
-
 interface DesktopViewProps {
   organized: OrganizedEscrowData;
   network: "mainnet" | "testnet";
 }
-
 
 export const DesktopView = ({ organized, network }: DesktopViewProps) => {
   return (
@@ -34,20 +36,19 @@ export const DesktopView = ({ organized, network }: DesktopViewProps) => {
                 <DetailRow
                   key={key}
                   label={key}
-  value={
-key === "trustline" ? (
-  <a
-    href={`https://stellar.expert/explorer/${network}/contract/${value}`}
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    {truncateAddress(String(value), false)}
-  </a>
-) : (
-  String(value)
-)
-  }
-
+                  value={
+                    key === "trustline" ? (
+                      <a
+                        href={`https://stellar.expert/explorer/${network}/contract/${value}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {truncateAddress(String(value), false)}
+                      </a>
+                    ) : (
+                      String(value)
+                    )
+                  }
                   tooltip={FIELD_TOOLTIPS[key] || "No description available"}
                   canCopy={key === "escrow_id"}
                 />
@@ -68,35 +69,33 @@ key === "trustline" ? (
               tooltips={FIELD_TOOLTIPS}
             />
           </motion.div>
-
-          
         </div>
       </div>
 
       {/* Roles Card */}
-<motion.div variants={cardVariants}>
-            <SectionCard
-              title="Assigned Roles"
-              icon={Users}
-              className="bg-card text-card-foreground"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {Object.entries(organized.roles).map(([key, value], index) => (
-                  <motion.div key={key} variants={cardVariants} custom={index}>
-                    <RoleCard
-                      title={ROLE_MAPPING[key] || key.replace(/_/g, " ")}
-                      address={String(value)}
-                      description={
-                        ROLE_PERMISSIONS[ROLE_MAPPING[key]] ||
-                        "No description available"
-                      }
-                      tooltips={FIELD_TOOLTIPS}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </SectionCard>
-          </motion.div>
+      <motion.div variants={cardVariants}>
+        <SectionCard
+          title="Assigned Roles"
+          icon={Users}
+          className="bg-card text-card-foreground"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {Object.entries(organized.roles).map(([key, value], index) => (
+              <motion.div key={key} variants={cardVariants} custom={index}>
+                <RoleCard
+                  title={ROLE_MAPPING[key] || key.replace(/_/g, " ")}
+                  address={String(value)}
+                  description={
+                    ROLE_PERMISSIONS[ROLE_MAPPING[key]] ||
+                    "No description available"
+                  }
+                  tooltips={FIELD_TOOLTIPS}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </SectionCard>
+      </motion.div>
 
       {/* Milestones Card */}
       <motion.div variants={cardVariants}>
@@ -108,7 +107,11 @@ key === "trustline" ? (
           {organized.milestones.length > 0 ? (
             <div className="grid md:grid-cols-2 gap-4">
               {organized.milestones.map((milestone, index) => (
-                <motion.div key={index.toString()} variants={cardVariants} custom={index}>
+                <motion.div
+                  key={index.toString()}
+                  variants={cardVariants}
+                  custom={index}
+                >
                   <MilestoneCard
                     title={milestone.title}
                     description={milestone.description}
