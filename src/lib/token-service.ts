@@ -41,11 +41,14 @@ type DiagnosticEventFactory = {
 };
 
 function getMaybeDiagnosticEventFactory(): DiagnosticEventFactory | undefined {
-  const maybe = (xdr as unknown as { DiagnosticEvent?: DiagnosticEventFactory }).DiagnosticEvent;
+  const maybe = (xdr as unknown as { DiagnosticEvent?: DiagnosticEventFactory })
+    .DiagnosticEvent;
   return maybe && typeof maybe.fromXDR === "function" ? maybe : undefined;
 }
 
-function tryGetContractEventFromDiagnostic(b64: string): xdr.ContractEvent | null {
+function tryGetContractEventFromDiagnostic(
+  b64: string,
+): xdr.ContractEvent | null {
   const fac = getMaybeDiagnosticEventFactory();
   if (!fac) return null;
   try {
@@ -69,12 +72,11 @@ function getEventV0Safely(ce: xdr.ContractEvent): ContractEventV0Like | null {
   }
 }
 
-
 /** Derive Stellar Asset Contract ID (SAC) from classic asset */
 export function sacContractIdFromAsset(
   code: string,
   issuer: string,
-  passphrase: string
+  passphrase: string,
 ) {
   return new Asset(code, issuer).contractId(passphrase);
 }
@@ -114,7 +116,7 @@ function findRetval(node: unknown): string | undefined {
 
 function parseFnReturnFromEventB64(
   evB64: string,
-  expectFunc: string
+  expectFunc: string,
 ): xdr.ScVal | null {
   try {
     // 1) Try DiagnosticEvent → ContractEvent
@@ -136,38 +138,36 @@ function parseFnReturnFromEventB64(
 
     const topics =
       (typeof v0.topics === "function" ? v0.topics() : v0.topics) ?? [];
-    const data =
-      (typeof v0.data === "function" ? v0.data() : v0.data) as xdr.ScVal | undefined;
+    const data = (typeof v0.data === "function" ? v0.data() : v0.data) as
+      | xdr.ScVal
+      | undefined;
     if (!Array.isArray(topics) || topics.length < 2 || !data) return null;
 
+    // Narrow by capability instead of comparing enum values
+    type HasSym = { sym?: () => { toString(): string } };
 
-// Narrow by capability instead of comparing enum values
-type HasSym = { sym?: () => { toString(): string } };
+    const hasSym = (sv: xdr.ScVal): sv is xdr.ScVal & HasSym =>
+      typeof (sv as HasSym).sym === "function";
 
-const hasSym = (sv: xdr.ScVal): sv is xdr.ScVal & HasSym =>
-  typeof (sv as HasSym).sym === "function";
+    const topic0 = topics[0];
+    const topic1 = topics[1];
 
-const topic0 = topics[0];
-const topic1 = topics[1];
+    if (!hasSym(topic0) || !hasSym(topic1)) return null;
 
-if (!hasSym(topic0) || !hasSym(topic1)) return null;
+    const sym0 = topic0.sym()!.toString();
+    const sym1 = topic1.sym()!.toString();
 
-const sym0 = topic0.sym()!.toString();
-const sym1 = topic1.sym()!.toString();
+    if (sym0 !== "fn_return" || sym1 !== expectFunc) return null;
 
-if (sym0 !== "fn_return" || sym1 !== expectFunc) return null;
-
-return data; // unchanged
-
+    return data; // unchanged
   } catch {
     return null;
   }
 }
 
-
 function parseFnReturnFromEvents(
   events: unknown,
-  expectFunc: string
+  expectFunc: string,
 ): xdr.ScVal | null {
   if (!Array.isArray(events)) return null;
   for (const evB64 of events) {
@@ -178,7 +178,6 @@ function parseFnReturnFromEvents(
   return null;
 }
 
-
 /** Simulate a built tx via JSON-RPC and return retval ScVal (or null if unavailable)
  * - First look for a `retval` field in the JSON
  * - If missing, parse events for `fn_return(funcName)`
@@ -186,7 +185,7 @@ function parseFnReturnFromEvents(
 async function simulateAndGetRetval(
   rpcUrl: string,
   txB64: string,
-  funcNameForEvent?: string
+  funcNameForEvent?: string,
 ): Promise<xdr.ScVal | null> {
   const sim = await rpcSimulate(rpcUrl, txB64);
 
@@ -196,17 +195,21 @@ async function simulateAndGetRetval(
     try {
       return xdr.ScVal.fromXDR(retvalB64, "base64");
     } catch (e) {
-      dbg("simulate: retval present but failed to parse:", (e as Error)?.message);
+      dbg(
+        "simulate: retval present but failed to parse:",
+        (e as Error)?.message,
+      );
     }
   }
 
   // Fallback: parse events (fn_return)
   if (funcNameForEvent) {
     try {
-const evRet = parseFnReturnFromEvents(
-  (sim as unknown as { events?: unknown }).events,
-  funcNameForEvent
-);      if (evRet) {
+      const evRet = parseFnReturnFromEvents(
+        (sim as unknown as { events?: unknown }).events,
+        funcNameForEvent,
+      );
+      if (evRet) {
         dbg("simulate: used fn_return fallback for", funcNameForEvent);
         return evRet;
       }
@@ -225,7 +228,7 @@ const evRet = parseFnReturnFromEvents(
 async function callContractNoArgs(
   network: NetworkType,
   contractId: string,
-  func: string
+  func: string,
 ): Promise<xdr.ScVal> {
   const cfg = getNetworkConfig(network);
   const passphrase =
@@ -259,7 +262,7 @@ async function callContractNoArgs(
 /** Read token decimals (prefers u32, tolerates u64/u128 as number) */
 export async function fetchTokenDecimals(
   network: NetworkType,
-  tokenContractId: string
+  tokenContractId: string,
 ): Promise<number> {
   try {
     const scv = await callContractNoArgs(network, tokenContractId, "decimals");
@@ -283,7 +286,7 @@ export async function fetchTokenDecimals(
 export async function fetchTokenBalance(
   network: NetworkType,
   tokenContractId: string,
-  ownerAddress: string
+  ownerAddress: string,
 ): Promise<bigint | null> {
   const cfg = getNetworkConfig(network);
   const passphrase =

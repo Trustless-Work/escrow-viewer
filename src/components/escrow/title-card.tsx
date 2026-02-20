@@ -1,12 +1,7 @@
 import { motion } from "framer-motion";
 import { DollarSign, CheckSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { cardVariants } from "@/utils/animations/animation-variants";
 import type { EscrowType } from "@/mappers/escrow-mapper";
@@ -30,8 +25,8 @@ export const TitleCard = ({
       whileHover={{ scale: 1.01 }}
       className="transform-gpu"
     >
-      <Card className="mb-6 border border-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative hover-lift edge-accent">
-        {/* Top gradient accent bar */}
+      <Card className="mb-6 border border-primary/20 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl group relative hover-lift edge-accent overflow-hidden">
+        {/* Top accent bar: mismo radio que el card (rounded-t-xl) */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-primary rounded-t-xl" />
 
         <CardHeader className="pt-4">
@@ -42,14 +37,18 @@ export const TitleCard = ({
                 {title}
                 {escrowType && (
                   <Badge
-                    variant={escrowType === "multi-release" ? "default" : "secondary"}
+                    variant={
+                      escrowType === "multi-release" ? "default" : "secondary"
+                    }
                     className={
                       escrowType === "multi-release"
                         ? "bg-primary/10 text-primary border border-primary/20"
-                        : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border border-green-200 dark:border-green-800"
+                        : "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-500/30"
                     }
                   >
-                    {escrowType === "multi-release" ? "Multi-Release" : "Single-Release"}
+                    {escrowType === "multi-release"
+                      ? "Multi-Release"
+                      : "Single-Release"}
                   </Badge>
                 )}
               </CardTitle>

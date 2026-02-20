@@ -1,14 +1,15 @@
 // src/hooks/useEscrowData.ts
 import { useCallback, useEffect, useState } from "react";
-import { getLedgerKeyContractCode, type EscrowMap } from "@/utils/ledgerkeycontract";
-import { organizeEscrowData, type OrganizedEscrowData } from "@/mappers/escrow-mapper";
-import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
 
 /**
  * Loads raw escrow contract storage and maps it to OrganizedEscrowData for UI.
  * Purely client-side; no caching layer yet.
  */
-export function useEscrowData(contractId: string, network: NetworkType, isMobile = false) {
+export function useEscrowData(
+  contractId: string,
+  network: NetworkType,
+  isMobile = false,
+) {
   const [raw, setRaw] = useState<EscrowMap | null>(null);
   const [organized, setOrganized] = useState<OrganizedEscrowData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);

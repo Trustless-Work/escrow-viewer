@@ -2,7 +2,11 @@ import { motion } from "framer-motion";
 import { FileText, Flag, Users, ListChecks } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
-import { FIELD_TOOLTIPS, ROLE_MAPPING, ROLE_PERMISSIONS } from "@/lib/escrow-constants";
+import {
+  FIELD_TOOLTIPS,
+  ROLE_MAPPING,
+  ROLE_PERMISSIONS,
+} from "@/lib/escrow-constants";
 import { cardVariants } from "@/utils/animations/animation-variants";
 import { SectionCard } from "@/components/shared/section-card";
 import { DetailRow } from "@/components/shared/detail-row";
@@ -10,42 +14,40 @@ import { StatusPanel } from "@/components/shared/status-panel";
 import { MilestoneCard } from "@/components/shared/milestone-card";
 import { truncateAddress } from "@/lib/escrow-constants";
 
-
 interface TabViewProps {
   organized: OrganizedEscrowData;
-    network: "mainnet" | "testnet";
-
+  network: "mainnet" | "testnet";
 }
 
-export const TabView = ({ organized,  network }: TabViewProps) => {
+export const TabView = ({ organized, network }: TabViewProps) => {
   return (
     <div className="block md:hidden mb-6">
       <Tabs defaultValue="details" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full mb-6 bg-blue-50">
+        <TabsList className="grid grid-cols-4 w-full mb-6 bg-muted">
           <TabsTrigger
             value="details"
-            className="flex items-center gap-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            className="flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <FileText className="h-3 w-3" />
             <span>Details</span>
           </TabsTrigger>
           <TabsTrigger
             value="status"
-            className="flex items-center gap-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            className="flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <Flag className="h-3 w-3" />
             <span>Status</span>
           </TabsTrigger>
           <TabsTrigger
             value="roles"
-            className="flex items-center gap-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            className="flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <Users className="h-3 w-3" />
             <span>Roles</span>
           </TabsTrigger>
           <TabsTrigger
             value="milestones"
-            className="flex items-center gap-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            className="flex items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <ListChecks className="h-3 w-3" />
             <span>Tasks</span>
@@ -61,20 +63,21 @@ export const TabView = ({ organized,  network }: TabViewProps) => {
                   <DetailRow
                     key={key}
                     label={key}
-value={
-  key === "trustline" && typeof value === "string" ? (
-    <a
-      href={`https://stellar.expert/explorer/${network}/account/${value}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="underline text-blue-600"
-    >
-{truncateAddress(value, true)} {/* or false depending on the desired truncation style */}
-    </a>
-  ) : (
-      String(value)
-  )
-}
+                    value={
+                      key === "trustline" && typeof value === "string" ? (
+                        <a
+                          href={`https://stellar.expert/explorer/${network}/account/${value}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-primary hover:text-primary/80"
+                        >
+                          {truncateAddress(value, true)}{" "}
+                          {/* or false depending on the desired truncation style */}
+                        </a>
+                      ) : (
+                        String(value)
+                      )
+                    }
                     tooltip={FIELD_TOOLTIPS[key] || "No description available"}
                     canCopy={key === "escrow_id"}
                   />
@@ -106,7 +109,7 @@ value={
                 {Object.entries(organized.roles).map(([key, value]) => (
                   <div
                     key={key}
-                    className="border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+                    className="border-b border-border pb-4 last:border-0 last:pb-0"
                   >
                     <DetailRow
                       label={ROLE_MAPPING[key] || key.replace(/_/g, " ")}
@@ -151,7 +154,7 @@ value={
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-gray-500">No milestones found</p>
+                  <p className="text-muted-foreground">No milestones found</p>
                 </div>
               )}
             </SectionCard>

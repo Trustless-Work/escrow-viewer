@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 export function NavbarSimple() {
   return (
     <header
-      className={`flex items-center justify-between gap-4 bg-white dark:bg-slate-900 rounded shadow-sm py-4 px-6 md:px-28 ${inter.className}`}
+      className={`flex items-center justify-between gap-4 rounded shadow-sm py-4 px-6 md:px-28 ${inter.className}`}
     >
       <div className="flex items-center gap-3">
         <Image

@@ -45,9 +45,10 @@ export const DetailRow = ({
         <div
           className={`
             truncate flex-grow 
-            ${isAddress
-              ? "font-mono text-xs px-2 py-1 rounded border border-border bg-muted text-card-foreground"
-              : "font-medium text-card-foreground"
+            ${
+              isAddress
+                ? "font-mono text-xs px-2 py-1 rounded border border-border bg-muted text-card-foreground"
+                : "font-medium text-card-foreground"
             }
           `}
         >

@@ -1,11 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion"
-import { AlertCircle, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
 
-interface ErrorDisplayProps {
-  error: string | null
-  onSwitchNetwork?: () => void
-  switchNetworkLabel?: string
 }
 
 export const ErrorDisplay = ({ error, onSwitchNetwork, switchNetworkLabel }: ErrorDisplayProps) => {
@@ -18,7 +11,6 @@ export const ErrorDisplay = ({ error, onSwitchNetwork, switchNetworkLabel }: Err
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="max-w-2xl mx-auto mb-6 p-4 bg-red-50 text-red-800 rounded-md shadow-sm border border-red-100"
         >
           <div className="flex items-start gap-2">
             <AlertCircle size={18} className="mt-0.5 flex-shrink-0" />
@@ -42,5 +34,5 @@ export const ErrorDisplay = ({ error, onSwitchNetwork, switchNetworkLabel }: Err
         </motion.div>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};

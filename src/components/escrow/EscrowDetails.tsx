@@ -32,12 +32,10 @@ import {
 import { LedgerBalancePanel } from "@/components/escrow/LedgerBalancePanel";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
-
 // ⬇️ New hooks
 import { useEscrowData } from "@/hooks/useEscrowData";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 // (useMemo is consolidated in the import above)
-
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -53,21 +51,21 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
 
   // Input / responsive state
   const [contractId, setContractId] = useState<string>(initialEscrowId);
-const isMobile = useIsMobile();
+  const isMobile = useIsMobile();
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
   // Escrow data hook (raw + organized)
   const { raw, organized, loading, error, refresh } = useEscrowData(
     contractId,
     currentNetwork,
-    isMobile
+    isMobile,
   );
 
   // Live token balance hook
   const { ledgerBalance, decimals, mismatch } = useTokenBalance(
     contractId,
     raw,
-    currentNetwork
+    currentNetwork,
   );
 
   // Network switching for error recovery
@@ -81,33 +79,25 @@ const isMobile = useIsMobile();
   };
 
   const organizedWithLive = useMemo(() => {
-  if (!organized) return null;
-  if (!ledgerBalance) return organized; // nothing to override
-  return {
-    ...organized,
-    properties: {
-      ...organized.properties,
-      balance: ledgerBalance, // <- replace storage balance with live one
-    },
-  };
-}, [organized, ledgerBalance]);
-
+    if (!organized) return null;
+    if (!ledgerBalance) return organized; // nothing to override
+    return {
+      ...organized,
+      properties: {
+        ...organized.properties,
+        balance: ledgerBalance, // <- replace storage balance with live one
+      },
+    };
+  }, [organized, ledgerBalance]);
 
   // Transaction-related state (kept here for now)
   const [transactions, setTransactions] = useState<TransactionMetadata[]>([]);
   const [transactionLoading, setTransactionLoading] = useState<boolean>(false);
   const [transactionError, setTransactionError] = useState<string | null>(null);
-  const [transactionResponse, setTransactionResponse] = useState<TransactionResponse | null>(null);
+  const [transactionResponse, setTransactionResponse] =
+    useState<TransactionResponse | null>(null);
   const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState<boolean>(false);
-
-  // Event-related state
-  const [events, setEvents] = useState<EventMetadata[]>([]);
-  const [eventLoading, setEventLoading] = useState<boolean>(false);
-  const [eventError, setEventError] = useState<string | null>(null);
-  const [eventResponse, setEventResponse] = useState<EventResponse | null>(null);
-
 
   // Fetch transaction data
   const fetchTransactionData = useCallback(
@@ -129,49 +119,6 @@ const isMobile = useIsMobile();
         setTransactionLoading(false);
       }
     },
-    [currentNetwork]
-  );
-
-  // Fetch event data
-  const fetchEventData = useCallback(
-    async (id: string, rpcUrl: string, cursor?: string) => {
-      if (!id) return;
-
-      // Basic validation for contract ID format
-      if (!/^C[A-Z0-9]{55}$/.test(id)) {
-        setEventError("Invalid contract ID format for event fetching.");
-        return;
-      }
-
-      setEventLoading(true);
-      setEventError(null);
-      try {
-        const response = await fetchEvents(id, rpcUrl, cursor, 20);
-        setEventResponse(response);
-        if (cursor) {
-          setEvents((prev) => [...prev, ...response.events]);
-        } else {
-          setEvents(response.events);
-        }
-      } catch (err: any) {
-        let errorMessage = "Failed to fetch contract events";
-
-        if (err instanceof Error) {
-          if (err.message.includes("startLedger must be within")) {
-            errorMessage = "Unable to fetch recent events due to RPC retention limits.";
-          } else if (err.message.includes("HTTP error")) {
-            errorMessage = "Network error while fetching events. Please try again.";
-          } else {
-            errorMessage = err.message;
-          }
-        }
-
-        setEventError(errorMessage);
-      } finally {
-        setEventLoading(false);
-      }
-    },
-    []
   );
 
   // Initial + network-change fetch (escrow + txs + events)
@@ -230,47 +177,27 @@ const isMobile = useIsMobile();
       fetchTransactionData(contractId, transactionResponse.cursor);
     }
   };
-
-  const handleLoadMoreEvents = () => {
-    if (eventResponse?.cursor && contractId) {
-      const { rpcUrl } = getNetworkConfig(currentNetwork);
-      fetchEventData(contractId, rpcUrl, eventResponse.cursor);
     }
   };
 
 
-// === DEBUG LOGGING (EscrowDetails) ===
-const DEBUG = true;
+  // === DEBUG LOGGING (EscrowDetails) ===
+  const DEBUG = true;
 
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] network:", currentNetwork);
-  console.log("[DBG][EscrowDetails] contractId:", contractId);
-}, [currentNetwork, contractId, DEBUG]);
-
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] raw escrow map:", raw);
-}, [raw, DEBUG]);
-
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] organized data:", organized);
-}, [organized, DEBUG]);
-
-useEffect(() => {
-  if (!DEBUG) return;
-  console.log("[DBG][EscrowDetails] token live balance:", {
-    ledgerBalance,
-    decimals,
-    mismatch,
-  });
-}, [ledgerBalance, decimals, mismatch, DEBUG]);
-
+  useEffect(() => {
+    if (!DEBUG) return;
+    console.log("[DBG][EscrowDetails] token live balance:", {
+      ledgerBalance,
+      decimals,
+      mismatch,
+    });
+  }, [ledgerBalance, decimals, mismatch]);
 
   return (
     <TooltipProvider>
-      <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 ${inter.className}`}>
+      <div
+        className={`min-h-screen bg-linear-to-b from-gray-50 to-blue-50 dark:from-background dark:to-background ${inter.className}`}
+      >
         <NavbarSimple />
 
         <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
@@ -290,8 +217,6 @@ useEffect(() => {
           )}
 
           {/* Search Card + View Transactions button (flexed together) */}
-          <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
-            <div className="flex-1 max-w-lg">
               <SearchCard
                 contractId={contractId}
                 setContractId={setContractId}
@@ -323,15 +248,6 @@ useEffect(() => {
             onSwitchNetwork={handleSwitchNetwork}
             switchNetworkLabel={switchNetworkLabel}
           />
-
-          {/* Content Section */}
-          <EscrowContent loading={loading} organized={organizedWithLive} isMobile={isMobile} />
-
-          {/* Live ledger balance (from token contract) */}
-          {raw && ledgerBalance && (
-            <LedgerBalancePanel balance={ledgerBalance} decimals={decimals} mismatch={mismatch} />
-          )}
-
 
           {/* Transaction Detail Modal */}
           <TransactionDetailModal

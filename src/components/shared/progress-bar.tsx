@@ -1,4 +1,4 @@
-import { CheckCircle, Circle } from "lucide-react"
+import { CheckCircle, Circle } from "lucide-react";
 
 interface ProgressBarProps {
   value: number;
@@ -20,17 +20,17 @@ export const ProgressBar = ({
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center text-sm">
-        <span className="text-gray-600 font-medium">{label}</span>
+        <span className="text-muted-foreground font-medium">{label}</span>
         {showPercentage && (
-          <span className="font-semibold text-blue-700">{percentage}%</span>
+          <span className="font-semibold text-primary">{percentage}%</span>
         )}
       </div>
 
       <div className="relative">
         {/* Base progress track */}
-        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-muted rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700 ease-in-out"
+            className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-in-out"
             style={{ width: `${value}%` }}
           />
         </div>
@@ -48,12 +48,12 @@ export const ProgressBar = ({
                   {isCompleted ? (
                     <CheckCircle
                       size={16}
-                      className="text-blue-500 bg-white rounded-full"
+                      className="text-primary bg-background rounded-full"
                     />
                   ) : (
                     <Circle
                       size={16}
-                      className="text-gray-300 bg-white rounded-full"
+                      className="text-muted-foreground bg-background rounded-full"
                     />
                   )}
                 </div>
@@ -63,5 +63,5 @@ export const ProgressBar = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};

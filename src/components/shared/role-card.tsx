@@ -14,7 +14,6 @@ export type RoleTitle =
   | "Receiver"
   | (string & {}); // ← allows dynamic strings safely
 
-
 interface RoleCardProps {
   title: string;
   address: string;
@@ -26,11 +25,11 @@ export const RoleCard = ({
   title,
   address,
   description,
-  tooltips
+  tooltips,
 }: RoleCardProps) => {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
   return (
@@ -39,13 +38,16 @@ export const RoleCard = ({
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 260 }}
     >
-      <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent border-primary/20">
+      <Card className="mb-6 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl relative hover-lift edge-accent border-primary/20 overflow-hidden">
         {/* Top accent bar */}
         <div className="absolute top-0 left-0 right-0 h-2 rounded-t-xl bg-primary" />
 
         <CardHeader className="pt-4 pb-2">
           <div className="flex items-center gap-3">
-            <motion.div whileHover={{ rotate: 10 }} transition={{ duration: 0.2 }}>
+            <motion.div
+              whileHover={{ rotate: 10 }}
+              transition={{ duration: 0.2 }}
+            >
               <RoleIcon title={title} />
             </motion.div>
             <CardTitle className="text-base sm:text-lg flex items-center gap-1.5 font-bold text-card-foreground">
@@ -59,7 +61,9 @@ export const RoleCard = ({
           <DetailRow
             label="Address"
             value={address}
-            tooltip={tooltips.address || "Blockchain address assigned to this role"}
+            tooltip={
+              tooltips.address || "Blockchain address assigned to this role"
+            }
             canCopy={true}
             isAddress={true}
           />

@@ -22,7 +22,7 @@ const networks: { value: NetworkType; label: string }[] = [
 
 export function NetworkToggle({ className }: NetworkToggleProps) {
   const { currentNetwork, setNetwork } = useNetwork();
-  
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -43,7 +43,7 @@ export function NetworkToggle({ className }: NetworkToggleProps) {
             className="flex items-center gap-2 cursor-pointer"
           >
             {currentNetwork === network.value && (
-              <Check className="h-4 w-4 text-blue-600" />
+              <Check className="h-4 w-4 text-primary" />
             )}
             <span>{network.label}</span>
           </DropdownMenuItem>
@@ -51,4 +51,4 @@ export function NetworkToggle({ className }: NetworkToggleProps) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}

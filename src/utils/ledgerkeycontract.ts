@@ -30,8 +30,6 @@ interface StorageEntry {
 
 export async function getLedgerKeyContractCode(
   contractId: string,
-  network: NetworkType = 'testnet'
-): Promise<EscrowMap | null> {
   try {
     const ledgerKey = new Contract(contractId).getFootprint();
     const keyBase64 = ledgerKey.toXDR("base64");
@@ -95,11 +93,14 @@ export async function getLedgerKeyContractCode(
       throw new Error("No storage data found or storage is not an array");
     }
 
-    console.log("[DEBUG] Raw contract storage:", JSON.stringify(storage, null, 2));
+    console.log(
+      "[DEBUG] Raw contract storage:",
+      JSON.stringify(storage, null, 2),
+    );
 
     // Find the escrow entry
     const escrowEntry = storage.find(
-      (s: StorageEntry) => s.key?.vec && s.key.vec[0]?.symbol === "Escrow"
+      (s: StorageEntry) => s.key?.vec && s.key.vec[0]?.symbol === "Escrow",
     );
 
     if (!escrowEntry) {
