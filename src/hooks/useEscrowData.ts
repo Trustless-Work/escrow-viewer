@@ -1,14 +1,5 @@
 // src/hooks/useEscrowData.ts
 import { useCallback, useEffect, useState } from "react";
-import {
-  getLedgerKeyContractCode,
-  type EscrowMap,
-} from "@/utils/ledgerkeycontract";
-import {
-  organizeEscrowData,
-  type OrganizedEscrowData,
-} from "@/mappers/escrow-mapper";
-import type { NetworkType } from "@/lib/network-config";
 
 /**
  * Loads raw escrow contract storage and maps it to OrganizedEscrowData for UI.
@@ -25,18 +16,51 @@ export function useEscrowData(
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!contractId) return;
+    if (!contractId) {
+      setError("Please enter a contract ID");
+      return;
+    }
+
+    // Basic validation for contract ID format
+    if (!/^C[A-Z0-9]{55}$/.test(contractId)) {
+      setError("Invalid contract ID format. Contract IDs should start with 'C' followed by 55 alphanumeric characters.");
+      setRaw(null);
+      setOrganized(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       const data = await getLedgerKeyContractCode(contractId, network);
-      setRaw(data);
-      setOrganized(organizeEscrowData(data, contractId, isMobile));
+      if (data === null) {
+        setRaw(null);
+        setOrganized(null);
+        const otherNetwork = network === 'testnet' ? 'mainnet' : 'testnet';
+        setError(`Contract not found on ${getNetworkConfig(network).name}. Try switching to ${getNetworkConfig(otherNetwork).name} or verify the contract ID is correct.`);
+      } else {
+        setRaw(data);
+        setOrganized(organizeEscrowData(data, contractId, isMobile));
+        setError(null);
+      }
     } catch (e) {
       setRaw(null);
       setOrganized(null);
-      setError(e instanceof Error ? e.message : "Failed to fetch escrow data");
+      let errorMessage = "Failed to fetch escrow data";
+
+      if (e instanceof Error) {
+        if (e.message.includes("Failed to fetch")) {
+          errorMessage = `Network error: Unable to connect to ${getNetworkConfig(network).name}. Please check your internet connection and try again.`;
+        } else if (e.message.includes("Invalid contract ID")) {
+          errorMessage = "Invalid contract ID format. Please enter a valid Soroban contract ID.";
+        } else {
+          errorMessage = e.message;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

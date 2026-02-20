@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { NetworkProvider } from "@/contexts/NetworkContext";
+import { ThemeProvider } from "next-themes";
 
 // Work around Node.js experimental localStorage mismatch in dev server
 // (prevents Next dev overlay from crashing when localStorage is non-standard)
@@ -52,13 +53,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         {...customBodyProps}
       >
         <Suspense fallback={<div>Loading...</div>}>
-          <NetworkProvider>{children}</NetworkProvider>
         </Suspense>
       </body>
     </html>

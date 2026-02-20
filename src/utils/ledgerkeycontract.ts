@@ -30,8 +30,6 @@ interface StorageEntry {
 
 export async function getLedgerKeyContractCode(
   contractId: string,
-  network: NetworkType = "testnet",
-): Promise<EscrowMap> {
   try {
     const ledgerKey = new Contract(contractId).getFootprint();
     const keyBase64 = ledgerKey.toXDR("base64");
@@ -47,27 +45,42 @@ export async function getLedgerKeyContractCode(
     };
 
     const networkConfig = getNetworkConfig(network);
-    const res = await fetch(networkConfig.rpcUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
+    let res;
+    try {
+      res = await fetch(networkConfig.rpcUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+    } catch (error) {
+      console.warn("Failed to fetch ledger entries from RPC:", error);
+      return null;
     }
 
-    const json = await res.json();
+    if (!res.ok) {
+      console.warn(`HTTP error fetching ledger entries: Status ${res.status}`);
+      return null;
+    }
+
+    let json;
+    try {
+      json = await res.json();
+    } catch (error) {
+      console.warn("Failed to parse JSON response:", error);
+      return null;
+    }
 
     if (json.error) {
-      throw new Error(json.error.message || "Failed to fetch ledger entries");
+      console.warn("RPC error:", json.error.message || "Failed to fetch ledger entries");
+      return null;
     }
 
     const entry = json.result.entries[0];
     if (!entry) {
-      throw new Error("No ledger entry found for this contract ID");
+      // Contract not found - this is a valid response, not an error
+      return null;
     }
 
     const contractData = entry?.dataJson?.contract_data?.val?.contract_instance;
@@ -105,6 +118,7 @@ export async function getLedgerKeyContractCode(
     return escrowEntry.val.map as EscrowMap;
   } catch (error) {
     console.error("Error fetching escrow data:", error);
-    return [];
+    // Re-throw network and other errors, only return null for "contract not found"
+    throw error;
   }
 }

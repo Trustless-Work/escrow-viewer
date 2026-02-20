@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Contract } from "@stellar/stellar-sdk";
+import { jsonRpcCall } from "@/lib/rpc";
+import { getNetworkConfig, type NetworkType } from "@/lib/network-config";
 
 // Types for transaction data
 export interface TransactionMetadata {
@@ -38,9 +40,6 @@ export interface TransactionResponse {
   retentionNotice?: string;
 }
 
-const SOROBAN_RPC_URL =
-  process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ||
-  "https://soroban-testnet.stellar.org";
 
 /**
  * Fetches recent transactions for a contract using Soroban JSON-RPC
@@ -48,10 +47,16 @@ const SOROBAN_RPC_URL =
  */
 export async function fetchTransactions(
   contractId: string,
-  options: FetchTransactionsOptions = {},
+in
 ): Promise<TransactionResponse> {
   try {
+    // Basic validation for contract ID format
+    if (!/^C[A-Z0-9]{55}$/.test(contractId)) {
+      throw new Error("Invalid contract ID format. Contract IDs should start with 'C' followed by 55 alphanumeric characters.");
+    }
+
     const { startLedger, cursor, limit = 50 } = options;
+    const networkConfig = getNetworkConfig(network);
 
     // Get contract instance to derive transaction filter
     const contract = new Contract(contractId);
@@ -74,19 +79,50 @@ export async function fetchTransactions(
       },
     };
 
-    const response = await fetch(SOROBAN_RPC_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+    let response;
+    try {
+      response = await fetch(networkConfig.rpcUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+    } catch (error) {
+      console.warn("Failed to fetch transactions from RPC:", error);
+      return {
+        transactions: [],
+        latestLedger: 0,
+        oldestLedger: 0,
+        hasMore: false,
+        retentionNotice: "Unable to connect to RPC. Please check your internet connection."
+      };
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      console.warn(`HTTP error fetching transactions: Status ${response.status}`);
+      return {
+        transactions: [],
+        latestLedger: 0,
+        oldestLedger: 0,
+        hasMore: false,
+        retentionNotice: "Unable to connect to RPC. Please check your internet connection."
+      };
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (error) {
+      console.warn("Failed to parse JSON response:", error);
+      return {
+        transactions: [],
+        latestLedger: 0,
+        oldestLedger: 0,
+        hasMore: false,
+        retentionNotice: "Unable to connect to RPC. Please check your internet connection."
+      };
+    }
 
     if (data.error) {
       // Handle retention-related errors gracefully
@@ -103,7 +139,14 @@ export async function fetchTransactions(
             "Transaction data beyond retention period. RPC typically retains 24h-7 days of history.",
         };
       }
-      throw new Error(data.error.message || "Failed to fetch transactions");
+      console.warn("RPC error:", data.error.message || "Failed to fetch transactions");
+      return {
+        transactions: [],
+        latestLedger: 0,
+        oldestLedger: 0,
+        hasMore: false,
+        retentionNotice: "Unable to connect to RPC. Please check your internet connection."
+      };
     }
 
     const result = data.result;
@@ -144,13 +187,139 @@ export async function fetchTransactions(
 }
 
 /**
+ * Fetches recent events for a contract using Soroban JSON-RPC getEvents
+ * Limited to ~7 days retention by RPC
+ */
+export async function fetchEvents(
+  contractId: string,
+  rpcUrl: string,
+  cursor?: string,
+  limit: number = 50
+): Promise<EventResponse> {
+  try {
+    // Basic validation for contract ID format
+    if (!/^C[A-Z0-9]{55}$/.test(contractId)) {
+      throw new Error("Invalid contract ID format. Contract IDs should start with 'C' followed by 55 alphanumeric characters.");
+    }
+
+    // Build request params
+    const params: any = {
+      filters: [
+        {
+          type: "contract",
+          contractIds: [contractId]
+        }
+      ],
+      cursor,
+      limit
+    };
+
+    // Only add startLedger if we can calculate a reasonable recent range
+    // RPC typically retains ~7 days, but we try to be more conservative
+    try {
+      const latestLedgerResponse = await jsonRpcCall<{ sequence: number }>(rpcUrl, "getLatestLedger");
+      const latestLedger = latestLedgerResponse.sequence;
+      // Conservative estimate: ~3 days (5 sec blocks * 86400 sec/day * 3 days)
+      const estimatedStartLedger = Math.max(1, latestLedger - 51840);
+
+      // Only use startLedger if it's reasonably recent (avoid invalid range errors)
+      if (estimatedStartLedger > latestLedger - 100000) { // Within last ~6 days
+        params.startLedger = estimatedStartLedger;
+      }
+    } catch (ledgerError) {
+      // If we can't get latest ledger, proceed without startLedger
+      console.warn("Could not fetch latest ledger for events, using default range:", ledgerError);
+    }
+
+    const makeRequest = async (requestParams: any) => {
+      try {
+        const response = await fetch(rpcUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "getEvents",
+            params: requestParams
+          }),
+        });
+
+        if (!response.ok) {
+          console.warn(`HTTP error fetching events: Status ${response.status}`);
+          return { error: { message: "Unable to connect to RPC. Please check your internet connection." } };
+        }
+
+        try {
+          return await response.json();
+        } catch (error) {
+          console.warn("Failed to parse JSON response:", error);
+          return { error: { message: "Unable to connect to RPC. Please check your internet connection." } };
+        }
+      } catch (error) {
+        console.warn("Failed to fetch events from RPC:", error);
+        return { error: { message: "Unable to connect to RPC. Please check your internet connection." } };
+      }
+    };
+
+    let data = await makeRequest(params);
+
+    // If startLedger is out of range, retry without it
+    if (data.error && data.error.message?.includes("startLedger must be within")) {
+      console.warn("startLedger out of range, retrying without startLedger");
+      delete params.startLedger;
+      data = await makeRequest(params);
+    }
+
+    if (data.error) {
+      if (data.error.message?.includes("Unable to connect")) {
+        return {
+          events: [],
+          latestLedger: 0,
+          cursor: undefined,
+          hasMore: false
+        };
+      }
+      throw new Error(data.error.message || "Failed to fetch events");
+    }
+
+    const result = data.result;
+    const events: EventMetadata[] = (result.events || []).map((event: any) => ({
+      id: event.id,
+      type: event.type,
+      ledger: event.ledger,
+      contractId: event.contractId,
+      topics: event.topics || [],
+      value: event.value || "",
+      inSuccessfulContractCall: event.inSuccessfulContractCall
+    }));
+
+    return {
+      events,
+      latestLedger: result.latestLedger || 0,
+      cursor: result.cursor,
+      hasMore: !!result.cursor
+    };
+
+  } catch (error) {
+    console.error("Error fetching events:", error);
+
+    // Return graceful error response
+    return {
+      events: [],
+      latestLedger: 0,
+      hasMore: false
+    };
+  }
+}
+
+/**
  * Fetches detailed information for a specific transaction
  * Returns full details with XDR decoded as JSON
  */
-export async function fetchTransactionDetails(
-  txHash: string,
-): Promise<TransactionDetails | null> {
   try {
+    const networkConfig = getNetworkConfig(network);
     const requestBody = {
       jsonrpc: "2.0",
       id: 2,
@@ -160,7 +329,7 @@ export async function fetchTransactionDetails(
       },
     };
 
-    const response = await fetch(SOROBAN_RPC_URL, {
+    const response = await fetch(networkConfig.rpcUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

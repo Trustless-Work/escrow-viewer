@@ -1,41 +1,40 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { safeLocalStorage } from "@/utils/storage";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
-  const [isDark, setIsDark] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Only access localStorage after component mounts (client-side only)
-  useEffect(() => {
-    setMounted(true);
-    const stored = safeLocalStorage.getItem("theme");
-    if (stored) {
-      setIsDark(stored === "dark");
-    } else if (
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      setIsDark(true);
-    }
-  }, []);
 
   // Apply theme class to document
   useEffect(() => {
-    if (!mounted) return;
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    safeLocalStorage.setItem("theme", isDark ? "dark" : "light");
-  }, [isDark, mounted]);
 
-  const toggle = () => setIsDark((v) => !v);
+  if (!mounted) {
+    return (
+      <button
+        aria-label="Toggle dark mode"
+        className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:shadow-sm transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
+          <circle cx="12" cy="12" r="5"></circle>
+          <path d="M12 1v2"></path>
+          <path d="M12 21v2"></path>
+          <path d="M4.22 4.22l1.42 1.42"></path>
+          <path d="M18.36 18.36l1.42 1.42"></path>
+          <path d="M1 12h2"></path>
+          <path d="M21 12h2"></path>
+          <path d="M4.22 19.78l1.42-1.42"></path>
+          <path d="M18.36 5.64l1.42-1.42"></path>
+        </svg>
+        <span className="sr-only">Theme</span>
+        <span className="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-200">Light</span>
+      </button>
+    );
+  }
+
+  const isDark = resolvedTheme === "dark";
+  const toggle = () => setTheme(theme === "dark" ? "light" : "dark");
 
   // Avoid hydration mismatch by not rendering until mounted
   if (!mounted) {
