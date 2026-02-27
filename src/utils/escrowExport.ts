@@ -1,7 +1,13 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { OrganizedEscrowData } from "@/mappers/escrow-mapper";
+import type { OrganizedEscrowData, ParsedMilestone } from "@/mappers/escrow-mapper";
 import { NetworkType } from "@/lib/network-config";
+
+interface jsPDFWithPlugin extends jsPDF {
+    lastAutoTable?: {
+        finalY: number;
+    };
+}
 
 /**
  * Generates a professional PDF report for an escrow.
@@ -10,7 +16,7 @@ export const exportEscrowToPDF = (
     organized: OrganizedEscrowData,
     network: NetworkType
 ) => {
-    const doc = new jsPDF();
+    const doc = new jsPDF() as jsPDFWithPlugin;
     const timestamp = new Date().toLocaleString();
     const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -53,7 +59,7 @@ export const exportEscrowToPDF = (
     });
 
     // --- 3. Escrow Status ---
-    const lastAutoTable1 = (doc as any).lastAutoTable;
+    const lastAutoTable1 = doc.lastAutoTable;
     const statusY = (lastAutoTable1 ? lastAutoTable1.finalY : 100) + 10;
     doc.setFontSize(16);
     doc.text("Escrow Status", 14, statusY);
@@ -74,7 +80,7 @@ export const exportEscrowToPDF = (
     });
 
     // --- 4. Assigned Roles ---
-    const lastAutoTable2 = (doc as any).lastAutoTable;
+    const lastAutoTable2 = doc.lastAutoTable;
     const rolesY = (lastAutoTable2 ? lastAutoTable2.finalY : 150) + 10;
     doc.setFontSize(16);
     doc.text("Assigned Roles", 14, rolesY);
@@ -95,7 +101,7 @@ export const exportEscrowToPDF = (
 
     // --- 5. Milestones ---
     if (organized.milestones && organized.milestones.length > 0) {
-        const lastAutoTable3 = (doc as any).lastAutoTable;
+        const lastAutoTable3 = doc.lastAutoTable;
         const milestonesY = (lastAutoTable3 ? lastAutoTable3.finalY : 200) + 10;
 
         // Check if we need a new page for milestones
@@ -112,7 +118,7 @@ export const exportEscrowToPDF = (
             ? [["ID", "Title", "Amount", "Status", "Approved"]]
             : [["ID", "Title", "Status", "Approved"]];
 
-        const milestoneBody = organized.milestones.map((m) => {
+        const milestoneBody = organized.milestones.map((m: ParsedMilestone) => {
             const base = [
                 String(m.id + 1),
                 m.title,
@@ -125,7 +131,7 @@ export const exportEscrowToPDF = (
             return base;
         });
 
-        const lastAutoTable4 = (doc as any).lastAutoTable;
+        const lastAutoTable4 = doc.lastAutoTable;
         const finalY = lastAutoTable4 ? lastAutoTable4.finalY : 0;
 
         autoTable(doc, {
@@ -139,7 +145,7 @@ export const exportEscrowToPDF = (
     }
 
     // --- 6. Footer ---
-    const pageCount = (doc as any).internal.pages.length - 1;
+    const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
