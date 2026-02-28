@@ -1,16 +1,19 @@
 import { motion } from "framer-motion";
-import { DollarSign, CheckSquare } from "lucide-react";
+import { DollarSign, CheckSquare, FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { cardVariants } from "@/utils/animations/animation-variants";
-import type { EscrowType } from "@/mappers/escrow-mapper";
+import type { EscrowType, OrganizedEscrowData } from "@/mappers/escrow-mapper";
+import { exportEscrowToPDF } from "@/utils/escrowExport";
+import { useNetwork } from "@/contexts/NetworkContext";
 
 interface TitleCardProps {
   title: string;
   description: string;
   progress: number;
   escrowType?: EscrowType;
+  organized?: OrganizedEscrowData | null;
 }
 
 export const TitleCard = ({
@@ -18,7 +21,16 @@ export const TitleCard = ({
   description,
   progress,
   escrowType,
+  organized,
 }: TitleCardProps) => {
+  const { currentNetwork } = useNetwork();
+
+  const handleExportPDF = () => {
+    if (organized) {
+      exportEscrowToPDF(organized, currentNetwork);
+    }
+  };
+
   return (
     <motion.div
       variants={cardVariants}
@@ -54,19 +66,31 @@ export const TitleCard = ({
               </CardTitle>
             </div>
 
-            <Badge
-              variant="outline"
-              className="bg-muted text-muted-foreground py-1 px-3 font-medium border border-border"
-            >
-              {progress === 100 ? (
-                <span className="flex items-center">
-                  <CheckSquare className="h-3 w-3 mr-1" />
-                  Completed
-                </span>
-              ) : (
-                "In Progress"
+            <div className="flex items-center gap-2">
+              {organized && (
+                <button
+                  onClick={handleExportPDF}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium  bg-primary cursor-pointer hover:bg-primary/10 border border-primary/20 rounded-lg  text-primary-foreground transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  title="Export to PDF"
+                >
+                  <FileDown className="h-4 w-4" />
+                  <span>Export to PDF</span>
+                </button>
               )}
-            </Badge>
+              <Badge
+                variant="outline"
+                className="bg-muted text-muted-foreground py-1 px-3 font-medium border border-border"
+              >
+                {progress === 100 ? (
+                  <span className="flex items-center">
+                    <CheckSquare className="h-3 w-3 mr-1" />
+                    Completed
+                  </span>
+                ) : (
+                  "In Progress"
+                )}
+              </Badge>
+            </div>
           </div>
 
           {/* ✅ Description with theme-aware color */}

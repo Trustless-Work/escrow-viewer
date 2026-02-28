@@ -36,6 +36,9 @@ interface EscrowDetailsClientProps {
   initialEscrowId: string;
 }
 
+// === DEBUG LOGGING (EscrowDetails) ===
+const DEBUG = process.env.NODE_ENV !== "production";
+
 const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   initialEscrowId,
 }) => {
@@ -172,7 +175,6 @@ const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   }, [showOnlyTransactions]);
 
   // === DEBUG LOGGING (EscrowDetails) ===
-  const DEBUG = true;
 
   useEffect(() => {
     if (!DEBUG) return;

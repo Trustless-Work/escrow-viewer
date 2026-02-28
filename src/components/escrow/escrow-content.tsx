@@ -57,6 +57,7 @@ export const EscrowContent = ({
               }
               progress={organized.progress}
               escrowType={organized.escrowType}
+              organized={organized}
             />
 
             {/* Mobile view: Use tabs for compact display */}
