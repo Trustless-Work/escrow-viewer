@@ -23,6 +23,7 @@ export type EscrowFlags = {
   dispute_flag: string;
   release_flag: string;
   resolved_flag: string;
+  lifecycle_state: string;
 };
 
 export interface OrganizedEscrowData {
@@ -372,6 +373,7 @@ export const extractFlags = (data: EscrowMap | null): EscrowFlags => {
     dispute_flag: "N/A",
     release_flag: "N/A",
     resolved_flag: "N/A",
+    lifecycle_state: "N/A",
   };
   if (!data) return flags;
 
@@ -387,6 +389,18 @@ export const extractFlags = (data: EscrowMap | null): EscrowFlags => {
       flags.release_flag = boolVal ? "True" : "False";
     if (symbol === "resolved" || symbol === "resolved_flag")
       flags.resolved_flag = boolVal ? "True" : "False";
+
+    // Attempt to extract lifecycle or status
+    if (
+      symbol === "lifecycle_state" ||
+      symbol === "status" ||
+      symbol === "lifecycle"
+    ) {
+      if (flag.val?.string) flags.lifecycle_state = flag.val.string;
+      else if (isStrLike(flag.val)) flags.lifecycle_state = flag.val.string;
+      else if (typeof (flag.val as { u32?: number }).u32 === "number")
+        flags.lifecycle_state = `State ${(flag.val as { u32?: number }).u32}`;
+    }
   }
   return flags;
 };

@@ -66,6 +66,7 @@ export const exportEscrowToPDF = (
 
     const statusData = [
         ["Progress", `${organized.progress}%`],
+        ["Lifecycle State", organized.flags.lifecycle_state],
         ["Dispute State", organized.flags.dispute_flag],
         ["Release State", organized.flags.release_flag],
         ["Resolution State", organized.flags.resolved_flag],
@@ -104,38 +105,40 @@ export const exportEscrowToPDF = (
         const lastAutoTable3 = doc.lastAutoTable;
         const milestonesY = (lastAutoTable3 ? lastAutoTable3.finalY : 200) + 10;
 
+        let milestonesStartY = milestonesY + 15;
+
         // Check if we need a new page for milestones
         if (milestonesY > 240) {
             doc.addPage();
             doc.setFontSize(16);
             doc.text("Milestones", 14, 22);
+            milestonesStartY = 30; // Reset startY for new page
         } else {
             doc.setFontSize(16);
             doc.text("Milestones", 14, milestonesY);
+            milestonesStartY = milestonesY + 5;
         }
 
         const milestoneHead = organized.escrowType === "multi-release"
-            ? [["ID", "Title", "Amount", "Status", "Approved"]]
-            : [["ID", "Title", "Status", "Approved"]];
+            ? [["ID", "Title", "Description", "Amount", "Status", "Approved"]]
+            : [["ID", "Title", "Description", "Status", "Approved"]];
 
         const milestoneBody = organized.milestones.map((m: ParsedMilestone) => {
             const base = [
                 String(m.id + 1),
                 m.title,
+                m.description || "",
                 m.status,
                 m.approved ? "Yes" : "No",
             ];
             if (organized.escrowType === "multi-release") {
-                base.splice(2, 0, m.amount || "0.00");
+                base.splice(3, 0, m.amount || "0.00");
             }
             return base;
         });
 
-        const lastAutoTable4 = doc.lastAutoTable;
-        const finalY = lastAutoTable4 ? lastAutoTable4.finalY : 0;
-
         autoTable(doc, {
-            startY: finalY > 240 ? 30 : finalY + 15,
+            startY: milestonesStartY,
             head: milestoneHead,
             body: milestoneBody,
             theme: "striped",

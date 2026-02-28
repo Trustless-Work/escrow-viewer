@@ -37,7 +37,7 @@ interface EscrowDetailsClientProps {
 }
 
 // === DEBUG LOGGING (EscrowDetails) ===
-const DEBUG = true;
+const DEBUG = process.env.NODE_ENV !== "production";
 
 const EscrowDetailsClient: React.FC<EscrowDetailsClientProps> = ({
   initialEscrowId,
